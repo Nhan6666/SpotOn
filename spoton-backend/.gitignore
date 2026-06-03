@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Environment variables (QUAN TRỌNG: KHÔNG BAO GIỜ COMMIT FILE NÀY!)
+.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Runtime
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

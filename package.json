@@ -1,0 +1,14 @@
+{
+  "name": "spoton-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:fe\" \"npm run dev:be\"",
+    "dev:fe": "npm --prefix fe-spoton run dev",
+    "dev:be": "npm --prefix spoton-backend run dev",
+    "install:all": "npm install && npm --prefix fe-spoton install && npm --prefix spoton-backend install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

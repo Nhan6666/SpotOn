@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { BranchStatsCards } from './components/BranchStatsCards';
-import { CapacityAlert } from './components/CapacityAlert';
 import { BranchList } from './components/BranchList';
 
 export function BranchManagementFeature() {
@@ -23,7 +22,6 @@ export function BranchManagementFeature() {
       </div>
 
       <BranchStatsCards />
-      <CapacityAlert />
       <BranchList />
     </div>
   );

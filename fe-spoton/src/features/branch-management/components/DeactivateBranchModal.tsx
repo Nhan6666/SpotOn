@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AlertTriangle, Info } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -14,12 +14,20 @@ interface DeactivateBranchModalProps {
 
 export function DeactivateBranchModal({ isOpen, onClose, branchName, branchId }: DeactivateBranchModalProps) {
   const { deactivateBranch } = useBranchContext();
-  const { success } = useToast();
+  const { success, error: showError } = useToast();
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
-  const handleDeactivate = () => {
-    deactivateBranch(branchId);
-    success(`Branch "${branchName}" has been deactivated.`);
-    onClose();
+  const handleDeactivate = async () => {
+    setIsDeactivating(true);
+    try {
+      await deactivateBranch(branchId);
+      success(`Branch "${branchName}" has been deactivated.`);
+      onClose();
+    } catch (error) {
+      showError(`Failed to deactivate branch "${branchName}".`);
+    } finally {
+      setIsDeactivating(false);
+    }
   };
 
   return (

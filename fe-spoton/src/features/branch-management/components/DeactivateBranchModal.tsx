@@ -3,6 +3,7 @@ import { AlertTriangle, Info } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useBranchContext } from '../branch-management.context';
+import { useToast } from '@/components/ui/Toast';
 
 interface DeactivateBranchModalProps {
   isOpen: boolean;
@@ -13,9 +14,11 @@ interface DeactivateBranchModalProps {
 
 export function DeactivateBranchModal({ isOpen, onClose, branchName, branchId }: DeactivateBranchModalProps) {
   const { deactivateBranch } = useBranchContext();
+  const { success } = useToast();
 
   const handleDeactivate = () => {
     deactivateBranch(branchId);
+    success(`Branch "${branchName}" has been deactivated.`);
     onClose();
   };
 

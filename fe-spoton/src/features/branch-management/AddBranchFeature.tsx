@@ -9,16 +9,42 @@ import { AddBranchLocation } from './components/AddBranchLocation';
 import { AddBranchOperations } from './components/AddBranchOperations';
 import { ProTipsSidebar } from './components/ProTipsSidebar';
 import { AddBranchSuccess } from './components/AddBranchSuccess';
+import { useBranchContext } from './branch-management.context';
+import { useToast } from '@/components/ui/Toast';
 import Link from 'next/link';
 
 export function AddBranchFeature() {
   const [currentStep, setCurrentStep] = useState(1);
 
+  const { addBranch } = useBranchContext();
+  const { success } = useToast();
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentStep]);
 
-  const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, 4));
+  const handleNext = () => {
+    if (currentStep === 3) {
+      // Simulate adding a new branch
+      const mockNewBranch = {
+        _id: 'BR-' + Math.floor(1000 + Math.random() * 9000),
+        name: 'New Branch (Mock)',
+        address: '123 Test Address, HCMC',
+        hotline: '028-0000-0000',
+        open_time: '08:00',
+        close_time: '22:00',
+        status: 'SETUP' as const,
+        overload_threshold: 80,
+        current_capacity_percent: 0,
+      };
+      addBranch(mockNewBranch);
+      success('Branch created successfully!');
+      setCurrentStep(4);
+    } else {
+      setCurrentStep(prev => Math.min(prev + 1, 4));
+    }
+  };
+  
   const handleBack = () => setCurrentStep(prev => Math.max(prev - 1, 1));
   const handleReset = () => setCurrentStep(1);
 

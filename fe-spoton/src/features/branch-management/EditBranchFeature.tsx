@@ -7,11 +7,13 @@ import { AddBranchForm } from './components/AddBranchForm';
 import { AddBranchOperations } from './components/AddBranchOperations';
 import { ProTipsSidebar } from './components/ProTipsSidebar';
 import { useBranchContext } from './branch-management.context';
+import { useToast } from '@/components/ui/Toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export function EditBranchFeature({ branchId }: { branchId: string }) {
   const { branches, updateBranch } = useBranchContext();
+  const { success } = useToast();
   const router = useRouter();
   
   const branch = branches.find(b => b._id === branchId);
@@ -22,6 +24,7 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
     updateBranch(branchId, {
       name: mockBranchName + " (Updated)",
     });
+    success(`Branch "${mockBranchName}" updated successfully.`);
     router.push('/admin/branches');
   };
 

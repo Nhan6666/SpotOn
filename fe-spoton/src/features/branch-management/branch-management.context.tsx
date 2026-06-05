@@ -1,9 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { http } from '@/lib/http';
 import { Branch } from './branch-management.types';
 
-const API_URL = '/api/v1/branches';
+const ENDPOINT = '/branches';
 
 interface BranchContextType {
   branches: Branch[];
@@ -23,13 +24,13 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   const fetchBranches = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(API_URL);
-      const result = await response.json();
-      if (result.success) {
-        setBranches(result.data);
+      const branches = await http.get<Branch[]>(ENDPOINT);
+      if (branches && Array.isArray(branches)) {
+        setBranches(branches);
       }
     } catch (error) {
       console.error('Failed to fetch branches:', error);
+      setBranches([]);
     } finally {
       setIsLoading(false);
     }
@@ -41,14 +42,9 @@ export function BranchProvider({ children }: { children: ReactNode }) {
 
   const updateBranch = async (id: string, updatedData: Partial<Branch>) => {
     try {
-      const response = await fetch(`${API_URL}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData),
-      });
-      const result = await response.json();
-      if (result.success) {
-        setBranches(prev => prev.map(b => b._id === id ? { ...b, ...result.data } : b));
+      const updated = await http.put<Branch>(`${ENDPOINT}/${id}`, updatedData);
+      if (updated) {
+        setBranches(prev => prev.map(b => b._id === id ? updated : b));
       }
     } catch (error) {
       console.error('Failed to update branch:', error);
@@ -58,11 +54,8 @@ export function BranchProvider({ children }: { children: ReactNode }) {
 
   const deactivateBranch = async (id: string) => {
     try {
-      const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-      const result = await response.json();
-      if (result.success) {
-        setBranches(prev => prev.filter(b => b._id !== id));
-      }
+      await http.delete(`${ENDPOINT}/${id}`);
+      setBranches(prev => prev.filter(b => b._id !== id));
     } catch (error) {
       console.error('Failed to deactivate branch:', error);
       throw error;
@@ -71,14 +64,9 @@ export function BranchProvider({ children }: { children: ReactNode }) {
 
   const addBranch = async (newBranch: Partial<Branch>) => {
     try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newBranch),
-      });
-      const result = await response.json();
-      if (result.success) {
-        setBranches(prev => [result.data, ...prev]);
+      const created = await http.post<Branch>(ENDPOINT, newBranch);
+      if (created) {
+        setBranches(prev => [created, ...prev]);
       }
     } catch (error) {
       console.error('Failed to create branch:', error);

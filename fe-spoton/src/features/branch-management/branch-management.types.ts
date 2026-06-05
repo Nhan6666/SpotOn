@@ -20,8 +20,7 @@ export interface Branch {
   close_time: string;
   status: 'OPEN' | 'FULL' | 'CLOSED' | 'SETUP';
   overload_threshold: number;
-  manager_name?: string;
-  manager_avatar?: string;
+  manager_id?: string | { _id: string; full_name: string; email: string };
   current_capacity_percent: number;
   zones?: BranchZone[];
 }

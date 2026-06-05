@@ -9,7 +9,8 @@ const connectDB = require('./config/db');
 // =============================================
 // const authRoutes     = require('./routes/authRoutes');
 // const userRoutes     = require('./routes/userRoutes');
-// const branchRoutes   = require('./routes/branchRoutes');
+const branchRoutes   = require('./routes/branchRoutes');
+const userRoutes     = require('./routes/userRoutes');
 // const menuRoutes     = require('./routes/menuRoutes');
 // const bookingRoutes  = require('./routes/bookingRoutes');
 // const voucherRoutes  = require('./routes/voucherRoutes');
@@ -52,7 +53,8 @@ app.get('/api/v1/health', (req, res) => {
 // Mount Routes (Uncomment dần khi implement)
 // app.use('/api/v1/auth',          authRoutes);
 // app.use('/api/v1/users',         userRoutes);
-// app.use('/api/v1/branches',      branchRoutes);
+app.use('/api/v1/branches',      branchRoutes);
+app.use('/api/v1/users',         userRoutes);
 // app.use('/api/v1/menus',         menuRoutes);
 // app.use('/api/v1/bookings',      bookingRoutes);
 // app.use('/api/v1/vouchers',      voucherRoutes);

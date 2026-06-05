@@ -11,7 +11,7 @@ import { DeactivateBranchModal } from './DeactivateBranchModal';
 import Link from 'next/link';
 
 export function BranchList() {
-  const { branches } = useBranchContext();
+  const { branches, isLoading } = useBranchContext();
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<{ id: string; name: string } | null>(null);
 
@@ -51,11 +51,13 @@ export function BranchList() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'OPEN':
-        return <Badge variant="success" className="bg-green-100 text-green-700 hover:bg-green-100"><span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>ACTIVE</Badge>;
+        return <Badge variant="success" className="bg-green-100 text-green-700 hover:bg-green-100"><span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>OPEN</Badge>;
       case 'FULL':
         return <Badge variant="danger" className="bg-red-50 text-red-700 hover:bg-red-50"><span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>FULL</Badge>;
+      case 'CLOSED':
+        return <Badge variant="default" className="bg-gray-100 text-gray-500 hover:bg-gray-100"><span className="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5"></span>CLOSED</Badge>;
       case 'SETUP':
-        return <Badge variant="default" className="bg-gray-100 text-gray-600 hover:bg-gray-100"><ClockIcon /> SETUP</Badge>;
+        return <Badge variant="default" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100"><ClockIcon /> SETUP</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -98,7 +100,7 @@ export function BranchList() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500 font-bold">
-                <th className="px-6 py-4 rounded-tl-lg">Branch & ID</th>
+                <th className="px-6 py-4 rounded-tl-lg">Branch Name</th>
                 <th className="px-6 py-4">Manager</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Operating Hours</th>
@@ -106,8 +108,17 @@ export function BranchList() {
                 <th className="px-6 py-4 text-right rounded-tr-lg">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {paginatedBranches.length > 0 ? (
+            <tbody className="bg-white divide-y divide-gray-200">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    <div className="flex justify-center mb-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+                    </div>
+                    Loading branches...
+                  </td>
+                </tr>
+              ) : paginatedBranches.length > 0 ? (
                 paginatedBranches.map((branch) => (
                   <tr key={branch._id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -117,17 +128,12 @@ export function BranchList() {
                       </div>
                       <div>
                         <div className="font-bold text-gray-900 group-hover:text-amber-700 transition-colors">{branch.name}</div>
-                        <div className="text-sm text-gray-500 flex items-center mt-0.5">
-                          <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] font-mono mr-2">
-                            {branch._id}
-                          </span>
-                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {branch.manager_name ? (
-                      <div className="text-sm font-medium text-gray-900">{branch.manager_name}</div>
+                    {branch.manager_id && typeof branch.manager_id === 'object' && branch.manager_id.full_name ? (
+                      <div className="text-sm font-medium text-gray-900">{branch.manager_id.full_name}</div>
                     ) : (
                       <div className="text-sm text-gray-400 italic">Unassigned</div>
                     )}
@@ -148,11 +154,11 @@ export function BranchList() {
                         <div className="flex-1 bg-gray-100 rounded-full h-2 mr-3 overflow-hidden flex">
                           <div 
                             className={`h-2 rounded-full ${(branch.current_capacity_percent || 0) > branch.overload_threshold ? 'bg-red-500' : 'bg-green-500'}`} 
-                            style={{ width: `${branch.current_capacity_percent}%` }}
+                            style={{ width: `${branch.current_capacity_percent || 0}%` }}
                           ></div>
                         </div>
                         <span className={`text-sm font-bold ${(branch.current_capacity_percent || 0) > branch.overload_threshold ? 'text-red-600' : 'text-gray-600'}`}>
-                          {branch.current_capacity_percent}%
+                          {branch.current_capacity_percent || 0}%
                         </span>
                       </div>
                     )}
@@ -161,7 +167,7 @@ export function BranchList() {
                     <Dropdown 
                       align="right"
                       trigger={
-                        <button className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors">
+                        <button className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer">
                           <MoreHorizontal className="w-5 h-5" />
                         </button>
                       }

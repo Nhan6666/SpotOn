@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -27,10 +28,10 @@ export function SystemConfigsFeature() {
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-3 text-sm text-gray-500">
+        <Link href="/admin/system-configs" className="flex items-center gap-3 text-sm text-gray-500 hover:text-gray-700">
           <ArrowLeft className="w-4 h-4" />
           <span className="font-medium text-slate-700">Back to Categories</span>
-        </div>
+        </Link>
         <div className="flex items-center gap-3 flex-wrap">
           <Button variant="outline" className="gap-2 border-gray-200 text-slate-600 hover:bg-slate-50">
             <X className="w-4 h-4" />

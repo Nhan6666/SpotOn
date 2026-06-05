@@ -1,6 +1,6 @@
 import React from 'react';
-import { SystemConfigsFeature } from '@/features/system-configs/SystemConfigsFeature';
+import { SystemConfigsOverview } from '@/features/system-configs/SystemConfigsOverview';
 
 export default function SystemConfigsPage() {
-  return <SystemConfigsFeature />;
+  return <SystemConfigsOverview />;
 }

@@ -1,7 +1,21 @@
+"use client";
+
 import React from 'react';
 import { Network, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { useBranchContext } from '../branch-management.context';
 
 export function BranchStatsCards() {
+  const { branches } = useBranchContext();
+
+  const totalBranches = branches.length;
+  const activeBranches = branches.filter(b => b.status === 'OPEN').length;
+  const setupBranches = branches.filter(b => b.status === 'SETUP').length;
+  
+  // Chi nhánh quá tải (trạng thái FULL hoặc sức chứa hiện tại > ngưỡng cho phép)
+  const overloadedBranches = branches.filter(
+    b => b.status === 'FULL' || (b.current_capacity_percent || 0) > b.overload_threshold
+  ).length;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {/* Total Branches */}
@@ -10,7 +24,7 @@ export function BranchStatsCards() {
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Branches</h3>
           <Network className="w-5 h-5 text-gray-400" />
         </div>
-        <div className="text-4xl font-bold text-gray-900">12</div>
+        <div className="text-4xl font-bold text-gray-900">{totalBranches}</div>
       </div>
 
       {/* Active */}
@@ -21,8 +35,8 @@ export function BranchStatsCards() {
           <CheckCircle2 className="w-5 h-5 text-green-500" />
         </div>
         <div className="flex items-baseline gap-2">
-          <div className="text-4xl font-bold text-gray-900">10</div>
-          <span className="text-sm font-medium text-green-600">↑ 2 this month</span>
+          <div className="text-4xl font-bold text-gray-900">{activeBranches}</div>
+          <span className="text-sm font-medium text-green-600">Live</span>
         </div>
       </div>
 
@@ -33,7 +47,7 @@ export function BranchStatsCards() {
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Opening Soon</h3>
           <Clock className="w-5 h-5 text-yellow-500" />
         </div>
-        <div className="text-4xl font-bold text-gray-900">2</div>
+        <div className="text-4xl font-bold text-gray-900">{setupBranches}</div>
       </div>
 
       {/* Overloaded */}
@@ -44,7 +58,7 @@ export function BranchStatsCards() {
           <AlertTriangle className="w-5 h-5 text-red-500" />
         </div>
         <div className="flex items-baseline gap-2">
-          <div className="text-4xl font-bold text-red-600">1</div>
+          <div className="text-4xl font-bold text-red-600">{overloadedBranches}</div>
           <span className="text-sm font-medium text-red-600">Requires action</span>
         </div>
       </div>

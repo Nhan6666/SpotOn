@@ -1,53 +1,40 @@
-/**
- * features/auth/auth.schema.ts
- * Zod validation schemas cho auth forms
- * Tất cả text validation phải đến từ messages/vi.json thông qua t()
- * KHÔNG hard-code chuỗi tiếng Việt trực tiếp ở đây
- */
-
 import { z } from 'zod';
 
-/**
- * Factory function nhận `t` từ useTranslations() để tạo schema động
- * Pattern này đảm bảo messages luôn đồng bộ với i18n
- */
-export const createRegisterSchema = (t: (key: string) => string) =>
-  z
-    .object({
-      fullName: z
-        .string()
-        .min(1, t('validation.required'))
-        .min(2, t('validation.fullName.min'))
-        .max(100, t('validation.fullName.max')),
-      email: z
-        .string()
-        .min(1, t('validation.required'))
-        .email(t('validation.email.invalid')),
-      phone: z
-        .string()
-        .min(1, t('validation.required'))
-        .regex(/^(0|\+84)[3-9]\d{8}$/, t('validation.phone.invalid')),
-      password: z
-        .string()
-        .min(1, t('validation.required'))
-        .min(8, t('validation.password.min'))
-        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, t('validation.password.pattern')),
-      confirmPassword: z.string().min(1, t('validation.required')),
-      terms: z.boolean().refine((val) => val === true, t('validation.terms.required')),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-      message: t('validation.confirmPassword.mismatch'),
-      path: ['confirmPassword'],
-    });
-
-export const createLoginSchema = (t: (key: string) => string) =>
-  z.object({
+export const registerSchema = z
+  .object({
+    fullName: z
+      .string()
+      .min(1, 'Vui lòng nhập họ và tên')
+      .min(2, 'Họ tên phải có ít nhất 2 ký tự')
+      .max(100, 'Họ tên không được vượt quá 100 ký tự'),
     email: z
       .string()
-      .min(1, t('validation.required'))
-      .email(t('validation.email.invalid')),
-    password: z.string().min(1, t('validation.required')),
+      .min(1, 'Vui lòng nhập email')
+      .email('Email không đúng định dạng'),
+    phone: z
+      .string()
+      .min(1, 'Vui lòng nhập số điện thoại')
+      .regex(/^(0|\+84)[3-9]\d{8}$/, 'Số điện thoại không hợp lệ (VD: 0912345678)'),
+    password: z
+      .string()
+      .min(1, 'Vui lòng nhập mật khẩu')
+      .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Mật khẩu phải chứa chữ hoa, chữ thường và số'),
+    confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
+    terms: z.boolean().refine((val) => val === true, 'Bạn phải đồng ý với điều khoản dịch vụ'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
   });
 
-export type RegisterSchema = ReturnType<typeof createRegisterSchema>;
-export type LoginSchema = ReturnType<typeof createLoginSchema>;
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Vui lòng nhập email')
+    .email('Email không đúng định dạng'),
+  password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
+});
+
+export type RegisterSchema = z.infer<typeof registerSchema>;
+export type LoginSchema = z.infer<typeof loginSchema>;

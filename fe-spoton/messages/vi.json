@@ -106,5 +106,29 @@
       "title": "Quản lý nhà hàng thông minh",
       "subtitle": "Tối ưu hóa vận hành, nâng cao trải nghiệm khách hàng"
     }
+  },
+  "admin": {
+    "systemConfigs": {
+      "title": "Cấu Hình Hệ Thống",
+      "description": "Quản lý các cài đặt nền tảng chung và các quy tắc mặc định.",
+      "actions": {
+        "viewHistory": "Xem Lịch Sử",
+        "previewImpact": "Xem Trước Tác Động",
+        "saveAll": "Lưu Mọi Thay Đổi"
+      },
+      "policies": {
+        "title": "Chính Sách Chung",
+        "description": "Quản lý múi giờ, quy tắc đặt bàn và chế độ bảo trì hệ thống."
+      },
+      "payments": {
+        "title": "Thanh Toán & Tích Hợp",
+        "description": "Cấu hình cài đặt VNPay, đặt cọc bàn, và thông tin xác thực dịch vụ bên thứ ba."
+      },
+      "configure": "Cấu hình",
+      "status": {
+        "title": "TRẠNG THÁI HỆ THỐNG",
+        "message": "Tất cả hệ thống hoạt động bình thường. Bản sao lưu cấu hình gần nhất: Hôm nay lúc 08:00 AM."
+      }
+    }
   }
 }

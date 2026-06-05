@@ -9,7 +9,6 @@ export interface RegisterFormValues {
   phone: string;
   password: string;
   confirmPassword: string;
-  terms: boolean;
 }
 
 export interface LoginFormValues {
@@ -28,7 +27,26 @@ export interface AuthUser {
   profile_vip_notes?: string;
 }
 
+/** Response sau khi đăng nhập thành công (có token + user) */
 export interface AuthResponse {
+  success: boolean;
+  token: string;
+  user: AuthUser;
+}
+
+/** Response sau khi đăng ký thành công (chưa có token, cần xác thực OTP) */
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  data: {
+    email: string;
+  };
+}
+
+/** Response sau khi xác thực OTP thành công */
+export interface VerifyOtpResponse {
+  success: boolean;
+  message: string;
   token: string;
   user: AuthUser;
 }
@@ -38,4 +56,9 @@ export interface RegisterPayload {
   password: string;
   full_name: string;
   phone?: string;
+}
+
+export interface VerifyOtpPayload {
+  email: string;
+  otp: string;
 }

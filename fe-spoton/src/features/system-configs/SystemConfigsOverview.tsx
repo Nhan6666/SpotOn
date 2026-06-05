@@ -49,28 +49,30 @@ export function SystemConfigsOverview() {
         </Link>
 
         {/* Payments & Integrations */}
-        <Card className="hover:shadow-lg transition-all cursor-pointer opacity-60">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg shrink-0">
-                <CreditCard className="w-6 h-6" />
+        <Link href="/admin/system-configs/payments" className="block">
+          <Card className="hover:shadow-lg transition-all cursor-pointer h-full">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg shrink-0">
+                  <CreditCard className="w-6 h-6" />
+                </div>
+                <div className="space-y-1.5 flex-1">
+                  <h3 className="font-semibold text-lg text-gray-900">Payments &amp; Integrations</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    Configure VNPay settings, table deposits, and third-party service credentials.
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1.5 flex-1">
-                <h3 className="font-semibold text-lg text-gray-900">Payments &amp; Integrations</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  Configure VNPay settings, table deposits, and third-party service credentials.
-                </p>
+              <hr className="my-4 border-gray-100" />
+              <div className="flex justify-end">
+                <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600 group">
+                  Configure
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </div>
               </div>
-            </div>
-            <hr className="my-4 border-gray-100" />
-            <div className="flex justify-end">
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-700 group">
-                Configure
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* System Status */}

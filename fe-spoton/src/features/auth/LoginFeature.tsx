@@ -39,16 +39,16 @@ export function LoginFeature() {
     setServerError(null);
     setIsGoogleLoading(true);
     try {
-      // 1. Bật cửa sổ Popup của Google
+      // Bật cửa sổ Popup của Google
       const result = await signInWithPopup(auth, googleProvider);
       
-      // 2. Lấy idToken bảo mật từ Google
+      // Lấy idToken bảo mật từ Google
       const idToken = await result.user.getIdToken();
 
-      // 3. Bắn idToken xuống Backend SpotOn của chúng ta
+      // Bắn idToken xuống Backend SpotOn của chúng ta
       const backendResult = await authService.googleLogin(idToken);
 
-      // 4. Nếu BE báo OK, lưu Token + User và cho vào trang chủ
+      // Nếu BE báo OK, lưu Token + User và cho vào trang chủ
       // Google login luôn dùng localStorage (persistent session)
       localStorage.setItem('spoton_token', backendResult.token);
       localStorage.setItem('spoton_user', JSON.stringify(backendResult.user));

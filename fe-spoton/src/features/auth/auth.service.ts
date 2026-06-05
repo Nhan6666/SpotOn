@@ -24,6 +24,9 @@ export const authService = {
   login: (payload: LoginPayload): Promise<AuthResponse> =>
     http.post<AuthResponse>('/auth/login', payload),
 
+  googleLogin: (idToken: string): Promise<AuthResponse> =>
+    http.post<AuthResponse>('/auth/google', { idToken }),
+
   logout: (): Promise<void> =>
     http.post<void>('/auth/logout', {}),
 

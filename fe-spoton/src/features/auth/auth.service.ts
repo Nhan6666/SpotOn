@@ -11,6 +11,7 @@ import type {
   RegisterResponse,
   VerifyOtpPayload,
   VerifyOtpResponse,
+  LoginPayload,
 } from './auth.types';
 
 export const authService = {
@@ -20,12 +21,16 @@ export const authService = {
   verifyOtp: (payload: VerifyOtpPayload): Promise<VerifyOtpResponse> =>
     http.post<VerifyOtpResponse>('/auth/verify-otp', payload),
 
-  login: (email: string, password: string): Promise<AuthResponse> =>
-    http.post<AuthResponse>('/auth/login', { email, password }),
+  login: (payload: LoginPayload): Promise<AuthResponse> =>
+    http.post<AuthResponse>('/auth/login', payload),
 
   logout: (): Promise<void> =>
     http.post<void>('/auth/logout', {}),
 
-  getMe: (token: string): Promise<AuthResponse['user']> =>
-    http.get<AuthResponse['user']>('/auth/me', { token }),
+ getMe: (token: string): Promise<AuthResponse['user']> =>
+    http.get<AuthResponse['user']>('/auth/me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }),
 };

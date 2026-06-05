@@ -14,6 +14,7 @@ export interface RegisterFormValues {
 export interface LoginFormValues {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface AuthUser {
@@ -61,4 +62,9 @@ export interface RegisterPayload {
 export interface VerifyOtpPayload {
   email: string;
   otp: string;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
 }

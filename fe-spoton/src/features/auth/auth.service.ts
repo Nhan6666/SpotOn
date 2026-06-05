@@ -5,11 +5,20 @@
  */
 
 import { http } from '@/lib/http';
-import type { AuthResponse, RegisterPayload } from './auth.types';
+import type {
+  AuthResponse,
+  RegisterPayload,
+  RegisterResponse,
+  VerifyOtpPayload,
+  VerifyOtpResponse,
+} from './auth.types';
 
 export const authService = {
-  register: (payload: RegisterPayload): Promise<AuthResponse> =>
-    http.post<AuthResponse>('/auth/register', payload),
+  register: (payload: RegisterPayload): Promise<RegisterResponse> =>
+    http.post<RegisterResponse>('/auth/register', payload),
+
+  verifyOtp: (payload: VerifyOtpPayload): Promise<VerifyOtpResponse> =>
+    http.post<VerifyOtpResponse>('/auth/verify-otp', payload),
 
   login: (email: string, password: string): Promise<AuthResponse> =>
     http.post<AuthResponse>('/auth/login', { email, password }),

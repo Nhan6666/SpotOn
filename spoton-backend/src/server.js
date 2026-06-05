@@ -7,7 +7,7 @@ const connectDB = require('./config/db');
 // =============================================
 // IMPORT ROUTES (Uncomment dần khi implement)
 // =============================================
-// const authRoutes     = require('./routes/authRoutes');
+const authRoutes     = require('./routes/authRoutes');
 // const userRoutes     = require('./routes/userRoutes');
 // const branchRoutes   = require('./routes/branchRoutes');
 // const menuRoutes     = require('./routes/menuRoutes');
@@ -50,7 +50,7 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 // Mount Routes (Uncomment dần khi implement)
-// app.use('/api/v1/auth',          authRoutes);
+app.use('/api/v1/auth',          authRoutes);
 // app.use('/api/v1/users',         userRoutes);
 // app.use('/api/v1/branches',      branchRoutes);
 // app.use('/api/v1/menus',         menuRoutes);

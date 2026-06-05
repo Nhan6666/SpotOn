@@ -5,6 +5,7 @@ const {
   getBranchById,
   createBranch,
   updateBranch,
+  deleteBranch,
   updateTableStatus,
 } = require('../controllers/branchController');
 // const { protect, authorize } = require('../middlewares/authMiddleware');
@@ -17,9 +18,11 @@ router.route('/')
 
 // GET /api/v1/branches/:id  -> Chi tiết chi nhánh
 // PUT /api/v1/branches/:id  -> Cập nhật chi nhánh
+// DELETE /api/v1/branches/:id -> Xóa chi nhánh
 router.route('/:id')
   .get(getBranchById)
-  .put(updateBranch);
+  .put(updateBranch)
+  .delete(deleteBranch);
 
 // PATCH /api/v1/branches/:branchId/tables/:tableId/status  -> Đổi trạng thái bàn
 router.patch('/:branchId/tables/:tableId/status', updateTableStatus);

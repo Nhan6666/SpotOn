@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import bgRegister from '@/assets/images/bg-register.png';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,6 +45,7 @@ function FormField({ id, label, error, children }: FieldProps) {
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export function RegisterFeature() {
+  const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -60,7 +62,6 @@ export function RegisterFeature() {
       phone: '',
       password: '',
       confirmPassword: '',
-      terms: false,
     },
   });
 
@@ -82,8 +83,12 @@ export function RegisterFeature() {
     };
 
     try {
-      await authService.register(payload);
-      setSuccessMessage('Đăng ký tài khoản thành công!');
+      const result = await authService.register(payload);
+      setSuccessMessage('Đăng ký thành công! Đang chuyển đến trang xác thực...');
+      // Redirect sang trang verify-otp, truyền email qua query string
+      setTimeout(() => {
+        router.push(`/verify-otp?email=${encodeURIComponent(result.data.email)}`);
+      }, 1000);
     } catch (error) {
       if (error instanceof AppError) {
         if (error.fieldErrors) {
@@ -219,7 +224,7 @@ export function RegisterFeature() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-md bg-[#8a5a19] px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#724a15] transition-colors focus:outline-none focus:ring-2 focus:ring-[#8a5a19] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full rounded-md bg-[#8a5a19] cursor-pointer px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#724a15] transition-colors focus:outline-none focus:ring-2 focus:ring-[#8a5a19] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Đang xử lý...' : 'Đăng Ký Tài Khoản'}
             </button>

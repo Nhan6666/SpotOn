@@ -24,7 +24,7 @@ const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Gán user vào request để các controller có thể dùng
-    req.user = await User.findById(decoded.id).select('-password_hash');
+    req.user = await User.findById(decoded.userId).select('-password_hash');
 
     if (!req.user) {
       return res.status(401).json({ success: false, message: 'Người dùng không tồn tại.' });

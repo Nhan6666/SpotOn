@@ -6,6 +6,18 @@ import { Branch } from './branch-management.types';
 
 const ENDPOINT = '/branches';
 
+// Shape của tất cả API response từ BE: { success, count?, data }
+interface ApiListResponse<T> {
+  success: boolean;
+  count: number;
+  data: T[];
+}
+
+interface ApiSingleResponse<T> {
+  success: boolean;
+  data: T;
+}
+
 interface BranchContextType {
   branches: Branch[];
   isLoading: boolean;
@@ -21,12 +33,13 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // fetchBranches không gọi setIsLoading(true) để tránh synchronous setState trong effect
   const fetchBranches = async () => {
-    setIsLoading(true);
     try {
-      const branches = await http.get<Branch[]>(ENDPOINT);
-      if (branches && Array.isArray(branches)) {
-        setBranches(branches);
+      // BE trả về { success, count, data: Branch[] } — phải lấy .data
+      const res = await http.get<ApiListResponse<Branch>>(ENDPOINT);
+      if (res?.data && Array.isArray(res.data)) {
+        setBranches(res.data);
       }
     } catch (error) {
       console.error('Failed to fetch branches:', error);
@@ -36,15 +49,37 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // refreshBranches được gọi bởi user action (không phải effect) nên có thể set loading
+  const refreshBranches = async () => {
+    setIsLoading(true);
+    await fetchBranches();
+  };
+
   useEffect(() => {
-    fetchBranches();
+    let cancelled = false;
+    // Dùng async IIFE để linter thấy rõ async boundary — setState chỉ chạy sau await
+    (async () => {
+      try {
+        const res = await http.get<ApiListResponse<Branch>>(ENDPOINT);
+        if (!cancelled && res?.data && Array.isArray(res.data)) {
+          setBranches(res.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch branches:', error);
+        if (!cancelled) setBranches([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const updateBranch = async (id: string, updatedData: Partial<Branch>) => {
     try {
-      const updated = await http.put<Branch>(`${ENDPOINT}/${id}`, updatedData);
-      if (updated) {
-        setBranches(prev => prev.map(b => b._id === id ? updated : b));
+      // BE trả về { success, data: Branch }
+      const res = await http.put<ApiSingleResponse<Branch>>(`${ENDPOINT}/${id}`, updatedData);
+      if (res?.data) {
+        setBranches(prev => prev.map(b => b._id === id ? res.data : b));
       }
     } catch (error) {
       console.error('Failed to update branch:', error);
@@ -64,9 +99,10 @@ export function BranchProvider({ children }: { children: ReactNode }) {
 
   const addBranch = async (newBranch: Partial<Branch>) => {
     try {
-      const created = await http.post<Branch>(ENDPOINT, newBranch);
-      if (created) {
-        setBranches(prev => [created, ...prev]);
+      // BE trả về { success, data: Branch }
+      const res = await http.post<ApiSingleResponse<Branch>>(ENDPOINT, newBranch);
+      if (res?.data) {
+        setBranches(prev => [res.data, ...prev]);
       }
     } catch (error) {
       console.error('Failed to create branch:', error);
@@ -75,13 +111,13 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <BranchContext.Provider value={{ 
-      branches, 
-      isLoading, 
-      updateBranch, 
-      deactivateBranch, 
-      addBranch, 
-      refreshBranches: fetchBranches 
+    <BranchContext.Provider value={{
+      branches,
+      isLoading,
+      updateBranch,
+      deactivateBranch,
+      addBranch,
+      refreshBranches: fetchBranches
     }}>
       {children}
     </BranchContext.Provider>

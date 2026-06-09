@@ -14,6 +14,12 @@ export interface RegisterFormValues {
 export interface LoginFormValues {
   email: string;
   password: string;
+  rememberMe?: boolean;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
 }
 
 export interface AuthUser {
@@ -22,7 +28,8 @@ export interface AuthUser {
   full_name: string;
   phone?: string;
   role: 'ADMIN' | 'MANAGER' | 'WAITER' | 'CUSTOMER';
-  is_email_verified: boolean;
+  is_email_verified?: boolean; 
+  avatar?: string; 
   profile_allergies?: string;
   profile_vip_notes?: string;
 }
@@ -30,8 +37,11 @@ export interface AuthUser {
 /** Response sau khi đăng nhập thành công (có token + user) */
 export interface AuthResponse {
   success: boolean;
-  token: string;
-  user: AuthUser;
+  message: string;
+  data: {
+    token: string;
+    user: AuthUser;
+  };
 }
 
 /** Response sau khi đăng ký thành công (chưa có token, cần xác thực OTP) */

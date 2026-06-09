@@ -9,7 +9,9 @@ const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail'); 
 const normalizeEmail = require('../utils/normalizeEmail');
 
-const admin = require('../config/firebase');
+const app = require('../config/firebase');
+const { getAuth } = require('firebase-admin/auth');
+const crypto = require('crypto');
 
 // Hàm phụ trợ: Sinh mã OTP 6 số
 const generateOTP = () => {
@@ -174,19 +176,19 @@ const googleAuth = async (req, res) => {
       });
     }
 
-    // Xác thực token với Firebase
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    
+    const decodedToken = await getAuth(app).verifyIdToken(idToken);
+
     const { email, name, picture } = decodedToken;
 
     // Chuẩn hóa email lấy từ Google (áp dụng logic xóa dấu chấm/cộng)
     const normalizedEmail = normalizeEmail(email);
 
-    // Tìm user trong Database theo email đã chuẩn hóa
     let user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       // TRƯỜNG HỢP 1: User hoàn toàn mới -> Tạo tài khoản tự động
-      const randomPassword = Math.random().toString(36).slice(-10);
+      const randomPassword = crypto.randomBytes(16).toString('hex');
       const salt = await bcrypt.genSalt(10);
       const password_hash = await bcrypt.hash(randomPassword, salt);
 
@@ -196,7 +198,7 @@ const googleAuth = async (req, res) => {
         password_hash: password_hash,
         auth_provider: 'GOOGLE', // Đánh dấu nguồn đăng nhập
         is_email_verified: true, // Google đã xác thực email này rồi, set true luôn
-        avatar: picture,
+        avatar: picture || User.DEFAULT_AVATAR,
       });
 
       await user.save();
@@ -216,6 +218,12 @@ const googleAuth = async (req, res) => {
       if (user.auth_provider === 'LOCAL') {
          user.auth_provider = 'GOOGLE';
          isUpdated = true;
+      }
+
+      // ưu tiên Avatar:
+      if (picture && (!user.avatar || user.avatar === User.DEFAULT_AVATAR)) {
+        user.avatar = picture;
+        isUpdated = true;
       }
 
       if (isUpdated) {
@@ -256,6 +264,12 @@ const googleAuth = async (req, res) => {
         message: 'Xác thực Google thất bại hoặc phiên đăng nhập đã hết hạn.'
       });
     }
+
+    // Lỗi khác (database, logic, v.v...)
+    return res.status(500).json({
+      success: false,
+      message: 'Đã xảy ra lỗi hệ thống khi xác thực Google.'
+    });
 
     res.status(500).json({
       success: false,

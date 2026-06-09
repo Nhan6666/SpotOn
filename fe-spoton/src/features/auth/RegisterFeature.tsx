@@ -12,6 +12,7 @@ import { registerSchema } from './auth.schema';
 import { authService } from './auth.service';
 import { AppError } from '@/lib/errors';
 import type { RegisterFormValues, RegisterPayload } from './auth.types';
+import { useGoogleAuth } from './useGoogleAuth';
 
 // ─── Sub-component: Form Field ────────────────────────────────────────────────
 interface FieldProps {
@@ -48,6 +49,13 @@ export function RegisterFeature() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const { loginWithGoogle, isLoading: isGoogleLoading, error: googleError } = useGoogleAuth({
+    onSuccess: () => {
+      setSuccessMessage('Đăng nhập Google thành công! Đang chuyển hướng...');
+      setTimeout(() => router.push('/'), 1000);
+    }
+  });
 
   const {
     register,
@@ -148,9 +156,9 @@ export function RegisterFeature() {
           )}
 
           {/* Server Error Banner */}
-          {serverError && (
+          {(serverError || googleError) && (
             <div role="alert" className="mb-5 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
-              {serverError}
+              {serverError || googleError}
             </div>
           )}
 
@@ -223,7 +231,7 @@ export function RegisterFeature() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isGoogleLoading}
               className="w-full rounded-md bg-[#8a5a19] cursor-pointer px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#724a15] transition-colors focus:outline-none focus:ring-2 focus:ring-[#8a5a19] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Đang xử lý...' : 'Đăng Ký Tài Khoản'}
@@ -243,8 +251,9 @@ export function RegisterFeature() {
             <div className="mt-6">
               <button
                 type="button"
-                onClick={() => console.log('Gọi hàm Firebase Google Login ở đây')}
-                className="flex w-full items-center cursor-pointer justify-center gap-3 rounded-md border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#8a5a19] focus:ring-offset-2 transition-colors"
+                onClick={loginWithGoogle}
+                disabled={isGoogleLoading || isSubmitting}
+                className="flex w-full items-center cursor-pointer justify-center gap-3 rounded-md border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#8a5a19] focus:ring-offset-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {/* Icon Google chuẩn */}
                 <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
@@ -265,7 +274,7 @@ export function RegisterFeature() {
                     fill="#34A853"
                   />
                 </svg>
-                Đăng ký bằng Google
+                {isGoogleLoading ? 'Đang kết nối...' : 'Tiếp tục với Google'}
               </button>
             </div>
           </div>

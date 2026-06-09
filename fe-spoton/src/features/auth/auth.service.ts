@@ -1,9 +1,3 @@
-/**
- * features/auth/auth.service.ts
- * Tất cả API calls cho auth feature
- * KHÔNG gọi fetch trực tiếp — dùng http từ lib/http.ts
- */
-
 import { http } from '@/lib/http';
 import type {
   AuthResponse,
@@ -11,6 +5,7 @@ import type {
   RegisterResponse,
   VerifyOtpPayload,
   VerifyOtpResponse,
+  LoginPayload,
 } from './auth.types';
 
 export const authService = {
@@ -20,12 +15,15 @@ export const authService = {
   verifyOtp: (payload: VerifyOtpPayload): Promise<VerifyOtpResponse> =>
     http.post<VerifyOtpResponse>('/auth/verify-otp', payload),
 
-  login: (email: string, password: string): Promise<AuthResponse> =>
-    http.post<AuthResponse>('/auth/login', { email, password }),
+  login: (payload: LoginPayload): Promise<AuthResponse> =>
+    http.post<AuthResponse>('/auth/login', payload),
+
+  loginWithGoogle: (idToken: string): Promise<AuthResponse> =>
+    http.post<AuthResponse>('/auth/google', { idToken }),
 
   logout: (): Promise<void> =>
     http.post<void>('/auth/logout', {}),
 
-  getMe: (token: string): Promise<AuthResponse['user']> =>
-    http.get<AuthResponse['user']>('/auth/me', { token }),
+  getMe: (token: string): Promise<AuthResponse['data']['user']> =>
+    http.get<AuthResponse['data']['user']>('/auth/me', { token }),
 };

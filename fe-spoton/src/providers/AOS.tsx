@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 type AOSAnimation =
   | 'fade-up'
@@ -27,7 +27,7 @@ interface AOSProps {
   offset?: number;
   easing?: string;
   /** render as a different tag (default: div) */
-  as?: keyof JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements;
   className?: string;
 }
 

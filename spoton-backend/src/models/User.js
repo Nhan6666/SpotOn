@@ -15,6 +15,12 @@ const UserSchema = new mongoose.Schema(
       enum: ['ADMIN', 'MANAGER', 'WAITER', 'CUSTOMER'],
       default: 'CUSTOMER',
     },
+    // BỔ SUNG: Liên kết nhân viên với chi nhánh (null nếu là ADMIN hoặc CUSTOMER)
+    branch_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Branch',
+      default: null
+    },
     avatar: { 
       type: String, 
       default: DEFAULT_AVATAR 

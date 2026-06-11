@@ -283,8 +283,8 @@ const googleAuth = async (req, res) => {
 // @access Private
 const getMe = async (req, res) => {
   try {
-    // req.user.userId được truyền từ middleware xác thực (auth.middleware.js)
-    const user = await User.findById(req.user.userId).select('-password_hash'); 
+    // Sử dụng trực tiếp req.user đã được gán từ authMiddleware để tối ưu hiệu suất (không cần gọi DB lần 2)
+    const user = req.user;
     
     if (!user) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
@@ -292,6 +292,7 @@ const getMe = async (req, res) => {
 
     res.status(200).json({ 
       success: true, 
+      message: 'Lấy thông tin tài khoản thành công.',
       data: user 
     });
   } catch (error) {

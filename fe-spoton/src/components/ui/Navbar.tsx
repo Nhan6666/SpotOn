@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import logoImg from '@/assets/images/Logo-SpotOn-2.png';
 
 export function Navbar() {
   return (
@@ -7,25 +8,27 @@ export function Navbar() {
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center">
-          <span className="text-2xl font-bold text-amber-500 font-playfair tracking-tight">SpotOn</span>
+          <Image 
+            src={logoImg} 
+            alt="SpotOn Logo" 
+            className="h-16 w-auto object-contain"
+            priority 
+          />
         </Link>
 
         {/* Center Nav */}
         <nav className="hidden md:flex items-center gap-8">
           <Link href="/" className="text-sm font-medium text-amber-500 border-b-2 border-amber-500 pb-1">
-            Home
+            Trang chủ
           </Link>
           <Link href="/branches" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
-            Branches
+            Chi nhánh
           </Link>
-          <Link href="/menu" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
-            Menu
+          <Link href="/menus" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
+            Thực đơn
           </Link>
-          <Link href="/catering" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
-            Catering
-          </Link>
-          <Link href="/about" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
-            About Us
+          <Link href="/promotions" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
+            Khuyến mãi
           </Link>
         </nav>
 
@@ -36,12 +39,8 @@ export function Navbar() {
             <input type="text" placeholder="Search..." className="bg-transparent border-none outline-none text-sm w-32" />
           </div>
           
-          <Link href="/login" className="text-sm font-medium text-amber-500 hover:text-amber-600 transition-colors hidden sm:block">
-            Login
-          </Link>
-          
-          <Link href="/book" className="hidden sm:flex items-center justify-center px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-full transition-colors">
-            Book a Table
+          <Link href="/login" className="hidden sm:flex items-center justify-center px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-full transition-colors shadow-sm">
+            Đăng nhập
           </Link>
 
           <button className="w-8 h-8 rounded-full bg-emerald-700 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">

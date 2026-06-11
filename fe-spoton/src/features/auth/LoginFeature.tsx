@@ -104,6 +104,7 @@ export function LoginFeature() {
           src={bgLogin}
           alt="SpotOn Restaurant Concept"
           fill
+          sizes="50vw"
           className="object-cover"
           priority
         />

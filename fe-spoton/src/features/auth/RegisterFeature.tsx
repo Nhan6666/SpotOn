@@ -292,9 +292,10 @@ export function RegisterFeature() {
       {/* Right Column - Image & Overlay */}
       <div className="relative hidden w-1/2 md:block">
         <Image
-src={bgRegister}
+          src={bgRegister}
           alt="Không gian nhà hàng sang trọng"
           fill
+          sizes="50vw"
           className="object-cover"
           priority
         />

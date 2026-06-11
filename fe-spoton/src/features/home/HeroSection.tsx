@@ -9,6 +9,7 @@ export function HeroSection() {
           src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1934&auto=format&fit=crop"
           alt="Restaurant interior"
           fill
+          sizes="100vw"
           className="object-cover brightness-50"
           priority
         />

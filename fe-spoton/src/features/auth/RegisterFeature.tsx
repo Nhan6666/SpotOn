@@ -13,6 +13,7 @@ import { authService } from './auth.service';
 import { AppError } from '@/lib/errors';
 import type { RegisterFormValues, RegisterPayload } from './auth.types';
 import { useGoogleAuth } from './useGoogleAuth';
+import { useAuth } from '@/providers/AuthProvider';
 
 // ─── Sub-component: Form Field ────────────────────────────────────────────────
 interface FieldProps {
@@ -50,8 +51,11 @@ export function RegisterFeature() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const { login } = useAuth();
+
   const { loginWithGoogle, isLoading: isGoogleLoading, error: googleError } = useGoogleAuth({
-    onSuccess: () => {
+    onSuccess: (token, user) => {
+      login(token, user);
       setSuccessMessage('Đăng nhập Google thành công! Đang chuyển hướng...');
       setTimeout(() => router.push('/'), 1000);
     }
@@ -292,9 +296,10 @@ export function RegisterFeature() {
       {/* Right Column - Image & Overlay */}
       <div className="relative hidden w-1/2 md:block">
         <Image
-src={bgRegister}
+          src={bgRegister}
           alt="Không gian nhà hàng sang trọng"
           fill
+          sizes="50vw"
           className="object-cover"
           priority
         />

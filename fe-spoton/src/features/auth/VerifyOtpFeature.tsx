@@ -5,10 +5,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from './auth.service';
 import { AppError } from '@/lib/errors';
 
+import { useAuth } from '@/providers/AuthProvider';
+
 // ─── Main Component ────────────────────────────────────────────────────────────
 export function VerifyOtpFeature() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useAuth();
   const email = searchParams.get('email') || '';
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -72,8 +75,8 @@ export function VerifyOtpFeature() {
     try {
       const result = await authService.verifyOtp({ email, otp: otpCode });
       setSuccessMessage('Xác thực thành công! Đang chuyển hướng...');
-      // Lưu token vào localStorage (sẽ được cải thiện với Context/cookie sau)
-      localStorage.setItem('spoton_token', result.token);
+      // Lưu token vào Cookie và cập nhật Context state thông qua useAuth()
+      login(result.token, result.user);
       setTimeout(() => {
         router.push('/');
       }, 1000);

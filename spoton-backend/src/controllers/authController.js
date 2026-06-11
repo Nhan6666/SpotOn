@@ -152,7 +152,13 @@ const login = async (req, res) => {
       message: 'Đăng nhập thành công.',
       data: {
         token,
-        user: { _id: user._id, email: user.email, full_name: user.full_name, role: user.role }
+        user: { 
+          _id: user._id, 
+          email: user.email, 
+          full_name: user.full_name, 
+          role: user.role,
+          avatar: user.avatar
+        }
       }
     });
 
@@ -198,7 +204,7 @@ const googleAuth = async (req, res) => {
         password_hash: password_hash,
         auth_provider: 'GOOGLE', // Đánh dấu nguồn đăng nhập
         is_email_verified: true, // Google đã xác thực email này rồi, set true luôn
-        avatar: picture || User.DEFAULT_AVATAR,
+        avatar: picture || "",
       });
 
       await user.save();
@@ -221,7 +227,7 @@ const googleAuth = async (req, res) => {
       }
 
       // ưu tiên Avatar:
-      if (picture && (!user.avatar || user.avatar === User.DEFAULT_AVATAR)) {
+      if (picture && !user.avatar) {
         user.avatar = picture;
         isUpdated = true;
       }

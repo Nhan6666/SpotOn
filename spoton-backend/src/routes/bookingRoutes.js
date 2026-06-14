@@ -7,20 +7,22 @@ const {
   updateBookingStatus,
   getMyBookings,
 } = require('../controllers/bookingController');
-// const { protect, authorize } = require('../middlewares/authMiddleware');
 
-// GET    /api/v1/bookings              -> Tất cả bookings (Admin/Manager)
-// POST   /api/v1/bookings              -> Tạo booking mới
+// MỞ KHÓA MIDDLEWARE
+const { protect, authorize } = require('../middlewares/authMiddleware');
+
+// GET /api/v1/bookings/my-bookings     -> Booking của chính khách hàng đang login (Customer)
+router.get('/my-bookings', protect, authorize('CUSTOMER'), getMyBookings);
+
+// GET    /api/v1/bookings              -> Tất cả bookings (Admin/Manager/Waiter)
+// POST   /api/v1/bookings              -> Tạo booking mới (Đăng nhập là tạo được)
 router.route('/')
-  .get(getAllBookings)
-  .post(createBooking);
+  .get(protect, authorize('ADMIN', 'MANAGER', 'WAITER'), getAllBookings)
+  .post(protect, createBooking);
 
-// GET /api/v1/bookings/my-bookings     -> Booking của tôi (Customer)
-router.get('/my-bookings', getMyBookings);
-
-// GET   /api/v1/bookings/:id           -> Chi tiết booking
-// PATCH /api/v1/bookings/:id/status    -> Cập nhật trạng thái
-router.get('/:id', getBookingById);
-router.patch('/:id/status', updateBookingStatus);
+// GET   /api/v1/bookings/:id           -> Chi tiết 1 booking (Bảo vệ vòng ngoài, vòng trong check đúng chủ đơn)
+// PATCH /api/v1/bookings/:id/status    -> Cập nhật trạng thái đơn đặt (Admin/Manager)
+router.get('/:id', protect, getBookingById);
+router.patch('/:id/status', protect, authorize('ADMIN', 'MANAGER'), updateBookingStatus);
 
 module.exports = router;

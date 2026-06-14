@@ -22,6 +22,7 @@ export function FeaturedBranches() {
               src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1740&auto=format&fit=crop" 
               alt="SpotOn Downtown Prime" 
               fill 
+              sizes="(max-width: 1024px) 100vw, 66vw"
               className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
             {/* Badges */}
@@ -66,6 +67,7 @@ export function FeaturedBranches() {
                 src="https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=1740&auto=format&fit=crop" 
                 alt="Uptown Bistro" 
                 fill 
+                sizes="(max-width: 1024px) 100vw, 33vw"
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center shadow-sm">
@@ -103,6 +105,7 @@ export function FeaturedBranches() {
                 src="https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?q=80&w=1742&auto=format&fit=crop" 
                 alt="Riverside Terrace" 
                 fill 
+                sizes="(max-width: 1024px) 100vw, 33vw"
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center shadow-sm">

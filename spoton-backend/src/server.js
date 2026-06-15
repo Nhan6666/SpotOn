@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const path = require('path');
 const connectDB = require('./config/db');
 
 // =============================================
@@ -11,7 +12,9 @@ const authRoutes     = require('./routes/authRoutes');
 // const userRoutes     = require('./routes/userRoutes');
 const branchRoutes   = require('./routes/branchRoutes');
 const userRoutes     = require('./routes/userRoutes');
-// const menuRoutes     = require('./routes/menuRoutes');
+const menuRoutes     = require('./routes/menuRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const uploadRoutes   = require('./routes/uploadRoutes');
 // const bookingRoutes  = require('./routes/bookingRoutes');
 // const voucherRoutes  = require('./routes/voucherRoutes');
 // const feedbackRoutes = require('./routes/feedbackRoutes');
@@ -30,13 +33,16 @@ connectDB();
 // =============================================
 // MIDDLEWARES
 // =============================================
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files as static
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // =============================================
 // ROUTES
@@ -55,7 +61,9 @@ app.use('/api/v1/auth',          authRoutes);
 // app.use('/api/v1/users',         userRoutes);
 app.use('/api/v1/branches',      branchRoutes);
 app.use('/api/v1/users',         userRoutes);
-// app.use('/api/v1/menus',         menuRoutes);
+app.use('/api/v1/menus',         menuRoutes);
+app.use('/api/v1/categories',    categoryRoutes);
+app.use('/api/v1/uploads',       uploadRoutes);
 // app.use('/api/v1/bookings',      bookingRoutes);
 // app.use('/api/v1/vouchers',      voucherRoutes);
 // app.use('/api/v1/feedbacks',     feedbackRoutes);

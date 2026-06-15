@@ -129,6 +129,22 @@
         "title": "TRẠNG THÁI HỆ THỐNG",
         "message": "Tất cả hệ thống hoạt động bình thường. Bản sao lưu cấu hình gần nhất: Hôm nay lúc 08:00 AM."
       }
+    },
+    "categories": {
+      "title": "Quản Lý Danh Mục",
+      "description": "Thêm, sửa, xóa các danh mục thực đơn của nhà hàng.",
+      "addCategory": "Thêm Danh Mục",
+      "editCategory": "Sửa",
+      "deleteCategory": "Xóa",
+      "categoryName": "Tên danh mục",
+      "categoryNamePlaceholder": "VD: Khai vị",
+      "itemCount": "Số món",
+      "actions": "Thao tác",
+      "confirmDelete": "Bạn có chắc chắn muốn xóa danh mục này không?",
+      "createSuccess": "Tạo danh mục thành công",
+      "updateSuccess": "Cập nhật danh mục thành công",
+      "deleteSuccess": "Xóa danh mục thành công",
+      "empty": "Chưa có danh mục nào."
     }
   }
 }

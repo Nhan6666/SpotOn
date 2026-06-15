@@ -1,4 +1,4 @@
-import { BranchManagementFeature } from '@/features/branch-management/BranchManagementFeature';
+import { BranchManagementFeature } from '@/features/admin/branch-management/BranchManagementFeature';
 
 export const metadata = {
   title: 'Branch Management | SpotOn Admin',

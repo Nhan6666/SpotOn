@@ -15,9 +15,12 @@ interface RequestOptions extends RequestInit {
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { token, ...fetchOptions } = options;
 
+  // Auto-inject auth token from localStorage if not provided explicitly
+  const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('spoton_token') : null);
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...fetchOptions.headers,
   };
 

@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server';
 // AUTH GUARD - Phân quyền theo Route
 // Bật/tắt tại đây khi chưa làm xong Login
 // =============================================
-const IS_AUTH_ENABLED = true; // ← Đổi thành FALSE khi cần tắt tạm
+const IS_AUTH_ENABLED = false; // ← Đổi thành FALSE khi cần tắt tạm
 
 // Định nghĩa các route cần bảo vệ và role tương ứng
 const PROTECTED_ROUTES: { path: string; roles: string[] }[] = [

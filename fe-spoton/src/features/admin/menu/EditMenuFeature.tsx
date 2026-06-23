@@ -117,6 +117,8 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
       let finalImageUrl = existingImageUrl;
       if (imageFile) {
         const formData = new FormData();
+        formData.append('category', category);
+        formData.append('itemName', itemName);
         formData.append('image', imageFile);
         const token = typeof window !== 'undefined' ? localStorage.getItem('spoton_token') : null;
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
@@ -130,12 +132,13 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
           throw new Error(err.message || 'Upload ảnh thất bại.');
         }
         const uploadData = await uploadRes.json();
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:5000';
-        finalImageUrl = `${backendUrl}${uploadData.data.url}`;
+        // Cloudinary returns an absolute URL
+        finalImageUrl = uploadData.data.url;
+      } else if (!imagePreview) {
+        finalImageUrl = '';
       }
 
       // Build update payload
-      const mongoose = await import('mongoose').catch(() => null);
       const validBranches = selectedBranches.filter(id => {
         try { return id.length === 24; } catch { return false; }
       });

@@ -3,9 +3,10 @@ const dotenv = require('dotenv');
 const Menu = require('../models/Menu');
 
 // Load env vars
-dotenv.config({ path: '../../.env' }); // Make sure this points to your root .env
+const path = require('path');
+dotenv.config({ path: path.join(__dirname, '../../.env') }); // Make sure this points to your root .env
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/spoton';
+const MONGODB_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/spoton_db';
 
 const seedData = [
   {
@@ -149,8 +150,38 @@ const seedMenus = async () => {
     await mongoose.connect(MONGODB_URI);
     console.log('Connected to Database...');
 
+    // Cloudinary config
+    const cloudinary = require('cloudinary').v2;
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+
+    console.log('Uploading images to Cloudinary, please wait...');
+
+    for (let category of seedData) {
+      for (let item of category.items) {
+        if (item.image_url) {
+          try {
+            let name = item.name;
+            name = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            const publicId = `${name}_${Date.now()}`;
+            
+            const result = await cloudinary.uploader.upload(item.image_url, {
+              folder: 'SpotOn/menu',
+              public_id: publicId
+            });
+            item.image_url = result.secure_url;
+            console.log(`[OK] Uploaded: ${item.name}`);
+          } catch (err) {
+            console.error(`[ERROR] Failed to upload ${item.name}:`, err);
+          }
+        }
+      }
+    }
+
     // Clear existing Master Menus (branch_id = null)
-    // Comment this out if you don't want to delete existing items
     await Menu.deleteMany({ branch_id: null });
     console.log('Cleared old Master Menus!');
 

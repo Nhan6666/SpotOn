@@ -194,9 +194,8 @@ const googleAuth = async (req, res) => {
 
     if (!user) {
       // TRƯỜNG HỢP 1: User hoàn toàn mới -> Tạo tài khoản tự động
-      const randomPassword = crypto.randomBytes(16).toString('hex');
-      const salt = await bcrypt.genSalt(10);
-      const password_hash = await bcrypt.hash(randomPassword, salt);
+      // Mật khẩu để null để biết đây là tài khoản Google chưa từng tạo mật khẩu
+      const password_hash = null;
 
       user = new User({
         full_name: name,
@@ -227,7 +226,7 @@ const googleAuth = async (req, res) => {
       }
 
       // ưu tiên Avatar:
-      if (picture && !user.avatar) {
+      if (picture && !user.has_custom_avatar) {
         user.avatar = picture;
         isUpdated = true;
       }

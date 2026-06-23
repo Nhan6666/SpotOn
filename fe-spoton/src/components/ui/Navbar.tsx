@@ -38,6 +38,7 @@ export function Navbar() {
       case 'WAITER':
         return (
           <>
+            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Hồ sơ cá nhân</Link>
             <Link href="/waiter/tables" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Quản lý bàn trực tiếp</Link>
             <Link href="/waiter/bookings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Danh sách đặt chỗ hôm nay</Link>
             <Link href="/waiter/dispatch" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Điều phối</Link>
@@ -46,6 +47,7 @@ export function Navbar() {
       case 'MANAGER':
         return (
           <>
+            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Hồ sơ cá nhân</Link>
             <Link href="/manager/branch" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Quản lý chi nhánh</Link>
             <Link href="/manager/menus" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Cập nhật Thực đơn</Link>
             <Link href="/manager/stats" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Thống kê</Link>
@@ -54,6 +56,7 @@ export function Navbar() {
       case 'ADMIN':
         return (
           <>
+            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Hồ sơ cá nhân</Link>
             <Link href="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Tổng quan hệ thống</Link>
             <Link href="/admin/branches" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Quản lý Chi nhánh</Link>
             <Link href="/admin/staff" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Quản lý Nhân sự</Link>

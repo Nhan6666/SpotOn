@@ -146,5 +146,42 @@
       "deleteSuccess": "Xóa danh mục thành công",
       "empty": "Chưa có danh mục nào."
     }
+  },
+  "profile": {
+    "title": "Hồ sơ cá nhân",
+    "subtitle": "Quản lý thông tin và bảo mật tài khoản của bạn",
+    "personalInfo": {
+      "title": "Thông tin cá nhân",
+      "description": "Cập nhật thông tin liên hệ và sở thích cá nhân",
+      "avatar": "Ảnh đại diện",
+      "uploading": "Đang tải lên...",
+      "uploadSuccess": "Tải ảnh lên thành công",
+      "uploadError": "Lỗi khi tải ảnh lên",
+      "fields": {
+        "fullName": "Họ và tên",
+        "phone": "Số điện thoại",
+        "email": "Email (không thể thay đổi)",
+        "allergies": "Dị ứng thức ăn",
+        "allergiesPlaceholder": "VD: Đậu phộng, hải sản...",
+        "vipNotes": "Ghi chú VIP",
+        "vipNotesPlaceholder": "Yêu cầu đặc biệt về chỗ ngồi, phục vụ..."
+      },
+      "submit": "Lưu thay đổi",
+      "success": "Cập nhật hồ sơ thành công",
+      "error": "Lỗi khi cập nhật hồ sơ"
+    },
+    "security": {
+      "title": "Bảo mật tài khoản",
+      "description": "Thay đổi mật khẩu hoặc thiết lập mật khẩu mới",
+      "fields": {
+        "oldPassword": "Mật khẩu hiện tại",
+        "newPassword": "Mật khẩu mới",
+        "confirmPassword": "Xác nhận mật khẩu mới"
+      },
+      "submit": "Cập nhật mật khẩu",
+      "setup": "Thiết lập mật khẩu",
+      "success": "Cập nhật mật khẩu thành công",
+      "error": "Lỗi khi cập nhật mật khẩu"
+    }
   }
 }

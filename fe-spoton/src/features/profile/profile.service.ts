@@ -2,7 +2,6 @@ import { http } from '@/lib/http';
 import { 
   UserProfile, 
   UpdateProfilePayload, 
-  ChangePasswordPayload, 
   UploadAvatarResponse 
 } from './profile.types';
 
@@ -15,11 +14,6 @@ export const profileService = {
   updateProfile: async (payload: UpdateProfilePayload) => {
     const res = await http.put<{ success: boolean; message: string; data: UserProfile }>('/users/profile', payload);
     return res.data;
-  },
-
-  changePassword: async (payload: ChangePasswordPayload) => {
-    const res = await http.put<{ success: boolean; message: string }>('/users/password', payload);
-    return res;
   },
 
   uploadAvatar: async (file: File): Promise<string> => {

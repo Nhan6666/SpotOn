@@ -11,9 +11,6 @@ router.route('/profile')
   .get(protect, userController.getProfile)
   .put(protect, userController.updateProfile);
 
-// @desc   Đổi / Tạo mật khẩu
-// @route  PUT /api/v1/users/password
-router.put('/password', protect, userController.changePassword);
 
 // @desc   Lấy danh sách managers chưa quản lý chi nhánh nào
 // @route  GET /api/v1/users/managers?currentBranchId=xxx

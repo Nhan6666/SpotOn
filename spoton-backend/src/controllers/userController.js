@@ -65,53 +65,8 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// @desc   Đổi mật khẩu / Tạo mật khẩu mới
-// @route  PUT /api/v1/user/password
-// @access Private
-const changePassword = async (req, res) => {
-  try {
-    const { oldPassword, newPassword } = req.body;
-    
-    if (!newPassword || newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'Mật khẩu mới phải từ 6 ký tự trở lên.' });
-    }
-
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'Người dùng không tồn tại.' });
-    }
-
-    // Nếu đã có mật khẩu thì phải kiểm tra oldPassword
-    if (user.password_hash) {
-      if (!oldPassword) {
-        return res.status(400).json({ success: false, message: 'Vui lòng nhập mật khẩu cũ.' });
-      }
-
-      const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
-      if (!isMatch) {
-        return res.status(400).json({ success: false, message: 'Mật khẩu cũ không chính xác.' });
-      }
-    }
-
-    // Hash mật khẩu mới
-    const salt = await bcrypt.genSalt(10);
-    const hashed = await bcrypt.hash(newPassword, salt);
-
-    user.password_hash = hashed;
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Cập nhật mật khẩu thành công.',
-    });
-  } catch (error) {
-    console.error('Lỗi changePassword:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server.' });
-  }
-};
 
 module.exports = {
   getProfile,
   updateProfile,
-  changePassword,
 };

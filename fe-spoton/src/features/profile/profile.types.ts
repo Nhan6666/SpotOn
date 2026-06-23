@@ -6,8 +6,6 @@ export interface UserProfile {
   avatar?: string;
   has_custom_avatar: boolean;
   role: string;
-  // Để frontend biết user có mật khẩu chưa
-  password_hash?: string | null; 
 }
 
 export interface UpdateProfilePayload {
@@ -16,10 +14,6 @@ export interface UpdateProfilePayload {
   avatar?: string;
 }
 
-export interface ChangePasswordPayload {
-  oldPassword?: string;
-  newPassword: string;
-}
 
 export interface UploadAvatarResponse {
   success: boolean;

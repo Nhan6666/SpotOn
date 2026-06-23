@@ -156,4 +156,344 @@ const updateTableStatus = async (req, res) => {
   }
 };
 
-module.exports = { getAllBranches, getBranchById, createBranch, updateBranch, deleteBranch, updateTableStatus };
+// ============================================================
+// ZONE CRUD — Quản lý khu vực trong chi nhánh
+// ============================================================
+
+// @desc   Lấy danh sách zones (kèm tables) của chi nhánh
+// @route  GET /api/v1/branches/:branchId/zones
+// @access Private (ADMIN, MANAGER)
+const getZonesByBranch = async (req, res) => {
+  try {
+    const branch = await Branch.findById(req.params.branchId).select('name zones');
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+    res.status(200).json({
+      success: true,
+      message: 'Lấy danh sách khu vực thành công.',
+      data: { branch_name: branch.name, zones: branch.zones },
+    });
+  } catch (error) {
+    console.error('Lỗi getZonesByBranch:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+// @desc   Thêm zone mới vào chi nhánh
+// @route  POST /api/v1/branches/:branchId/zones
+// @access Private (ADMIN, MANAGER)
+const addZone = async (req, res) => {
+  try {
+    const { name, capacity } = req.body;
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Tên khu vực là bắt buộc.' });
+    }
+
+    const branch = await Branch.findById(req.params.branchId);
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+
+    // Kiểm tra trùng tên zone
+    const duplicateZone = branch.zones.find(z => z.name.toLowerCase() === name.toLowerCase());
+    if (duplicateZone) {
+      return res.status(400).json({ success: false, message: `Khu vực "${name}" đã tồn tại trong chi nhánh này.` });
+    }
+
+    branch.zones.push({ name, capacity: capacity || 0, tables: [] });
+    await branch.save();
+
+    const newZone = branch.zones[branch.zones.length - 1];
+    res.status(201).json({
+      success: true,
+      message: `Thêm khu vực "${name}" thành công.`,
+      data: newZone,
+    });
+  } catch (error) {
+    console.error('Lỗi addZone:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+// @desc   Cập nhật thông tin zone
+// @route  PUT /api/v1/branches/:branchId/zones/:zoneId
+// @access Private (ADMIN, MANAGER)
+const updateZone = async (req, res) => {
+  try {
+    const { branchId, zoneId } = req.params;
+    const { name, capacity } = req.body;
+
+    const branch = await Branch.findById(branchId);
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+
+    const zone = branch.zones.id(zoneId);
+    if (!zone) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy khu vực.' });
+    }
+
+    // Kiểm tra trùng tên (trừ chính nó)
+    if (name) {
+      const duplicateZone = branch.zones.find(
+        z => z.name.toLowerCase() === name.toLowerCase() && String(z._id) !== String(zoneId)
+      );
+      if (duplicateZone) {
+        return res.status(400).json({ success: false, message: `Khu vực "${name}" đã tồn tại.` });
+      }
+      zone.name = name;
+    }
+    if (capacity !== undefined) zone.capacity = capacity;
+
+    await branch.save();
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật khu vực thành công.',
+      data: zone,
+    });
+  } catch (error) {
+    console.error('Lỗi updateZone:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+// @desc   Xóa zone (kèm tất cả tables bên trong)
+// @route  DELETE /api/v1/branches/:branchId/zones/:zoneId
+// @access Private (ADMIN, MANAGER)
+const deleteZone = async (req, res) => {
+  try {
+    const { branchId, zoneId } = req.params;
+
+    const branch = await Branch.findById(branchId);
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+
+    const zone = branch.zones.id(zoneId);
+    if (!zone) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy khu vực.' });
+    }
+
+    const zoneName = zone.name;
+    branch.zones.pull(zoneId);
+    await branch.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Xóa khu vực "${zoneName}" và tất cả bàn bên trong thành công.`,
+      data: {},
+    });
+  } catch (error) {
+    console.error('Lỗi deleteZone:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+// ============================================================
+// TABLE CRUD — Quản lý bàn trong zone
+// ============================================================
+
+// @desc   Thêm bàn mới vào zone
+// @route  POST /api/v1/branches/:branchId/zones/:zoneId/tables
+// @access Private (ADMIN, MANAGER)
+const addTable = async (req, res) => {
+  try {
+    const { branchId, zoneId } = req.params;
+    const { table_number, capacity, x, y, width, height, shape } = req.body;
+
+    if (!table_number || !capacity) {
+      return res.status(400).json({ success: false, message: 'Số bàn và sức chứa là bắt buộc.' });
+    }
+
+    const branch = await Branch.findById(branchId);
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+
+    const zone = branch.zones.id(zoneId);
+    if (!zone) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy khu vực.' });
+    }
+
+    // Kiểm tra trùng số bàn trong zone
+    const duplicateTable = zone.tables.find(t => t.table_number === table_number);
+    if (duplicateTable) {
+      return res.status(400).json({ success: false, message: `Bàn số "${table_number}" đã tồn tại trong khu vực này.` });
+    }
+
+    zone.tables.push({ 
+      table_number, 
+      capacity, 
+      status: 'EMPTY',
+      x: x || 0,
+      y: y || 0,
+      width: width || 70,
+      height: height || 70,
+      shape: shape || 'RECTANGLE'
+    });
+    await branch.save();
+
+    const newTable = zone.tables[zone.tables.length - 1];
+    res.status(201).json({
+      success: true,
+      message: `Thêm bàn "${table_number}" thành công.`,
+      data: newTable,
+    });
+  } catch (error) {
+    console.error('Lỗi addTable:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+// @desc   Cập nhật thông tin bàn (table_number, capacity)
+// @route  PUT /api/v1/branches/:branchId/zones/:zoneId/tables/:tableId
+// @access Private (ADMIN, MANAGER)
+const updateTable = async (req, res) => {
+  try {
+    const { branchId, zoneId, tableId } = req.params;
+    const { table_number, capacity, status, x, y, width, height, shape } = req.body;
+
+    const branch = await Branch.findById(branchId);
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+
+    const zone = branch.zones.id(zoneId);
+    if (!zone) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy khu vực.' });
+    }
+
+    const table = zone.tables.id(tableId);
+    if (!table) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy bàn.' });
+    }
+
+    // Kiểm tra trùng số bàn (trừ chính nó)
+    if (table_number) {
+      const duplicateTable = zone.tables.find(
+        t => t.table_number === table_number && String(t._id) !== String(tableId)
+      );
+      if (duplicateTable) {
+        return res.status(400).json({ success: false, message: `Bàn số "${table_number}" đã tồn tại.` });
+      }
+      table.table_number = table_number;
+    }
+    if (capacity !== undefined) table.capacity = capacity;
+    if (status) table.status = status;
+    if (x !== undefined) table.x = x;
+    if (y !== undefined) table.y = y;
+    if (width !== undefined) table.width = width;
+    if (height !== undefined) table.height = height;
+    if (shape !== undefined) table.shape = shape;
+
+    await branch.save();
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật bàn thành công.',
+      data: table,
+    });
+  } catch (error) {
+    console.error('Lỗi updateTable:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+// @desc   Xóa bàn khỏi zone
+// @route  DELETE /api/v1/branches/:branchId/zones/:zoneId/tables/:tableId
+// @access Private (ADMIN, MANAGER)
+const deleteTable = async (req, res) => {
+  try {
+    const { branchId, zoneId, tableId } = req.params;
+
+    const branch = await Branch.findById(branchId);
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+
+    const zone = branch.zones.id(zoneId);
+    if (!zone) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy khu vực.' });
+    }
+
+    const table = zone.tables.id(tableId);
+    if (!table) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy bàn.' });
+    }
+
+    const tableNumber = table.table_number;
+    zone.tables.pull(tableId);
+    await branch.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Xóa bàn "${tableNumber}" thành công.`,
+      data: {},
+    });
+  } catch (error) {
+    console.error('Lỗi deleteTable:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+// @desc   Cập nhật tọa độ hàng loạt cho các bàn trong zone
+// @route  PUT /api/v1/branches/:branchId/zones/:zoneId/tables/layout
+// @access Private (ADMIN, MANAGER)
+const bulkUpdateTablesLayout = async (req, res) => {
+  try {
+    const { branchId, zoneId } = req.params;
+    const { tables } = req.body; // Array of { _id, x, y }
+
+    if (!Array.isArray(tables)) {
+      return res.status(400).json({ success: false, message: 'Dữ liệu tables phải là một mảng.' });
+    }
+
+    const branch = await Branch.findById(branchId);
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+
+    const zone = branch.zones.id(zoneId);
+    if (!zone) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy khu vực.' });
+    }
+
+    let updatedCount = 0;
+    for (const tData of tables) {
+      const table = zone.tables.id(tData._id);
+      if (table) {
+        if (tData.x !== undefined) table.x = tData.x;
+        if (tData.y !== undefined) table.y = tData.y;
+        updatedCount++;
+      }
+    }
+
+    await branch.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Đã cập nhật tọa độ cho ${updatedCount} bàn.`,
+      data: zone.tables,
+    });
+  } catch (error) {
+    console.error('Lỗi bulkUpdateTablesLayout:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+module.exports = {
+  getAllBranches,
+  getBranchById,
+  createBranch,
+  updateBranch,
+  deleteBranch,
+  updateTableStatus,
+  getZonesByBranch,
+  addZone,
+  updateZone,
+  deleteZone,
+  addTable,
+  updateTable,
+  deleteTable,
+  bulkUpdateTablesLayout,
+};

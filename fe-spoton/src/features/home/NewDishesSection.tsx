@@ -100,7 +100,7 @@ export function NewDishesSection() {
                   <div>
                     <h3 className="text-[17px] font-bold text-gray-900 line-clamp-2 mb-1">{item.name}</h3>
                     <p className="text-[#1a3826] font-semibold text-[15px]">
-                      {item.base_price.toLocaleString('vi-VN')}
+                      {(item.base_price || 0).toLocaleString('vi-VN')} đ
                     </p>
                   </div>
                   <div className="mt-4 flex justify-end">

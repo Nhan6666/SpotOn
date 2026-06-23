@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 
 import { ProfileForm } from './components/ProfileForm';
-import { ChangePasswordForm } from './components/ChangePasswordForm';
 import { profileService } from './profile.service';
 import { UserProfile } from './profile.types';
 
@@ -52,7 +51,6 @@ export function ProfileFeature() {
       
       <div className="space-y-8">
         <ProfileForm user={user} onUpdateSuccess={setUser} />
-        <ChangePasswordForm user={user} />
       </div>
     </div>
   );

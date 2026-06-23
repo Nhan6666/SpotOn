@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/providers/AuthProvider';
 
 import { ProfileFormSchema, ProfileFormValues } from '../profile.schema';
 import { profileService } from '../profile.service';
@@ -20,7 +21,8 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
-  const { addToast } = useToast();
+  const { toast } = useToast();
+  const { updateUser } = useAuth();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -44,9 +46,10 @@ export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
     try {
       const updatedUser = await profileService.updateProfile(data);
       onUpdateSuccess(updatedUser);
-      addToast('Cập nhật hồ sơ thành công', 'success');
+      updateUser({ full_name: updatedUser.full_name, avatar: updatedUser.avatar });
+      toast('Cập nhật hồ sơ thành công', 'success');
     } catch (error: any) {
-      addToast(error.message || 'Lỗi khi cập nhật hồ sơ', 'error');
+      toast(error.message || 'Lỗi khi cập nhật hồ sơ', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -61,9 +64,10 @@ export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
       const url = await profileService.uploadAvatar(file);
       const updatedUser = await profileService.updateProfile({ avatar: url });
       onUpdateSuccess(updatedUser);
-      addToast('Tải ảnh lên thành công', 'success');
+      updateUser({ avatar: updatedUser.avatar });
+      toast('Tải ảnh lên thành công', 'success');
     } catch (error: any) {
-      addToast(error.message || 'Lỗi khi tải ảnh lên', 'error');
+      toast(error.message || 'Lỗi khi tải ảnh lên', 'error');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -84,7 +88,7 @@ export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
           <div className="flex flex-col items-center gap-4">
             <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20 bg-gray-100 flex items-center justify-center">
               {user.avatar ? (
-                <Image src={user.avatar.startsWith('http') ? user.avatar : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '')}${user.avatar}`} alt="Avatar" fill className="object-cover" />
+                <Image src={user.avatar} alt="Avatar" fill sizes="(max-width: 128px) 100vw, 128px" className="object-cover" />
               ) : (
                 <span className="text-4xl text-gray-400">{user.full_name.charAt(0).toUpperCase()}</span>
               )}

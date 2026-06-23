@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -42,16 +42,16 @@ export function ZoneFormModal({ isOpen, onClose, onSubmit, initialData, mode }: 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in duration-300">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in zoom-in-95 duration-300 slide-in-from-bottom-2">
         {/* Header */}
         <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-5">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-white">
               {mode === "create" ? "Thêm Khu Vực Mới" : "Chỉnh Sửa Khu Vực"}
             </h2>
-            <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+            <button type="button" aria-label="Đóng" onClick={onClose} className="text-white/70 hover:text-white transition-colors rounded-full p-1 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -105,6 +105,7 @@ export function ZoneFormModal({ isOpen, onClose, onSubmit, initialData, mode }: 
               className="flex-1 bg-amber-700 hover:bg-amber-800 border-0"
               disabled={isSubmitting || !name.trim()}
             >
+              {isSubmitting && <RefreshCcw className="w-4 h-4 mr-1.5 animate-spin" />}
               {isSubmitting ? "Đang lưu..." : mode === "create" ? "Thêm Khu Vực" : "Lưu Thay Đổi"}
             </Button>
           </div>

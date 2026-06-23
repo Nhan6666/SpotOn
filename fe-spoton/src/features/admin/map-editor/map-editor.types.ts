@@ -12,6 +12,7 @@ export interface EditorTable {
   width: number;
   height: number;
   shape: TableShape;
+  image_url?: string;
 }
 
 export interface EditorZone {
@@ -19,6 +20,15 @@ export interface EditorZone {
   name: string;
   capacity: number;
   tables: EditorTable[];
+}
+
+export interface TableTemplate {
+  label: string;
+  capacity: number;
+  width: number;
+  height: number;
+  shape: TableShape;
+  image_url?: string | null;
 }
 
 export interface ZonesResponse {

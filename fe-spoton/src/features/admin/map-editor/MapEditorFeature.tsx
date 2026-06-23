@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, RefreshCcw } from "lucide-react";
+import { ArrowLeft, RefreshCcw, PanelLeftClose, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 
 import { ZoneSidebar } from "./components/ZoneSidebar";
+import { TableTemplatesSidebar } from "./components/TableTemplatesSidebar";
 import { TableCanvas } from "./components/TableCanvas";
 import { ZoneFormModal } from "./components/ZoneFormModal";
 import { TableFormModal } from "./components/TableFormModal";
@@ -35,8 +36,10 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
   // Data state
   const [branchName, setBranchName] = useState("");
   const [zones, setZones] = useState<EditorZone[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  const [showLeftSidebar, setShowLeftSidebar] = useState(true);
 
   // Modal state
   const [zoneModal, setZoneModal] = useState<{
@@ -49,7 +52,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
   const [tableModal, setTableModal] = useState<{
     open: boolean;
     mode: "create" | "edit";
-    data?: { table_number: string; capacity: number; status: TableStatus; width?: number; height?: number; shape?: "RECTANGLE"|"CIRCLE" } | null;
+    data?: { table_number: string; capacity: number; status: TableStatus; width?: number; height?: number; shape?: "RECTANGLE"|"CIRCLE"; x?: number; y?: number; image_url?: string | null } | null;
     tableId?: string;
   }>({ open: false, mode: "create" });
 
@@ -74,6 +77,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
       if (res.success) {
         setBranchName(res.data.branch_name);
         setZones(res.data.zones);
+        setTemplates(res.data.table_templates || []);
         // Auto-select first zone if none selected
         if (!selectedZoneId && res.data.zones.length > 0) {
           setSelectedZoneId(res.data.zones[0]._id);
@@ -153,13 +157,31 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
     }
   };
 
-  const handleSaveLayout = async (tablesLayout: { _id: string; x: number; y: number }[]) => {
+  const handleSaveLayout = async (tablesLayout: { _id: string; x: number; y: number; width?: number; height?: number }[]) => {
     if (!selectedZoneId) return;
     const res = await bulkUpdateTablesLayout(branchId, selectedZoneId, tablesLayout);
     if (res.success) {
       success("Lưu sơ đồ bàn thành công!");
       await loadZones();
     }
+  };
+
+  const handleDropTemplate = (templateData: any, x: number, y: number) => {
+    setTableModal({
+      open: true,
+      mode: "create",
+      data: {
+        table_number: "",
+        capacity: templateData.capacity,
+        status: "EMPTY",
+        width: templateData.width,
+        height: templateData.height,
+        shape: templateData.shape,
+        image_url: templateData.image_url,
+        x,
+        y,
+      },
+    });
   };
 
   return (
@@ -192,43 +214,66 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="bg-white"
-          onClick={() => loadZones()}
-          disabled={isLoading}
-        >
-          <RefreshCcw className={`w-4 h-4 mr-1.5 ${isLoading ? "animate-spin" : ""}`} />
-          Làm mới
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-white shadow-sm hover:bg-gray-50"
+            onClick={() => setShowLeftSidebar(!showLeftSidebar)}
+          >
+            {showLeftSidebar ? (
+              <><PanelLeftClose className="w-4 h-4 mr-1.5" /> Ẩn cột khu vực</>
+            ) : (
+              <><PanelLeft className="w-4 h-4 mr-1.5" /> Hiện cột khu vực</>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-white shadow-sm hover:bg-gray-50"
+            onClick={() => loadZones()}
+            disabled={isLoading}
+          >
+            <RefreshCcw className={`w-4 h-4 mr-1.5 ${isLoading ? "animate-spin" : ""}`} />
+            Làm mới
+          </Button>
+        </div>
       </div>
 
       {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar */}
-        <ZoneSidebar
-          zones={zones}
-          selectedZoneId={selectedZoneId}
-          onSelectZone={setSelectedZoneId}
-          isLoading={isLoading}
-          onAddZone={() => setZoneModal({ open: true, mode: "create" })}
-          onEditZone={(zone) =>
-            setZoneModal({
-              open: true,
-              mode: "edit",
-              data: { name: zone.name, capacity: zone.capacity },
-              zoneId: zone._id,
-            })
-          }
-          onDeleteZone={(zone) =>
-            setDeleteModal({
-              open: true,
-              type: "zone",
-              id: zone._id,
-              name: zone.name,
-            })
-          }
+        {showLeftSidebar && (
+          <ZoneSidebar
+            zones={zones}
+            selectedZoneId={selectedZoneId}
+            onSelectZone={setSelectedZoneId}
+            isLoading={isLoading}
+            onAddZone={() => setZoneModal({ open: true, mode: "create" })}
+            onEditZone={(zone) =>
+              setZoneModal({
+                open: true,
+                mode: "edit",
+                data: { name: zone.name, capacity: zone.capacity },
+                zoneId: zone._id,
+              })
+            }
+            onDeleteZone={(zone) =>
+              setDeleteModal({
+                open: true,
+                type: "zone",
+                id: zone._id,
+                name: zone.name,
+              })
+            }
+          />
+        )}
+
+        {/* Templates Sidebar */}
+        <TableTemplatesSidebar 
+          branchId={branchId}
+          templates={templates} 
+          onTemplateUpdate={loadZones}
         />
 
         {/* Table Canvas (Drag & Drop) */}
@@ -236,6 +281,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
           zone={selectedZone}
           onAddTable={() => setTableModal({ open: true, mode: "create" })}
           onSaveLayout={handleSaveLayout}
+          onDropTemplate={handleDropTemplate}
           onEditTable={(table) =>
             setTableModal({
               open: true,
@@ -247,6 +293,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
                 width: table.width,
                 height: table.height,
                 shape: table.shape as "RECTANGLE" | "CIRCLE",
+                image_url: table.image_url,
               },
               tableId: table._id,
             })

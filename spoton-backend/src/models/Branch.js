@@ -9,6 +9,11 @@ const TableSchema = new mongoose.Schema({
     enum: ['EMPTY', 'HOLDING', 'LOCKED', 'RESERVED', 'OCCUPIED', 'CLEANING'],
     default: 'EMPTY',
   },
+  x: { type: Number, default: 0 },
+  y: { type: Number, default: 0 },
+  width: { type: Number, default: 70 },
+  height: { type: Number, default: 70 },
+  shape: { type: String, enum: ['RECTANGLE', 'CIRCLE'], default: 'RECTANGLE' },
 });
 
 // ---- Sub-schema: Khu vực (Zone) ----

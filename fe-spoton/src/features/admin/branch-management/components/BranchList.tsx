@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Search, Filter, Download, MoreHorizontal, ChevronLeft, ChevronRight, Edit2, Trash2 } from 'lucide-react';
+import { Search, Filter, Download, MoreHorizontal, ChevronLeft, ChevronRight, Edit2, Trash2, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -176,6 +176,12 @@ export function BranchList() {
                         <DropdownItem className="flex items-center gap-2">
                           <Edit2 className="w-4 h-4" />
                           Edit Branch
+                        </DropdownItem>
+                      </Link>
+                      <Link href={`/admin/branches/${branch._id}/map-editor`}>
+                        <DropdownItem className="flex items-center gap-2">
+                          <LayoutGrid className="w-4 h-4" />
+                          Map Editor
                         </DropdownItem>
                       </Link>
                       <div className="h-px bg-gray-100 my-1"></div>

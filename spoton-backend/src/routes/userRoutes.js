@@ -2,6 +2,15 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Branch = require('../models/Branch');
+const userController = require('../controllers/userController');
+const { protect } = require('../middlewares/authMiddleware');
+
+// @desc   Lấy thông tin và cập nhật profile
+// @route  GET/PUT /api/v1/users/profile
+router.route('/profile')
+  .get(protect, userController.getProfile)
+  .put(protect, userController.updateProfile);
+
 
 // @desc   Lấy danh sách managers chưa quản lý chi nhánh nào
 // @route  GET /api/v1/users/managers?currentBranchId=xxx

@@ -21,6 +21,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (token: string, userData: User) => void;
   logout: () => void;
+  updateUser: (userData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,8 +93,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/login"); // Đá về trang login
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...userData } : null));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, updateUser }}>
       {/* Trong lúc call API check token thì hiện Loading mờ mờ tránh giật giao diện */}
       {isLoading ? (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">

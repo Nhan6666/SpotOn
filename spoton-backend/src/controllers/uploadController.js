@@ -2,6 +2,11 @@
 // UPLOAD CONTROLLER — Xử lý upload ảnh cho Menu Items
 // ============================================================
 
+const AVATARS_DIR = path.join(__dirname, '..', '..', 'uploads', 'avatars');
+if (!fs.existsSync(AVATARS_DIR)) {
+  fs.mkdirSync(AVATARS_DIR, { recursive: true });
+}
+
 // @desc   Upload ảnh món ăn
 // @route  POST /api/v1/uploads/menu
 // @access Private (ADMIN, MANAGER)
@@ -33,4 +38,31 @@ const uploadMenuImage = async (req, res) => {
   }
 };
 
-module.exports = { uploadMenuImage };
+// @desc   Upload ảnh đại diện
+// @route  POST /api/v1/uploads/avatar
+// @access Private
+const uploadAvatarImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng chọn file ảnh để tải lên.',
+      });
+    }
+
+    const imageUrl = `/uploads/avatars/${req.file.filename}`;
+
+    res.status(201).json({
+      success: true,
+      message: 'Tải ảnh đại diện thành công.',
+      data: {
+        url: imageUrl,
+      },
+    });
+  } catch (error) {
+    console.error('Lỗi uploadAvatarImage:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+module.exports = { uploadMenuImage, uploadAvatarImage };

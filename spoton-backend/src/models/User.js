@@ -23,6 +23,7 @@ const UserSchema = new mongoose.Schema(
       type: String, 
       default: "" 
     },
+    has_custom_avatar: { type: Boolean, default: false },
     is_email_verified: { type: Boolean, default: false },
     profile_allergies: { type: String },
     profile_vip_notes: { type: String },

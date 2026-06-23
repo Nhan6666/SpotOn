@@ -70,6 +70,8 @@ export function AddMenuFeature() {
       let uploadedImageUrl = '';
       if (imageFile) {
         const formData = new FormData();
+        formData.append('category', category);
+        formData.append('itemName', itemName);
         formData.append('image', imageFile);
 
         const token = typeof window !== 'undefined' ? localStorage.getItem('spoton_token') : null;
@@ -89,9 +91,8 @@ export function AddMenuFeature() {
         }
 
         const uploadData = await uploadRes.json();
-        // Build full URL for the uploaded image
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:5000';
-        uploadedImageUrl = `${backendUrl}${uploadData.data.url}`;
+        // Cloudinary returns an absolute URL
+        uploadedImageUrl = uploadData.data.url;
       }
 
       // Step 2: Find or create the category

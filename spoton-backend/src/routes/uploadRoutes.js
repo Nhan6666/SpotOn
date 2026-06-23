@@ -1,38 +1,41 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
-const { uploadMenuImage, uploadAvatarImage } = require('../controllers/uploadController');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
+const { uploadMenuImage } = require('../controllers/uploadController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 // ============================================================
-// MULTER CONFIGURATION
+// CLOUDINARY CONFIGURATION
 // ============================================================
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '..', '..', 'uploads', 'menu');
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    // Format: menu_{timestamp}_{random}.{ext}
-    const ext = path.extname(file.originalname);
-    const uniqueName = `menu_${Date.now()}_${Math.round(Math.random() * 1e6)}${ext}`;
-    cb(null, uniqueName);
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: async (req, file) => {
+      const formatStr = (str) => {
+        if (!str) return 'unknown';
+        return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      };
+      let cat = formatStr(req.body.category || 'other');
+      let name = formatStr(req.body.itemName || 'menu_item');
+      return `SpotOn/menu/${cat}/${name}`;
+    },
+    allowed_formats: ['jpeg', 'jpg', 'png', 'webp', 'gif'],
+    public_id: (req, file) => {
+      return `img_${Date.now()}`;
+    },
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-  if (allowed.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Chỉ cho phép upload file ảnh (JPEG, PNG, WebP, GIF).'), false);
-  }
-};
-
 const upload = multer({
   storage,
-  fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // Max 5MB
 });
 

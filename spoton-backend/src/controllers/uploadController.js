@@ -1,14 +1,6 @@
 // ============================================================
 // UPLOAD CONTROLLER — Xử lý upload ảnh cho Menu Items
 // ============================================================
-const path = require('path');
-const fs = require('fs');
-
-// Đảm bảo thư mục uploads tồn tại
-const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads', 'menu');
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
 
 const AVATARS_DIR = path.join(__dirname, '..', '..', 'uploads', 'avatars');
 if (!fs.existsSync(AVATARS_DIR)) {
@@ -27,8 +19,8 @@ const uploadMenuImage = async (req, res) => {
       });
     }
 
-    // Tạo URL trả về cho FE
-    const imageUrl = `/uploads/menu/${req.file.filename}`;
+    // Với Cloudinary, URL được trả về trong req.file.path
+    const imageUrl = req.file.path;
 
     res.status(201).json({
       success: true,

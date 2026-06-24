@@ -449,4 +449,24 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, googleAuth, getMe, verifyOtp, forgotPassword, resetPassword };
+// @desc   Xác minh OTP để đổi mật khẩu (chưa đổi mật khẩu)
+// @route  POST /api/v1/auth/verify-forgot-password-otp
+// @access Public
+const verifyForgotPasswordOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const email = normalizeEmail(req.body.email);
+
+    const otpDoc = await Otp.findOne({ email, otp });
+    if (!otpDoc) {
+      return res.status(400).json({ success: false, message: 'Mã OTP không đúng hoặc đã hết hạn.' });
+    }
+
+    res.status(200).json({ success: true, message: 'Mã OTP hợp lệ.' });
+  } catch (error) {
+    console.error('Lỗi Verify Forgot Password OTP:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+module.exports = { register, login, googleAuth, getMe, verifyOtp, forgotPassword, resetPassword, verifyForgotPasswordOtp };

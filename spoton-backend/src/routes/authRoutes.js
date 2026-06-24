@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, googleAuth, getMe, verifyOtp, forgotPassword, resetPassword } = require('../controllers/authController');
+const { register, login, googleAuth, getMe, verifyOtp, forgotPassword, resetPassword, verifyForgotPasswordOtp } = require('../controllers/authController');
 const { protect } = require('../middlewares/authMiddleware');
 
 
@@ -21,6 +21,9 @@ router.post('/verify-otp', verifyOtp);
 
 // POST /api/v1/auth/forgot-password
 router.post('/forgot-password', forgotPassword);
+
+// POST /api/v1/auth/verify-forgot-password-otp
+router.post('/verify-forgot-password-otp', verifyForgotPasswordOtp);
 
 // POST /api/v1/auth/reset-password
 router.post('/reset-password', resetPassword);

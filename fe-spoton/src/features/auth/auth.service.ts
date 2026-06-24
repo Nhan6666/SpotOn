@@ -32,6 +32,9 @@ export const authService = {
   forgotPassword: (email: string): Promise<GenericMessageResponse> =>
     http.post<GenericMessageResponse>('/auth/forgot-password', { email }),
 
+  verifyForgotPasswordOtp: (payload: VerifyOtpPayload): Promise<GenericMessageResponse> =>
+    http.post<GenericMessageResponse>('/auth/verify-forgot-password-otp', payload),
+
   resetPassword: (payload: ResetPasswordPayload): Promise<GenericMessageResponse> =>
     http.post<GenericMessageResponse>('/auth/reset-password', payload),
 };

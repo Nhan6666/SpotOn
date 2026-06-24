@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, googleAuth, getMe, verifyOtp } = require('../controllers/authController');// const { protect } = require('../middlewares/authMiddleware'); // Uncomment khi implement middleware
+const { register, login, googleAuth, getMe, verifyOtp, forgotPassword, resetPassword } = require('../controllers/authController');
 const { protect } = require('../middlewares/authMiddleware');
 
 
@@ -14,10 +14,15 @@ router.post('/login', login);
 router.post('/google', googleAuth);
 
 // GET /api/v1/auth/me  (cần đăng nhập)
-// router.get('/me', protect, getMe);
 router.get('/me', protect, getMe);
 
 // POST /api/v1/auth/verify-otp
 router.post('/verify-otp', verifyOtp);
+
+// POST /api/v1/auth/forgot-password
+router.post('/forgot-password', forgotPassword);
+
+// POST /api/v1/auth/reset-password
+router.post('/reset-password', resetPassword);
 
 module.exports = router;

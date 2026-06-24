@@ -6,6 +6,8 @@ import type {
   VerifyOtpPayload,
   VerifyOtpResponse,
   LoginPayload,
+  ResetPasswordPayload,
+  GenericMessageResponse,
 } from './auth.types';
 
 export const authService = {
@@ -26,4 +28,10 @@ export const authService = {
 
   getMe: (token: string): Promise<AuthResponse['data']['user']> =>
     http.get<AuthResponse['data']['user']>('/auth/me', { token }),
+
+  forgotPassword: (email: string): Promise<GenericMessageResponse> =>
+    http.post<GenericMessageResponse>('/auth/forgot-password', { email }),
+
+  resetPassword: (payload: ResetPasswordPayload): Promise<GenericMessageResponse> =>
+    http.post<GenericMessageResponse>('/auth/reset-password', payload),
 };

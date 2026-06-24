@@ -3,7 +3,8 @@ const router = express.Router();
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
-const { uploadMenuImage } = require('../controllers/uploadController');
+const path = require('path');
+const { uploadMenuImage, uploadAvatarImage } = require('../controllers/uploadController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 // ============================================================
@@ -50,6 +51,14 @@ const avatarStorage = multer.diskStorage({
     cb(null, uniqueName);
   },
 });
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Chỉ chấp nhận file ảnh!'), false);
+  }
+};
 
 const uploadAvatar = multer({
   storage: avatarStorage,

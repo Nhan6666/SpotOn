@@ -2,6 +2,9 @@
 // UPLOAD CONTROLLER — Xử lý upload ảnh cho Menu Items
 // ============================================================
 
+const path = require('path');
+const fs = require('fs');
+
 const AVATARS_DIR = path.join(__dirname, '..', '..', 'uploads', 'avatars');
 if (!fs.existsSync(AVATARS_DIR)) {
   fs.mkdirSync(AVATARS_DIR, { recursive: true });

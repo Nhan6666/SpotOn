@@ -72,3 +72,28 @@ export interface VerifyOtpPayload {
   email: string;
   otp: string;
 }
+
+export interface ResetPasswordPayload {
+  email: string;
+  otp: string;
+  newPassword: string;
+}
+
+export interface ForgotPasswordFormValues {
+  email: string;
+}
+
+export interface ForgotPasswordOtpFormValues {
+  otp: string;
+}
+
+export interface ResetPasswordFormValues {
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface GenericMessageResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+}

@@ -165,14 +165,14 @@ const updateTableStatus = async (req, res) => {
 // @access Private (ADMIN, MANAGER)
 const getZonesByBranch = async (req, res) => {
   try {
-    const branch = await Branch.findById(req.params.branchId).select('name zones');
+    const branch = await Branch.findById(req.params.branchId).select('name zones table_templates');
     if (!branch) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
     }
     res.status(200).json({
       success: true,
       message: 'Lấy danh sách khu vực thành công.',
-      data: { branch_name: branch.name, zones: branch.zones },
+      data: { branch_name: branch.name, zones: branch.zones, table_templates: branch.table_templates },
     });
   } catch (error) {
     console.error('Lỗi getZonesByBranch:', error);
@@ -300,7 +300,7 @@ const deleteZone = async (req, res) => {
 const addTable = async (req, res) => {
   try {
     const { branchId, zoneId } = req.params;
-    const { table_number, capacity, x, y, width, height, shape } = req.body;
+    const { table_number, capacity, x, y, width, height, shape, image_url } = req.body;
 
     if (!table_number || !capacity) {
       return res.status(400).json({ success: false, message: 'Số bàn và sức chứa là bắt buộc.' });
@@ -330,7 +330,8 @@ const addTable = async (req, res) => {
       y: y || 0,
       width: width || 70,
       height: height || 70,
-      shape: shape || 'RECTANGLE'
+      shape: shape || 'RECTANGLE',
+      image_url: image_url || null
     });
     await branch.save();
 
@@ -352,7 +353,7 @@ const addTable = async (req, res) => {
 const updateTable = async (req, res) => {
   try {
     const { branchId, zoneId, tableId } = req.params;
-    const { table_number, capacity, status, x, y, width, height, shape } = req.body;
+    const { table_number, capacity, status, x, y, width, height, shape, image_url } = req.body;
 
     const branch = await Branch.findById(branchId);
     if (!branch) {
@@ -386,6 +387,7 @@ const updateTable = async (req, res) => {
     if (width !== undefined) table.width = width;
     if (height !== undefined) table.height = height;
     if (shape !== undefined) table.shape = shape;
+    if (image_url !== undefined) table.image_url = image_url;
 
     await branch.save();
     res.status(200).json({
@@ -464,6 +466,8 @@ const bulkUpdateTablesLayout = async (req, res) => {
       if (table) {
         if (tData.x !== undefined) table.x = tData.x;
         if (tData.y !== undefined) table.y = tData.y;
+        if (tData.width !== undefined) table.width = tData.width;
+        if (tData.height !== undefined) table.height = tData.height;
         updatedCount++;
       }
     }
@@ -477,6 +481,39 @@ const bulkUpdateTablesLayout = async (req, res) => {
     });
   } catch (error) {
     console.error('Lỗi bulkUpdateTablesLayout:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+// @desc   Cập nhật mẫu bàn (table template)
+// @route  PUT /api/v1/branches/:branchId/templates/:templateIndex
+// @access Private (ADMIN, MANAGER)
+const updateTableTemplate = async (req, res) => {
+  try {
+    const { branchId, templateIndex } = req.params;
+    const { image_url } = req.body;
+
+    const branch = await Branch.findById(branchId);
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+
+    const index = parseInt(templateIndex, 10);
+    if (isNaN(index) || index < 0 || index >= branch.table_templates.length) {
+      return res.status(400).json({ success: false, message: 'Index mẫu bàn không hợp lệ.' });
+    }
+
+    // Only update image_url for Option 1
+    branch.table_templates[index].image_url = image_url;
+    await branch.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật mẫu bàn thành công.',
+      data: branch.table_templates[index],
+    });
+  } catch (error) {
+    console.error('Lỗi updateTableTemplate:', error);
     res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
   }
 };
@@ -496,4 +533,5 @@ module.exports = {
   updateTable,
   deleteTable,
   bulkUpdateTablesLayout,
+  updateTableTemplate,
 };

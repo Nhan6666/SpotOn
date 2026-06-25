@@ -15,6 +15,7 @@ const {
   updateTable,
   deleteTable,
   bulkUpdateTablesLayout,
+  updateTableTemplate,
 } = require('../controllers/branchController');
 
 // Import bảo mật vào route
@@ -83,5 +84,16 @@ router.route('/:branchId/zones/:zoneId/tables')
 router.route('/:branchId/zones/:zoneId/tables/:tableId')
   .put(protect, authorize('ADMIN', 'MANAGER'), updateTable)
   .delete(protect, authorize('ADMIN', 'MANAGER'), deleteTable);
+
+// =============================================
+// TABLE TEMPLATE CRUD
+// =============================================
+// PUT /api/v1/branches/:branchId/templates/:templateIndex
+router.put(
+  '/:branchId/templates/:templateIndex',
+  protect,
+  authorize('ADMIN', 'MANAGER'),
+  updateTableTemplate
+);
 
 module.exports = router;

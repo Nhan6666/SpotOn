@@ -1,14 +1,6 @@
 // ============================================================
-// UPLOAD CONTROLLER — Xử lý upload ảnh cho Menu Items
+// UPLOAD CONTROLLER — Xử lý upload ảnh (Cloudinary)
 // ============================================================
-
-const path = require('path');
-const fs = require('fs');
-
-const AVATARS_DIR = path.join(__dirname, '..', '..', 'uploads', 'avatars');
-if (!fs.existsSync(AVATARS_DIR)) {
-  fs.mkdirSync(AVATARS_DIR, { recursive: true });
-}
 
 // @desc   Upload ảnh món ăn
 // @route  POST /api/v1/uploads/menu
@@ -41,9 +33,10 @@ const uploadMenuImage = async (req, res) => {
   }
 };
 
-// @desc   Upload ảnh đại diện
+// @desc   Upload ảnh đại diện (Cloudinary)
 // @route  POST /api/v1/uploads/avatar
 // @access Private
+// Folder trên Cloudinary: SpotOn/user/{email}/avatar/
 const uploadAvatarImage = async (req, res) => {
   try {
     if (!req.file) {
@@ -53,13 +46,16 @@ const uploadAvatarImage = async (req, res) => {
       });
     }
 
-    const imageUrl = `/uploads/avatars/${req.file.filename}`;
+    // Cloudinary trả URL trong req.file.path
+    const imageUrl = req.file.path;
 
     res.status(201).json({
       success: true,
       message: 'Tải ảnh đại diện thành công.',
       data: {
         url: imageUrl,
+        filename: req.file.filename,
+        size: req.file.size,
       },
     });
   } catch (error) {
@@ -68,4 +64,33 @@ const uploadAvatarImage = async (req, res) => {
   }
 };
 
-module.exports = { uploadMenuImage, uploadAvatarImage };
+// @desc   Upload ảnh bàn (Cloudinary)
+// @route  POST /api/v1/uploads/table
+// @access Private (ADMIN, MANAGER)
+const uploadTableImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng chọn file ảnh để tải lên.',
+      });
+    }
+
+    const imageUrl = req.file.path;
+
+    res.status(201).json({
+      success: true,
+      message: 'Tải ảnh bàn thành công.',
+      data: {
+        url: imageUrl,
+        filename: req.file.filename,
+        size: req.file.size,
+      },
+    });
+  } catch (error) {
+    console.error('Lỗi uploadTableImage:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+module.exports = { uploadMenuImage, uploadAvatarImage, uploadTableImage };

@@ -10,14 +10,17 @@ interface TableCanvasProps {
   zone: EditorZone | null;
   onAddTable: () => void;
   onEditTable: (table: EditorTable) => void;
-  onSaveLayout: (tables: { _id: string; x: number; y: number }[]) => Promise<void>;
+  onSaveLayout: (tables: { _id: string; x: number; y: number; width?: number; height?: number }[]) => Promise<void>;
+  onDropTemplate?: (templateData: any, x: number, y: number) => void;
 }
 
-export function TableCanvas({ zone, onAddTable, onEditTable, onSaveLayout }: TableCanvasProps) {
+export function TableCanvas({ zone, onAddTable, onEditTable, onSaveLayout, onDropTemplate }: TableCanvasProps) {
   const [tables, setTables] = useState<EditorTable[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [draggedTableId, setDraggedTableId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizingTableId, setResizingTableId] = useState<string | null>(null);
+  const [resizeStart, setResizeStart] = useState({ startX: 0, startY: 0, startWidth: 0, startHeight: 0 });
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   
@@ -39,6 +42,7 @@ export function TableCanvas({ zone, onAddTable, onEditTable, onSaveLayout }: Tab
     const handleGlobalMouseUp = () => {
       setIsDragging(false);
       setDraggedTableId(null);
+      setResizingTableId(null);
     };
     window.addEventListener("mouseup", handleGlobalMouseUp);
     return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
@@ -91,27 +95,52 @@ export function TableCanvas({ zone, onAddTable, onEditTable, onSaveLayout }: Tab
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !draggedTableId) return;
+    if (isDragging && draggedTableId) {
+      const canvasRect = canvasRef.current?.getBoundingClientRect();
+      if (canvasRect) {
+        let newX = e.clientX - canvasRect.left - dragOffset.x;
+        let newY = e.clientY - canvasRect.top - dragOffset.y;
 
-    const canvasRect = canvasRef.current?.getBoundingClientRect();
-    if (canvasRect) {
-      let newX = e.clientX - canvasRect.left - dragOffset.x;
-      let newY = e.clientY - canvasRect.top - dragOffset.y;
+        // Snap to 10px grid
+        newX = Math.round(newX / 10) * 10;
+        newY = Math.round(newY / 10) * 10;
 
-      // Snap to 10px grid
-      newX = Math.round(newX / 10) * 10;
-      newY = Math.round(newY / 10) * 10;
+        const targetTable = tables.find(t => t._id === draggedTableId);
+        const tWidth = targetTable?.width || 70;
+        const tHeight = targetTable?.height || 70;
 
-      const targetTable = tables.find(t => t._id === draggedTableId);
-      const tWidth = targetTable?.width || 70;
-      const tHeight = targetTable?.height || 70;
+        // Boundary check (assume canvas is 850x700)
+        newX = Math.max(0, Math.min(newX, 850 - tWidth));
+        newY = Math.max(0, Math.min(newY, 700 - tHeight));
 
-      // Boundary check (assume canvas is 850x700)
-      newX = Math.max(0, Math.min(newX, 850 - tWidth));
-      newY = Math.max(0, Math.min(newY, 700 - tHeight));
+        setTables(prev => prev.map(t => 
+          t._id === draggedTableId ? { ...t, x: newX, y: newY } : t
+        ));
+        setHasChanges(true);
+      }
+    } else if (resizingTableId) {
+      const targetTable = tables.find(t => t._id === resizingTableId);
+      if (!targetTable) return;
+
+      let newWidth = resizeStart.startWidth + (e.clientX - resizeStart.startX);
+      let newHeight = resizeStart.startHeight + (e.clientY - resizeStart.startY);
+
+      // Snap to grid
+      newWidth = Math.round(newWidth / 10) * 10;
+      newHeight = Math.round(newHeight / 10) * 10;
+
+      // Min limits
+      newWidth = Math.max(30, newWidth);
+      newHeight = Math.max(30, newHeight);
+
+      if (targetTable.shape === "CIRCLE") {
+        const size = Math.max(newWidth, newHeight);
+        newWidth = size;
+        newHeight = size;
+      }
 
       setTables(prev => prev.map(t => 
-        t._id === draggedTableId ? { ...t, x: newX, y: newY } : t
+        t._id === resizingTableId ? { ...t, width: newWidth, height: newHeight } : t
       ));
       setHasChanges(true);
     }
@@ -120,12 +149,30 @@ export function TableCanvas({ zone, onAddTable, onEditTable, onSaveLayout }: Tab
   const handleMouseUp = () => {
     setIsDragging(false);
     setDraggedTableId(null);
+    setResizingTableId(null);
+  };
+
+  const handleMouseDownResize = (e: React.MouseEvent, table: EditorTable) => {
+    e.stopPropagation();
+    setResizingTableId(table._id);
+    setResizeStart({
+      startX: e.clientX,
+      startY: e.clientY,
+      startWidth: table.width || 70,
+      startHeight: table.height || 70
+    });
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const layoutData = tables.map(t => ({ _id: t._id, x: t.x || 0, y: t.y || 0 }));
+      const layoutData = tables.map(t => ({ 
+        _id: t._id, 
+        x: t.x || 0, 
+        y: t.y || 0,
+        width: t.width || 70,
+        height: t.height || 70
+      }));
       await onSaveLayout(layoutData);
       setHasChanges(false);
     } finally {
@@ -136,6 +183,45 @@ export function TableCanvas({ zone, onAddTable, onEditTable, onSaveLayout }: Tab
   const handleUndo = () => {
     setTables(JSON.parse(JSON.stringify(zone.tables)));
     setHasChanges(false);
+  };
+
+  // --- HTML5 Drag & Drop cho Templates ---
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault(); // Cần thiết để cho phép drop
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!onDropTemplate) return;
+
+    try {
+      const dataStr = e.dataTransfer.getData("application/json");
+      if (!dataStr) return;
+      const templateData = JSON.parse(dataStr);
+
+      const canvasRect = canvasRef.current?.getBoundingClientRect();
+      if (canvasRect) {
+        let x = e.clientX - canvasRect.left;
+        let y = e.clientY - canvasRect.top;
+
+        // Căn giữa template vào vị trí con trỏ chuột
+        x = x - (templateData.width || 70) / 2;
+        y = y - (templateData.height || 70) / 2;
+
+        // Snap to grid
+        x = Math.round(x / 10) * 10;
+        y = Math.round(y / 10) * 10;
+
+        // Boundary check
+        x = Math.max(0, Math.min(x, 850 - (templateData.width || 70)));
+        y = Math.max(0, Math.min(y, 700 - (templateData.height || 70)));
+
+        onDropTemplate(templateData, x, y);
+      }
+    } catch (error) {
+      console.error("Lỗi khi drop template:", error);
+    }
   };
 
   return (
@@ -170,15 +256,6 @@ export function TableCanvas({ zone, onAddTable, onEditTable, onSaveLayout }: Tab
                 </Button>
               </>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 ml-2"
-              onClick={onAddTable}
-            >
-              <Plus className="w-4 h-4 mr-1.5" />
-              Thêm bàn
-            </Button>
           </div>
         </div>
 
@@ -196,24 +273,20 @@ export function TableCanvas({ zone, onAddTable, onEditTable, onSaveLayout }: Tab
       </div>
 
       {/* Canvas Area */}
-      <div 
-        ref={containerRef}
-        className="flex-1 bg-[#fafafa] overflow-auto relative p-8 flex items-center justify-center"
-      >
-        {/* The Map Canvas with a fixed size (850x700) */}
+      <div className="flex-1 p-6 flex flex-col h-[calc(100vh-140px)]">
         <div 
           ref={canvasRef}
-          className="relative bg-white shadow-md border-2 border-dashed border-gray-300 select-none"
+          className="relative w-full h-full bg-[#f8fafc] bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] overflow-hidden rounded-2xl border border-gray-200/60 shadow-inner select-none"
           style={{ 
-            width: "850px", 
-            height: "700px",
+            backgroundSize: '16px 16px',
             cursor: isDragging ? "grabbing" : "default" 
           }}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
         >
-          {/* Grid pattern background for visual guidance */}
           <div 
             className="absolute inset-0 opacity-20 pointer-events-none"
             style={{
@@ -241,9 +314,10 @@ export function TableCanvas({ zone, onAddTable, onEditTable, onSaveLayout }: Tab
                 <div
                   key={table._id}
                   onMouseDown={(e) => handleMouseDown(e, table)}
-                  className={`absolute flex flex-col items-center justify-center border-2 transition-shadow cursor-grab active:cursor-grabbing group
-                    ${statusConfig.bg} ${statusConfig.border} ${shapeClasses}
-                    ${draggedTableId === table._id ? 'shadow-xl z-50 ring-2 ring-blue-400 opacity-90' : 'shadow-sm z-10 hover:shadow-md'}
+                  className={`absolute flex flex-col items-center justify-center transition-all cursor-grab active:cursor-grabbing group
+                    ${table.image_url ? 'bg-transparent border-transparent' : `border-2 ${statusConfig.bg} ${statusConfig.border}`}
+                    ${shapeClasses}
+                    ${draggedTableId === table._id ? 'shadow-2xl z-50 ring-4 ring-blue-400/50 scale-105 opacity-95' : 'shadow-sm z-10 hover:shadow-md'}
                   `}
                   style={{
                     left: table.x || 0,
@@ -255,24 +329,59 @@ export function TableCanvas({ zone, onAddTable, onEditTable, onSaveLayout }: Tab
                 >
                   {/* Edit overlay */}
                   <button
+                    type="button"
+                    aria-label={`Sửa bàn ${table.table_number}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       onEditTable(table);
                     }}
-                    className="edit-btn absolute -top-3 -right-3 w-8 h-8 bg-white border border-gray-200 rounded-full shadow-md items-center justify-center text-gray-500 hover:text-amber-600 hover:bg-amber-50 transition-colors hidden group-hover:flex z-50 cursor-pointer"
+                    className="edit-btn absolute -top-3 -right-3 w-8 h-8 bg-white/90 backdrop-blur border border-gray-200/80 rounded-full shadow-md flex items-center justify-center text-gray-500 hover:text-amber-600 hover:bg-amber-50 hover:scale-110 hover:shadow-lg transition-all opacity-0 group-hover:opacity-100 focus-within:opacity-100 z-50 cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Edit2 className="w-3.5 h-3.5" />
                   </button>
 
-                  <span className={`font-bold ${statusConfig.color} ${isCircle && table.width && table.width < 50 ? 'text-sm' : 'text-lg'}`}>
-                    {table.table_number}
-                  </span>
-                  
-                  {(!isCircle || (table.width && table.width >= 50)) && (
-                    <span className={`text-xs ${statusConfig.color} opacity-80 mt-1`}>
-                      {table.capacity} chỗ
-                    </span>
+                  {table.image_url ? (
+                    <>
+                      <img 
+                        src={table.image_url} 
+                        alt={`Bàn ${table.table_number}`} 
+                        className={`w-full h-full object-contain pointer-events-none p-1 ${shapeClasses}`}
+                        draggable={false}
+                      />
+                      <div className={`absolute top-0 left-0 ${statusConfig.bg} ${statusConfig.border} border-b border-r text-gray-800 text-[10px] font-bold px-1.5 py-0.5 rounded-tl-md rounded-br-md shadow-sm pointer-events-none`}>
+                        {table.table_number}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className={`font-bold ${statusConfig.color} ${isCircle && table.width && table.width < 50 ? 'text-sm' : 'text-lg'}`}>
+                        {table.table_number}
+                      </span>
+                      
+                      {(!isCircle || (table.width && table.width >= 50)) && (
+                        <span className={`text-xs ${statusConfig.color} opacity-80 mt-1 pointer-events-none`}>
+                          {table.capacity} chỗ
+                        </span>
+                      )}
+                    </>
                   )}
+
+                  {/* Resize handle */}
+                  <div
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Kéo để thay đổi kích thước bàn ${table.table_number}`}
+                    className="absolute -bottom-2 -right-2 w-5 h-5 bg-white/80 backdrop-blur-md border border-gray-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-nwse-resize opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all z-50 flex items-center justify-center rounded-full hover:scale-110 hover:bg-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+                    onMouseDown={(e) => handleMouseDownResize(e, table)}
+                    title="Kéo để thay đổi kích thước"
+                  >
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
+                  </div>
+
+                  {/* Status Label underneath the table */}
+                  <div className={`absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] px-2.5 py-0.5 rounded-full border shadow-[0_2px_10px_rgba(0,0,0,0.06)] pointer-events-none z-10 ${statusConfig.bg} ${statusConfig.border} ${statusConfig.color} font-bold uppercase tracking-wider`}>
+                    {statusConfig.label}
+                  </div>
                 </div>
               );
             })

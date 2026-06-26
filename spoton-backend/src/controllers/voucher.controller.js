@@ -25,6 +25,25 @@ exports.getAllVouchers = async (req, res) => {
   }
 };
 
+// @desc    Get single voucher
+// @route   GET /api/v1/vouchers/:id
+// @access  Private/Admin,Manager
+exports.getVoucherById = async (req, res) => {
+  try {
+    const voucher = await Voucher.findById(req.params.id);
+    if (!voucher) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy voucher' });
+    }
+    res.status(200).json({
+      success: true,
+      data: voucher,
+    });
+  } catch (error) {
+    console.error('Error in getVoucherById:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi lấy voucher' });
+  }
+};
+
 // @desc    Create new voucher
 // @route   POST /api/v1/vouchers
 // @access  Private/Admin,Manager

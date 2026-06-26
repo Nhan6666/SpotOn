@@ -12,6 +12,7 @@ router.route('/')
   .post(voucherController.createVoucher);
 
 router.route('/:id')
+  .get(voucherController.getVoucherById)
   .put(voucherController.updateVoucher)
   .delete(voucherController.deleteVoucher);
 

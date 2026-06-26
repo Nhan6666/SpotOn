@@ -35,7 +35,7 @@ export function Modal({ isOpen, onClose, children, maxWidth = 'md' }: ModalProps
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/40 transition-opacity"
         onClick={onClose}
       ></div>
       
@@ -45,7 +45,7 @@ export function Modal({ isOpen, onClose, children, maxWidth = 'md' }: ModalProps
       >
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute top-4 cursor-pointer right-4 text-gray-400 hover:text-gray-600 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>

@@ -60,6 +60,7 @@ export function Navbar() {
             <Link href="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Tổng quan hệ thống</Link>
             <Link href="/admin/branches" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Quản lý Chi nhánh</Link>
             <Link href="/admin/staff" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Quản lý Nhân sự</Link>
+            <Link href="/admin/vouchers" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Quản lý Voucher</Link>
             <Link href="/admin/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Cấu hình</Link>
           </>
         );

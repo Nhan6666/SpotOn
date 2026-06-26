@@ -23,6 +23,15 @@ export async function fetchVouchersAction() {
     }
 }
 
+export async function getVoucherByIdAction(id: string) {
+    try {
+        const res = await http.get<ApiSingleResponse<VoucherItem>>(`${ENDPOINT}/${id}`);
+        return { success: true, data: res.data };
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Lỗi khi tải voucher' };
+    }
+}
+
 export async function createVoucherAction(payload: AdminVoucherCreateRequest) {
     try {
         const res = await http.post<ApiSingleResponse<VoucherItem>>(ENDPOINT, payload);

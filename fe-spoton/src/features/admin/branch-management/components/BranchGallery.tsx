@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Search, Filter, MoreHorizontal, Edit2, Trash2, MapPin, Clock, LayoutGrid } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, Edit2, Trash2, MapPin, Clock, LayoutGrid, MonitorPlay, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Input } from '@/components/ui/Input';
@@ -192,6 +192,16 @@ export function BranchGallery() {
                     <Link href={`/admin/branches/${branch._id}/edit`} className="flex-1">
                       <Button variant="outline" size="md" className="w-full text-amber-700 border-amber-200 hover:bg-amber-50">
                         View Details
+                      </Button>
+                    </Link>
+                    <Link href={`/admin/branches/${branch._id}/live-map`}>
+                      <Button variant="outline" size="md" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50" title="Live Map">
+                        <MonitorPlay className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                    <Link href={`/admin/branches/${branch._id}/bookings`}>
+                      <Button variant="outline" size="md" className="text-indigo-600 border-indigo-200 hover:bg-indigo-50" title="Bookings">
+                        <CalendarDays className="w-4 h-4" />
                       </Button>
                     </Link>
                     <Link href={`/admin/branches/${branch._id}/map-editor`}>

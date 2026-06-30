@@ -3,8 +3,8 @@ import { TableMapFeature } from "@/features/booking/TableMapFeature";
 export default async function TableMapPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  // We can fetch initial branch details here if needed
-  return <TableMapFeature branchId={params.id} />;
+  const { id } = await params;
+  return <TableMapFeature branchId={id} />;
 }

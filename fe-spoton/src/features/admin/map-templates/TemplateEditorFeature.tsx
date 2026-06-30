@@ -2,17 +2,16 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, RefreshCcw, PanelLeftClose, PanelLeft, Download } from "lucide-react";
+import { ArrowLeft, RefreshCcw, PanelLeftClose, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-import { useAuth } from "@/providers/AuthProvider";
 
-import { ZoneSidebar } from "./components/ZoneSidebar";
-import { TableTemplatesSidebar } from "./components/TableTemplatesSidebar";
-import { TableCanvas } from "./components/TableCanvas";
-import { ZoneFormModal } from "./components/ZoneFormModal";
-import { TableFormModal } from "./components/TableFormModal";
-import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
+import { ZoneSidebar } from "../map-editor/components/ZoneSidebar";
+import { TableTemplatesSidebar } from "../map-editor/components/TableTemplatesSidebar";
+import { TableCanvas } from "../map-editor/components/TableCanvas";
+import { ZoneFormModal } from "../map-editor/components/ZoneFormModal";
+import { TableFormModal } from "../map-editor/components/TableFormModal";
+import { DeleteConfirmModal } from "../map-editor/components/DeleteConfirmModal";
 
 import {
   fetchZones,
@@ -23,23 +22,19 @@ import {
   updateTableApi,
   deleteTableApi,
   bulkUpdateTablesLayout,
-  applyTemplateApi
-} from "./map-editor.service";
+} from "./template-editor.service";
 
-import { fetchMapTemplates } from "../map-templates/map-template.service";
+import type { EditorZone, EditorTable, TableStatus } from "../map-editor/map-editor.types";
 
-import type { EditorZone, EditorTable, TableStatus } from "./map-editor.types";
-
-interface MapEditorFeatureProps {
-  branchId: string;
+interface TemplateEditorFeatureProps {
+  templateId: string;
 }
 
-export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
+export function TemplateEditorFeature({ templateId }: TemplateEditorFeatureProps) {
   const { success, error: showError } = useToast();
-  const { user } = useAuth();
 
   // Data state
-  const [branchName, setBranchName] = useState("");
+  const [templateName, setTemplateName] = useState("");
   const [zones, setZones] = useState<EditorZone[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,9 +64,6 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
     parentId?: string; // zoneId for table deletion
   }>({ open: false, type: "zone", id: "", name: "" });
 
-  const [importModal, setImportModal] = useState(false);
-  const [availableTemplates, setAvailableTemplates] = useState<any[]>([]);
-
   // Selected zone object
   const selectedZone = zones.find((z) => z._id === selectedZoneId) || null;
 
@@ -81,9 +73,9 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
   const loadZones = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetchZones(branchId);
+      const res = await fetchZones(templateId);
       if (res.success) {
-        setBranchName(res.data.branch_name);
+        setTemplateName(res.data.branch_name);
         setZones(res.data.zones);
         setTemplates(res.data.table_templates || []);
         // Auto-select first zone if none selected
@@ -95,12 +87,12 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
         });
       }
     } catch (err) {
-      showError("Không thể tải dữ liệu sơ đồ bàn.");
+      showError("Không thể tải dữ liệu sơ đồ mẫu.");
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, [branchId]);
+  }, [templateId]);
 
   useEffect(() => {
     loadZones();
@@ -109,41 +101,16 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
   // =============================================
   // ZONE CRUD HANDLERS
   // =============================================
-  const handleCreateZone = async (data: { name: string; capacity: number }) => {
-    const res = await createZone(branchId, data);
-    if (res.success) {
-      success(`Thêm khu vực "${data.name}" thành công!`);
-      await loadZones();
-      setSelectedZoneId(res.data._id);
-    }
-  };
-
-  const handleUpdateZone = async (data: { name: string; capacity: number }) => {
-    if (!zoneModal.zoneId) return;
-    const res = await updateZoneApi(branchId, zoneModal.zoneId, data);
-    if (res.success) {
-      success("Cập nhật khu vực thành công!");
-      await loadZones();
-    }
-  };
-
-  const handleDeleteZone = async () => {
-    const res = await deleteZoneApi(branchId, deleteModal.id);
-    if (res.success) {
-      success(`Xóa khu vực "${deleteModal.name}" thành công!`);
-      if (selectedZoneId === deleteModal.id) {
-        setSelectedZoneId(null);
-      }
-      await loadZones();
-    }
-  };
+  const handleCreateZone = async () => {};
+  const handleUpdateZone = async () => {};
+  const handleDeleteZone = async () => {};
 
   // =============================================
   // TABLE CRUD HANDLERS
   // =============================================
   const handleCreateTable = async (data: { table_number: string; capacity: number }) => {
     if (!selectedZoneId) return;
-    const res = await createTable(branchId, selectedZoneId, data);
+    const res = await createTable(templateId, selectedZoneId, data);
     if (res.success) {
       success(`Thêm bàn "${data.table_number}" thành công!`);
       await loadZones();
@@ -152,7 +119,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
 
   const handleUpdateTable = async (data: { table_number: string; capacity: number; status?: TableStatus; width?: number; height?: number; shape?: string }) => {
     if (!selectedZoneId || !tableModal.tableId) return;
-    const res = await updateTableApi(branchId, selectedZoneId, tableModal.tableId, data);
+    const res = await updateTableApi(templateId, selectedZoneId, tableModal.tableId, data);
     if (res.success) {
       success("Cập nhật bàn thành công!");
       await loadZones();
@@ -161,7 +128,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
 
   const handleDeleteTable = async () => {
     if (!deleteModal.parentId) return;
-    const res = await deleteTableApi(branchId, deleteModal.parentId, deleteModal.id);
+    const res = await deleteTableApi(templateId, deleteModal.parentId, deleteModal.id);
     if (res.success) {
       success(`Xóa bàn "${deleteModal.name}" thành công!`);
       await loadZones();
@@ -170,41 +137,10 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
 
   const handleSaveLayout = async (tablesLayout: { _id: string; x: number; y: number; width?: number; height?: number }[]) => {
     if (!selectedZoneId) return;
-    const res = await bulkUpdateTablesLayout(branchId, selectedZoneId, tablesLayout);
+    const res = await bulkUpdateTablesLayout(templateId, selectedZoneId, tablesLayout);
     if (res.success) {
       success("Lưu sơ đồ bàn thành công!");
       await loadZones();
-    }
-  };
-
-  const handleOpenImportModal = async () => {
-    if (!selectedZoneId) {
-      showError("Vui lòng chọn một khu vực trước khi nhập từ mẫu.");
-      return;
-    }
-    try {
-      const res = await fetchMapTemplates();
-      if (res.success) {
-        setAvailableTemplates(res.data);
-        setImportModal(true);
-      }
-    } catch (err) {
-      showError("Không thể tải danh sách mẫu.");
-    }
-  };
-
-  const handleImportTemplate = async (templateId: string) => {
-    if (!selectedZoneId) return;
-    if (!window.confirm(`Cảnh báo: Hành động này sẽ XÓA TOÀN BỘ bàn hiện tại trong khu vực "${selectedZone?.name}" và thay thế bằng sơ đồ mẫu. Bạn có chắc chắn không?`)) return;
-    try {
-      const res = await applyTemplateApi(branchId, selectedZoneId, templateId);
-      if (res.success) {
-        success("Đã áp dụng sơ đồ mẫu thành công!");
-        setImportModal(false);
-        await loadZones();
-      }
-    } catch (err) {
-      showError("Lỗi khi áp dụng sơ đồ mẫu.");
     }
   };
 
@@ -228,44 +164,35 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
 
   return (
     <div className="p-6 md:p-8 max-w-[1600px] mx-auto w-full">
-      {/* Header */}
+      {/* Breadcrumbs & Header */}
+      <div className="flex items-center text-sm mb-2">
+        <Link
+          href="/admin/map-templates"
+          className="text-gray-500 hover:text-indigo-700 transition-colors"
+        >
+          Map Templates
+        </Link>
+        <span className="mx-2 text-gray-300">/</span>
+        <span className="font-medium text-gray-900">Template Editor</span>
+      </div>
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
         <div className="flex items-center gap-3">
-          <Link href={user?.role === 'MANAGER' ? '/manager/branches' : '/admin/branches'}>
+          <Link href="/admin/map-templates">
             <Button variant="outline" size="sm" className="bg-white">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Sơ Đồ Bàn
+              Sơ Đồ Mẫu
             </h1>
             <p className="text-sm text-gray-500">
-              {branchName || "Đang tải..."}
+              {templateName || "Đang tải..."}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white shadow-sm hover:bg-gray-50"
-            onClick={() => setShowLeftSidebar(!showLeftSidebar)}
-          >
-            {showLeftSidebar ? (
-              <><PanelLeftClose className="w-4 h-4 mr-1.5" /> Ẩn cột khu vực</>
-            ) : (
-              <><PanelLeft className="w-4 h-4 mr-1.5" /> Hiện cột khu vực</>
-            )}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white shadow-sm hover:bg-gray-50"
-            onClick={handleOpenImportModal}
-          >
-            <Download className="w-4 h-4 mr-1.5" /> Nhập từ Mẫu
-          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -281,36 +208,10 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
 
       {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar */}
-        {showLeftSidebar && (
-          <ZoneSidebar
-            zones={zones}
-            selectedZoneId={selectedZoneId}
-            onSelectZone={setSelectedZoneId}
-            isLoading={isLoading}
-            onAddZone={() => setZoneModal({ open: true, mode: "create" })}
-            onEditZone={(zone) =>
-              setZoneModal({
-                open: true,
-                mode: "edit",
-                data: { name: zone.name, capacity: zone.capacity },
-                zoneId: zone._id,
-              })
-            }
-            onDeleteZone={(zone) =>
-              setDeleteModal({
-                open: true,
-                type: "zone",
-                id: zone._id,
-                name: zone.name,
-              })
-            }
-          />
-        )}
 
         {/* Templates Sidebar */}
         <TableTemplatesSidebar 
-          branchId={branchId}
+          branchId="" // Disable edits
           templates={templates} 
           onTemplateUpdate={loadZones}
         />
@@ -391,43 +292,6 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
         }
         itemName={deleteModal.name}
       />
-
-      {/* Import Template Modal */}
-      {importModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]">
-            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-gray-900">Nhập từ Sơ đồ mẫu</h3>
-                <p className="text-xs text-red-500 mt-1">Lưu ý: Bàn trong khu vực đang chọn sẽ bị ghi đè hoàn toàn.</p>
-              </div>
-              <button onClick={() => setImportModal(false)} className="text-gray-400 hover:text-gray-600">
-                <PanelLeftClose className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-5 overflow-y-auto">
-              {availableTemplates.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">Chưa có Sơ đồ mẫu nào trong hệ thống.</p>
-              ) : (
-                <div className="space-y-3">
-                  {availableTemplates.map(tpl => (
-                    <div key={tpl._id} className="p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors flex justify-between items-center group cursor-pointer" onClick={() => handleImportTemplate(tpl._id)}>
-                      <div>
-                        <p className="font-semibold text-gray-900 text-sm">{tpl.name}</p>
-                        <p className="text-xs text-gray-500 line-clamp-1">{tpl.description}</p>
-                      </div>
-                      <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">Chọn</Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="p-4 border-t border-gray-100 flex justify-end">
-              <Button variant="outline" onClick={() => setImportModal(false)}>Hủy</Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

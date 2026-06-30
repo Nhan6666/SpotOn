@@ -72,3 +72,7 @@ export async function updateTableTemplateApi(
 ) {
   return http.put<SingleResponse<any>>(`${BASE}/${branchId}/templates/${templateIndex}`, data);
 }
+
+export async function applyTemplateApi(branchId: string, zoneId: string, templateId: string) {
+  return http.post<SingleResponse<any>>(`${BASE}/${branchId}/zones/${zoneId}/apply-template`, { templateId });
+}

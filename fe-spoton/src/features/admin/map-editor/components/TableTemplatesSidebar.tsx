@@ -5,6 +5,7 @@ import { Users, Upload, RefreshCcw } from "lucide-react";
 import Image from "next/image";
 import { uploadTableImageApi, updateTableTemplateApi } from "../map-editor.service";
 import type { TableTemplate } from "../map-editor.types";
+import { Button } from "@/components/ui/Button";
 
 
 const DEFAULT_TEMPLATES: TableTemplate[] = [
@@ -95,7 +96,7 @@ export function TableTemplatesSidebar({ branchId, templates, onTemplateUpdate }:
   };
 
   return (
-    <div className="w-64 bg-white/90 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden flex flex-col shrink-0">
+    <div className="w-52 h-200 bg-white/90 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden flex flex-col shrink-0 self-start sticky top-6">
       <input 
         type="file" 
         ref={fileInputRef} 
@@ -147,10 +148,25 @@ export function TableTemplatesSidebar({ branchId, templates, onTemplateUpdate }:
                   tpl.shape === "CIRCLE" ? "rounded-full" : "rounded-md"
                 }`}
                 style={{
-                  width: `${tpl.width / 2}px`, // Thu nhỏ một nửa để vừa sidebar
-                  height: `${tpl.height / 2}px`,
+                  width: `${tpl.width / 3}px`, // Thu nhỏ tỷ lệ 1/3 để vừa sidebar
+                  height: `${tpl.height / 3}px`,
                 }}
               >
+                <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
+                  {branchId && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-6 w-6 p-0 bg-white/90 text-blue-600 hover:bg-blue-50 border-blue-200 shadow-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTriggerUpload(idx);
+                      }}
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
+                </div>
                 <img 
                   src={tpl.image_url} 
                   alt={tpl.label} 
@@ -160,14 +176,30 @@ export function TableTemplatesSidebar({ branchId, templates, onTemplateUpdate }:
               </div>
             ) : (
               <div
-                className={`bg-gradient-to-br from-blue-400 to-blue-600 border border-blue-300 mb-3 shadow-[0_4px_10px_rgb(59,130,246,0.2)] group-hover:scale-105 transition-transform duration-300 ease-out ${
+                className={`relative bg-gradient-to-br from-blue-400 to-blue-600 border border-blue-300 mb-3 shadow-[0_4px_10px_rgb(59,130,246,0.2)] group-hover:scale-105 transition-transform duration-300 ease-out flex items-center justify-center ${
                   tpl.shape === "CIRCLE" ? "rounded-full" : "rounded-lg"
                 }`}
                 style={{
-                  width: `${tpl.width / 2}px`, 
-                  height: `${tpl.height / 2}px`,
+                  width: `${tpl.width / 3}px`, 
+                  height: `${tpl.height / 3}px`,
                 }}
-              />
+              >
+                <div className="absolute right-[-10px] top-[-10px] opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 z-10">
+                  {branchId && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-6 w-6 p-0 bg-white/90 text-blue-600 hover:bg-blue-50 border-blue-200 shadow-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTriggerUpload(idx);
+                      }}
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
+                </div>
+              </div>
             )}
 
             <div className="w-full">
@@ -180,11 +212,6 @@ export function TableTemplatesSidebar({ branchId, templates, onTemplateUpdate }:
             </div>
           </div>
         ))}
-
-        <div className="mt-4 p-4 bg-gradient-to-b from-blue-50 to-indigo-50/30 border border-blue-100/60 rounded-xl text-xs text-blue-800 leading-relaxed text-center shadow-sm">
-          <span className="font-bold block mb-1">💡 Hướng dẫn</span>
-          <span className="opacity-90">Nhấn giữ chuột vào mẫu bàn bạn muốn và kéo thả vào sơ đồ bên phải.</span>
-        </div>
       </div>
     </div>
   );

@@ -128,23 +128,24 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-              Số bàn <span className="text-red-500">*</span>
-            </label>
-            <Input
-              value={tableNumber}
-              onChange={(e) => setTableNumber(e.target.value)}
-              placeholder='VD: "A1", "B2", "VIP-01"'
-              required
-              autoFocus
-            />
-          </div>
-
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                Số bàn <span className="text-red-500">*</span>
+              </label>
+              <Input
+                value={tableNumber}
+                onChange={(e) => setTableNumber(e.target.value)}
+                placeholder='VD: "A1"'
+                required
+                autoFocus
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
                 Sức chứa <span className="text-red-500">*</span>
               </label>
               <Input
@@ -154,10 +155,14 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                 min={1}
                 max={20}
                 required
+                className="h-8 text-sm"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
                 Chiều rộng (px)
               </label>
               <Input
@@ -165,10 +170,11 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                 value={width}
                 onChange={(e) => setWidth(Number(e.target.value))}
                 min={30}
+                className="h-8 text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
                 Chiều dài (px)
               </label>
               <Input
@@ -178,15 +184,16 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                 min={30}
                 disabled={shape === "CIRCLE"}
                 title={shape === "CIRCLE" ? "Bàn tròn sẽ dùng chung một đường kính" : ""}
+                className="h-8 text-sm"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
               Hình ảnh bàn (Tùy chọn)
             </label>
-            <div className="border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all duration-300 rounded-xl p-5 flex flex-col items-center justify-center bg-gray-50/50 text-center relative group">
+            <div className="border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all duration-300 rounded-xl p-3 flex flex-col items-center justify-center bg-gray-50/50 text-center relative group">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -196,12 +203,12 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
               />
               {imageUrl ? (
                 <div className="w-full flex flex-col items-center">
-                  <div className="relative w-full max-w-[200px] h-[120px] rounded-lg overflow-hidden border border-gray-200 shadow-sm mb-3 group bg-white flex items-center justify-center">
+                  <div className="relative w-full max-w-[140px] h-[80px] rounded-lg overflow-hidden border border-gray-200 shadow-sm mb-2 group bg-white flex items-center justify-center">
                     <Image
                       src={imageUrl}
                       alt="Table image"
-                      width={200}
-                      height={120}
+                      width={140}
+                      height={80}
                       className="object-contain w-full h-full"
                       unoptimized
                     />
@@ -209,11 +216,11 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                       <button
                         type="button"
                         onClick={() => setImageUrl(null)}
-                        className="p-2 bg-red-600/90 text-white rounded-full hover:bg-red-700 hover:scale-105 transition-all focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-none"
+                        className="p-1.5 bg-red-600/90 text-white rounded-full hover:bg-red-700 hover:scale-105 transition-all focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-none"
                         title="Xóa ảnh"
                         aria-label="Xóa ảnh"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
@@ -221,20 +228,20 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="text-xs"
+                    className="h-7 text-[11px] px-2"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
                   >
-                    {isUploading ? "Đang tải..." : "Đổi ảnh khác"}
+                    {isUploading ? "Đang tải..." : "Đổi ảnh"}
                   </Button>
                 </div>
               ) : (
                 <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2">
-                    <ImageIcon className="w-5 h-5" />
+                  <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-1.5">
+                    <ImageIcon className="w-4 h-4" />
                   </div>
-                  <p className="text-xs text-gray-500 mb-3 max-w-[250px]">
-                    Tải lên hình ảnh thực tế của bàn, ghế sofa, hoặc cây cảnh để hiển thị trên sơ đồ. (Tối đa 5MB)
+                  <p className="text-[10px] text-gray-500 mb-2 max-w-[200px] leading-tight">
+                    Tải ảnh bàn thực tế (Tối đa 5MB)
                   </p>
                   <Button
                     type="button"
@@ -242,9 +249,9 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                     size="sm"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="bg-white shadow-sm hover:shadow-md transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+                    className="bg-white shadow-sm hover:shadow-md transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none h-7 text-[11px] px-3"
                   >
-                    {isUploading ? <RefreshCcw className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+                    {isUploading ? <RefreshCcw className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}
                     {isUploading ? "Đang tải..." : "Chọn ảnh"}
                   </Button>
                 </div>
@@ -254,10 +261,10 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
 
           {mode === "edit" && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                 Trạng thái
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5">
                 {ALL_STATUSES.map((s) => {
                   const config = TABLE_STATUS_CONFIG[s];
                   return (

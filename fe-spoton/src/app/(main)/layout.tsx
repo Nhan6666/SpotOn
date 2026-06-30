@@ -10,11 +10,11 @@ export default function MainLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith('/admin');
+  const isAdmin = pathname?.startsWith('/admin') || pathname?.startsWith('/manager');
 
   return (
     <>
-      {!isAdmin && <Navbar />}
+      <Navbar />
       <div className="flex-1 w-full">{children}</div>
       {!isAdmin && <Footer />}
     </>

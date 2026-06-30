@@ -19,8 +19,14 @@ export function middleware(request: NextRequest) {
   // 2. Phân quyền theo Role (Chỉ khi đã đăng nhập)
   if (token && role) {
     // ADMIN routes
-    if (pathname.startsWith('/admin') && role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/', request.url)); // Không đủ quyền đá về trang chủ
+    if (pathname.startsWith('/admin')) {
+      if (role === 'MANAGER') {
+        const newPath = pathname.replace('/admin', '/manager');
+        return NextResponse.redirect(new URL(newPath, request.url));
+      }
+      if (role !== 'ADMIN') {
+        return NextResponse.redirect(new URL('/', request.url)); // Không đủ quyền đá về trang chủ
+      }
     }
 
     // MANAGER routes (Cả ADMIN và MANAGER đều vào được)

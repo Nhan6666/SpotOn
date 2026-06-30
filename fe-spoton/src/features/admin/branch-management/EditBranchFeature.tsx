@@ -5,6 +5,8 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { AddBranchForm } from "./components/AddBranchForm";
 import { AddBranchOperations } from "./components/AddBranchOperations";
+import { useAuth } from "@/providers/AuthProvider";
+import { Map, Power } from "lucide-react";
 import { useBranchContext } from "./branch-management.context";
 import { useToast } from "@/components/ui/Toast";
 import { useRouter } from "next/navigation";
@@ -13,6 +15,7 @@ import Link from "next/link";
 export function EditBranchFeature({ branchId }: { branchId: string }) {
   const { updateBranch } = useBranchContext();
   const { success, error: showError } = useToast();
+  const { user } = useAuth();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -91,43 +94,68 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
-      {/* Breadcrumbs */}
-      <div className="flex items-center text-sm mb-4">
-        <Link
-          href="/admin/branches"
-          className="text-gray-500 hover:text-amber-700 transition-colors"
-        >
-          Branch Management
-        </Link>
-        <span className="mx-2 text-gray-300">/</span>
-        <span className="font-medium text-gray-900">Edit Branch</span>
+      {/* Breadcrumbs - Only show for Admin */}
+      {user?.role !== 'MANAGER' && (
+        <div className="flex items-center text-sm mb-6">
+          <Link
+            href="/admin/branches"
+            className="text-gray-500 hover:text-amber-700 transition-colors font-medium"
+          >
+            Branch Management
+          </Link>
+          <span className="mx-3 text-gray-300">/</span>
+          <span className="font-semibold text-gray-900">
+            Edit Branch
+          </span>
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          {user?.role === 'MANAGER' ? 'Chi nhánh: ' : 'Edit Branch: '}
+          <span className="font-medium text-gray-600">
+            {formData.name || "Loading..."}
+          </span>
+        </h1>
+        {user?.role === 'MANAGER' && (
+          <div className="flex items-center gap-3">
+            <Link href={`/manager/branches/${branchId}/map-editor`}>
+              <Button variant="outline" className="shadow-sm flex items-center gap-2">
+                <Map className="w-4 h-4" />
+                Chỉnh Sửa Sơ Đồ Bàn
+              </Button>
+            </Link>
+            <Link href={`/manager/branches/${branchId}/live-map`}>
+              <Button variant="primary" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-2">
+                <Power className="w-4 h-4" />
+                Vận Hành (Live Map)
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
 
-      <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-8">
-        Edit Branch:{" "}
-        <span className="font-medium text-gray-600">
-          {formData.name || "Loading..."}
-        </span>
-      </h1>
-
-      <div className="max-w-2xl mx-auto space-y-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
         <AddBranchForm
           formData={formData}
           updateFormData={updateFormData}
           currentBranchId={branchId}
+          disabled={user?.role === "MANAGER"}
         />
         <AddBranchOperations
           formData={formData}
           updateFormData={updateFormData}
+          disabled={user?.role === "MANAGER"}
         />
+      </div>
 
-        <div className="flex justify-between items-center mt-8 pb-12 pt-4 border-t border-gray-200">
+      <div className="flex justify-end items-center mt-8 pb-12 pt-6 border-t border-gray-200 gap-4">
           <Link href="/admin/branches">
             <Button
               variant="outline"
               className="w-32 bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
             >
-              Cancel
+              Hủy
             </Button>
           </Link>
           <Button
@@ -139,7 +167,6 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
             {isSaving ? "Saving..." : "Update Changes"}
           </Button>
         </div>
-      </div>
     </div>
   );
 }

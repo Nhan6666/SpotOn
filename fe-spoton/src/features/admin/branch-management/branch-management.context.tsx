@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { http } from '@/lib/http';
 import { Branch } from './branch-management.types';
+import { useAuth } from '@/providers/AuthProvider';
 
 const ENDPOINT = '/branches';
 
@@ -32,6 +33,7 @@ const BranchContext = createContext<BranchContextType | undefined>(undefined);
 export function BranchProvider({ children }: { children: ReactNode }) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   // fetchBranches không gọi setIsLoading(true) để tránh synchronous setState trong effect
   const fetchBranches = async () => {
@@ -39,7 +41,14 @@ export function BranchProvider({ children }: { children: ReactNode }) {
       // BE trả về { success, count, data: Branch[] } — phải lấy .data
       const res = await http.get<ApiListResponse<Branch>>(ENDPOINT);
       if (res?.data && Array.isArray(res.data)) {
-        setBranches(res.data);
+        let fetchedBranches = res.data;
+        if (user?.role === 'MANAGER') {
+          fetchedBranches = fetchedBranches.filter(b => {
+            const managerId = typeof b.manager_id === 'object' ? b.manager_id?._id : b.manager_id;
+            return managerId === user._id;
+          });
+        }
+        setBranches(fetchedBranches);
       }
     } catch (error) {
       console.error('Failed to fetch branches:', error);
@@ -62,7 +71,14 @@ export function BranchProvider({ children }: { children: ReactNode }) {
       try {
         const res = await http.get<ApiListResponse<Branch>>(ENDPOINT);
         if (!cancelled && res?.data && Array.isArray(res.data)) {
-          setBranches(res.data);
+          let fetchedBranches = res.data;
+          if (user?.role === 'MANAGER') {
+            fetchedBranches = fetchedBranches.filter(b => {
+              const managerId = typeof b.manager_id === 'object' ? b.manager_id?._id : b.manager_id;
+              return managerId === user._id;
+            });
+          }
+          setBranches(fetchedBranches);
         }
       } catch (error) {
         console.error('Failed to fetch branches:', error);
@@ -72,7 +88,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [user?.role, user?._id]);
 
   const updateBranch = async (id: string, updatedData: Partial<Branch>) => {
     try {

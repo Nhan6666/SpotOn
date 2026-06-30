@@ -6,12 +6,13 @@ import { Switch } from '@/components/ui/Switch';
 export interface AddBranchOperationsProps {
   formData: any;
   updateFormData: (fields: any) => void;
+  disabled?: boolean;
 }
 
-export function AddBranchOperations({ formData, updateFormData }: AddBranchOperationsProps) {
+export function AddBranchOperations({ formData, updateFormData, disabled }: AddBranchOperationsProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sm:p-8">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Operational Rules</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-6">{disabled ? 'Quy định hoạt động' : 'Operational Rules'}</h2>
       
       <div className="space-y-10">
 
@@ -19,30 +20,46 @@ export function AddBranchOperations({ formData, updateFormData }: AddBranchOpera
         <div>
           <h3 className="text-base font-bold text-gray-900 mb-1">Standard Operating Hours</h3>
           <p className="text-sm text-gray-500 mb-4">Define the typical baseline schedule for this location.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                Opening Time
-              </label>
-              <Input 
-                type="time" 
-                value={formData.open_time}
-                onChange={(e) => updateFormData({ open_time: e.target.value })}
-                icon={<Clock className="w-4 h-4" />}
-              />
+          {disabled ? (
+            <div className="flex items-center gap-6 bg-amber-50/50 rounded-xl p-5 border border-amber-100/50">
+              <div className="flex items-center gap-2">
+                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mở cửa:</span>
+                 <span className="text-gray-900 font-bold flex items-center gap-1.5 text-lg"><Clock className="w-5 h-5 text-amber-600"/> {formData.open_time}</span>
+              </div>
+              <div className="w-px h-8 bg-amber-200"></div>
+              <div className="flex items-center gap-2">
+                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Đóng cửa:</span>
+                 <span className="text-gray-900 font-bold flex items-center gap-1.5 text-lg"><Clock className="w-5 h-5 text-amber-600"/> {formData.close_time}</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                Closing Time
-              </label>
-              <Input 
-                type="time" 
-                value={formData.close_time}
-                onChange={(e) => updateFormData({ close_time: e.target.value })}
-                icon={<Clock className="w-4 h-4" />}
-              />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                  Opening Time
+                </label>
+                <Input 
+                  type="time" 
+                  value={formData.open_time}
+                  onChange={(e) => updateFormData({ open_time: e.target.value })}
+                  icon={<Clock className="w-4 h-4" />}
+                  disabled={disabled}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                  Closing Time
+                </label>
+                <Input 
+                  type="time" 
+                  value={formData.close_time}
+                  onChange={(e) => updateFormData({ close_time: e.target.value })}
+                  icon={<Clock className="w-4 h-4" />}
+                  disabled={disabled}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Overload Threshold */}
@@ -56,14 +73,26 @@ export function AddBranchOperations({ formData, updateFormData }: AddBranchOpera
           <p className="text-sm text-gray-500 mb-6">
             Alert branch managers when capacity reaches this critical level.
           </p>
-          <input 
-            type="range" 
-            min="50" 
-            max="100" 
-            value={formData.overload_threshold} 
-            onChange={(e) => updateFormData({ overload_threshold: Number(e.target.value) })}
-            className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
-          />
+          {disabled ? (
+            <div className="mt-4">
+              <div className="w-full h-3 bg-gray-200/80 rounded-full overflow-hidden shadow-inner">
+                <div 
+                  className="h-full bg-gradient-to-r from-amber-400 to-red-500 rounded-full transition-all duration-500" 
+                  style={{ width: `${formData.overload_threshold}%` }}
+                ></div>
+              </div>
+            </div>
+          ) : (
+            <input 
+              type="range" 
+              min="50" 
+              max="100" 
+              value={formData.overload_threshold} 
+              onChange={(e) => updateFormData({ overload_threshold: Number(e.target.value) })}
+              className={`w-full h-1.5 bg-gray-200 rounded-lg appearance-none accent-amber-500 mt-4 ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+              disabled={disabled}
+            />
+          )}
           <div className="flex justify-between text-xs font-medium text-gray-500 mt-2">
             <span>50% (Conservative)</span>
             <span>100% (Maximum)</span>
@@ -79,6 +108,7 @@ export function AddBranchOperations({ formData, updateFormData }: AddBranchOpera
               checked={formData.status !== 'CLOSED'} 
               onChange={(e) => updateFormData({ status: e.target.checked ? 'OPEN' : 'CLOSED' })} 
               label={formData.status === 'CLOSED' ? 'Closed / Opening Soon' : 'Open / Accepting Orders'}
+              disabled={!disabled}
             />
           </div>
         </div>

@@ -11,9 +11,9 @@ const createBooking = async (req, res) => {
   try {
     const bookingData = { ...req.body };
 
-    // TÍNH NĂNG BẢO MẬT: Nếu là Customer tự đặt, ép cứng user_id là ID của họ (tránh giả mạo truyền ID người khác lên)
+    // TÍNH NĂNG BẢO MẬT: Nếu là Customer tự đặt, ép cứng customer_id là ID của họ (tránh giả mạo truyền ID người khác lên)
     if (req.user.role === 'CUSTOMER') {
-      bookingData.user_id = req.user._id;
+      bookingData.customer_id = req.user._id;
     }
 
     // Tự động gán branch_id hiện tại nếu Manager/Waiter tạo đơn cho khách walk-in
@@ -48,7 +48,7 @@ const getAllBookings = async (req, res) => {
     }
 
     const bookings = await Booking.find(filter)
-      .populate('user_id', 'full_name email phone')
+      .populate('customer_id', 'full_name email phone')
       .sort({ created_at: -1 }); // Sắp xếp đơn mới nhất lên đầu
 
     res.status(200).json({ 
@@ -68,7 +68,7 @@ const getAllBookings = async (req, res) => {
 const getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .populate('user_id', 'full_name email phone');
+      .populate('customer_id', 'full_name email phone');
 
     if (!booking) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt bàn.' });
@@ -77,7 +77,7 @@ const getBookingById = async (req, res) => {
     // TÍNH NĂNG BẢO MẬT VÒNG TRONG:
     // 1. Nếu là Khách, phải là người tạo đơn mới được xem
     if (req.user.role === 'CUSTOMER') {
-      if (String(booking.user_id._id || booking.user_id) !== String(req.user._id)) {
+      if (String(booking.customer_id?._id || booking.customer_id) !== String(req.user._id)) {
         return res.status(403).json({ success: false, message: 'Bạn không có quyền xem đơn đặt bàn này.' });
       }
     } 
@@ -136,7 +136,7 @@ const updateBookingStatus = async (req, res) => {
 const getMyBookings = async (req, res) => {
   try {
     // Chỉ lấy đơn mà thuộc về ID của chính khách hàng này (req.user._id)
-    const bookings = await Booking.find({ user_id: req.user._id })
+    const bookings = await Booking.find({ customer_id: req.user._id })
       .sort({ created_at: -1 });
 
     res.status(200).json({ 

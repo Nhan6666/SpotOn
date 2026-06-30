@@ -11,7 +11,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-1 w-full overflow-hidden bg-gray-50 h-[calc(100vh-80px)]">
+    <div className="flex flex-1 w-full overflow-hidden bg-gray-50">
       {/* Sidebar */}
       <AdminSidebar />
 

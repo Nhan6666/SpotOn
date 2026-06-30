@@ -15,7 +15,7 @@ export default function MainLayout({
   return (
     <>
       <Navbar />
-      <div className="flex-1 w-full">{children}</div>
+      <div className="flex-1 flex flex-col w-full min-h-0">{children}</div>
       {!isAdmin && <Footer />}
     </>
   );

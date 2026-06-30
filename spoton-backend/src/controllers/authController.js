@@ -350,4 +350,123 @@ const verifyOtp = async (req, res) => {
   }
 };
 
-module.exports = { register, login, googleAuth, getMe, verifyOtp };
+// @desc   Yêu cầu đặt lại mật khẩu (Gửi OTP)
+// @route  POST /api/v1/auth/forgot-password
+// @access Public
+const forgotPassword = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy tài khoản với email này.',
+      });
+    }
+
+    // Xóa OTP cũ nếu có
+    await Otp.deleteMany({ email });
+
+    // Sinh mã OTP mới (Mã tự hủy sau 5 phút theo TTL)
+    const otpCode = generateOTP();
+    await Otp.create({
+      email,
+      otp: otpCode,
+    });
+
+    // Gửi email
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #8a5a19; text-align: center;">SpotOn - Quên Mật Khẩu</h2>
+        <p>Xin chào <strong>${user.full_name}</strong>,</p>
+        <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng sử dụng mã xác nhận (OTP) dưới đây:</p>
+        <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0;">
+          <h1 style="color: #333; letter-spacing: 5px; margin: 0;">${otpCode}</h1>
+        </div>
+        <p style="color: #d9534f; font-size: 14px;"><strong>Lưu ý:</strong> Mã này sẽ hết hạn sau 5 phút. Nếu bạn không yêu cầu đổi mật khẩu, vui lòng bỏ qua email này.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="font-size: 12px; color: #777; text-align: center;">Đội ngũ hỗ trợ SpotOn</p>
+      </div>
+    `;
+
+    await sendEmail({
+      email,
+      subject: 'Mã xác thực đặt lại mật khẩu SpotOn',
+      html: emailHtml,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Mã OTP đã được gửi đến email của bạn.',
+      data: { email }
+    });
+  } catch (error) {
+    console.error('Lỗi Forgot Password:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+// @desc   Đặt lại mật khẩu mới bằng OTP
+// @route  POST /api/v1/auth/reset-password
+// @access Public
+const resetPassword = async (req, res) => {
+  try {
+    const { otp, newPassword } = req.body;
+    const email = normalizeEmail(req.body.email);
+
+    // Kiểm tra OTP
+    const otpDoc = await Otp.findOne({ email, otp });
+    if (!otpDoc) {
+      return res.status(400).json({ success: false, message: 'Mã OTP không đúng hoặc đã hết hạn.' });
+    }
+
+    // Băm mật khẩu mới
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    // Cập nhật mật khẩu user
+    const user = await User.findOneAndUpdate(
+      { email },
+      { password_hash, auth_provider: 'LOCAL' }, // Reset về LOCAL nếu lỡ dùng Google nhưng muốn dùng mật khẩu
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
+    }
+
+    // Xóa OTP
+    await Otp.deleteOne({ _id: otpDoc._id });
+
+    res.status(200).json({
+      success: true,
+      message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.',
+    });
+  } catch (error) {
+    console.error('Lỗi Reset Password:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+// @desc   Xác minh OTP để đổi mật khẩu (chưa đổi mật khẩu)
+// @route  POST /api/v1/auth/verify-forgot-password-otp
+// @access Public
+const verifyForgotPasswordOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const email = normalizeEmail(req.body.email);
+
+    const otpDoc = await Otp.findOne({ email, otp });
+    if (!otpDoc) {
+      return res.status(400).json({ success: false, message: 'Mã OTP không đúng hoặc đã hết hạn.' });
+    }
+
+    res.status(200).json({ success: true, message: 'Mã OTP hợp lệ.' });
+  } catch (error) {
+    console.error('Lỗi Verify Forgot Password OTP:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+module.exports = { register, login, googleAuth, getMe, verifyOtp, forgotPassword, resetPassword, verifyForgotPasswordOtp };

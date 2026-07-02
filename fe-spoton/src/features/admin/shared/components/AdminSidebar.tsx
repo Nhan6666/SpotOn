@@ -14,7 +14,6 @@ const MENU_ITEMS = [
   { href: '/admin/categories', label: 'Categories', icon: Tags, matchPrefix: true },
   { href: '/admin/vouchers', label: 'Vouchers', icon: TicketPercent, matchPrefix: true },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, matchPrefix: true },
-  { href: '/admin/system-configs', label: 'System Configs', icon: Settings, matchPrefix: true },
 ];
 
 export function AdminSidebar() {
@@ -41,17 +40,6 @@ export function AdminSidebar() {
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col flex-shrink-0 h-full">
-      <div className="p-6 flex items-center gap-3">
-        <div className="w-8 h-8 rounded bg-amber-500 flex items-center justify-center text-white font-bold">
-          S
-        </div>
-        <div>
-          <h1 className="text-lg font-bold text-gray-900 leading-tight">SpotOn</h1>
-          <p className="text-xs text-gray-500 font-medium">
-            {user?.role === 'MANAGER' ? 'Management Portal' : 'Admin Portal'}
-          </p>
-        </div>
-      </div>
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-2">
         {visibleMenuItems.map((item) => {
           const itemHref = user?.role === 'MANAGER' ? item.href.replace('/admin', '/manager') : item.href;

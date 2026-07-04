@@ -5,12 +5,15 @@ import type { NextRequest } from 'next/server';
 // AUTH GUARD - Phân quyền theo Route
 // Bật/tắt tại đây khi chưa làm xong Login
 // =============================================
-const IS_AUTH_ENABLED = false; // ← Đổi thành FALSE khi cần tắt tạm
+const IS_AUTH_ENABLED = true; // ← Đổi thành FALSE khi cần tắt tạm
 
 // Định nghĩa các route cần bảo vệ và role tương ứng
 const PROTECTED_ROUTES: { path: string; roles: string[] }[] = [
   { path: '/admin', roles: ['ADMIN'] },
   { path: '/manager', roles: ['MANAGER', 'ADMIN'] },
+  { path: '/waiter', roles: ['WAITER', 'MANAGER', 'ADMIN'] },
+  { path: '/profile', roles: ['CUSTOMER', 'WAITER', 'MANAGER', 'ADMIN'] },
+  { path: '/my-bookings', roles: ['CUSTOMER', 'WAITER', 'MANAGER', 'ADMIN'] },
 ];
 
 // Route chỉ dành cho người chưa đăng nhập
@@ -49,7 +52,7 @@ export function middleware(request: NextRequest) {
     }
 
     // Đã có token nhưng không đủ quyền → redirect về trang 403
-    if (userRole && !protectedRoute.roles.includes(userRole)) {
+    if (userRole && !protectedRoute.roles.includes(userRole.toUpperCase())) {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
   }

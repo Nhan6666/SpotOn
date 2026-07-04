@@ -1,19 +1,22 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Search, Filter, Download, MoreHorizontal, ChevronLeft, ChevronRight, Edit2, Trash2, LayoutGrid } from 'lucide-react';
+import { Search, Filter, Download, MoreHorizontal, ChevronLeft, ChevronRight, Edit2, Trash2, LayoutGrid, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Dropdown, DropdownItem } from '@/components/ui/Dropdown';
 import { useBranchContext } from '../branch-management.context';
 import { DeactivateBranchModal } from './DeactivateBranchModal';
+import { ViewBranchDetailsModal } from './ViewBranchDetailsModal';
 import Link from 'next/link';
 
 export function BranchList() {
   const { branches, isLoading } = useBranchContext();
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<{ id: string; name: string } | null>(null);
+  const [viewBranch, setViewBranch] = useState<any>(null);
 
   // Search, Filter, Pagination state
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,16 +54,60 @@ export function BranchList() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'OPEN':
-        return <Badge variant="success" className="bg-green-100 text-green-700 hover:bg-green-100"><span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>OPEN</Badge>;
+        return (
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-6 bg-amber-400 rounded-full flex items-center p-1 mb-1">
+              <div className="w-4 h-4 bg-gray-900 rounded-full shadow-sm ml-auto"></div>
+            </div>
+            <span className="text-[10px] font-bold text-gray-700 uppercase">MỞ CỬA</span>
+          </div>
+        );
       case 'FULL':
-        return <Badge variant="danger" className="bg-red-50 text-red-700 hover:bg-red-50"><span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>FULL</Badge>;
+        return (
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-6 bg-red-500 rounded-full flex items-center p-1 mb-1">
+              <div className="w-4 h-4 bg-white rounded-full shadow-sm ml-auto"></div>
+            </div>
+            <span className="text-[10px] font-bold text-gray-700 uppercase">HẾT BÀN</span>
+          </div>
+        );
       case 'CLOSED':
-        return <Badge variant="default" className="bg-gray-100 text-gray-500 hover:bg-gray-100"><span className="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5"></span>CLOSED</Badge>;
+        return (
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-6 bg-gray-300 rounded-full flex items-center p-1 mb-1">
+              <div className="w-4 h-4 bg-white rounded-full shadow-sm"></div>
+            </div>
+            <span className="text-[10px] font-bold text-gray-500 uppercase">ĐÓNG CỬA</span>
+          </div>
+        );
       case 'SETUP':
-        return <Badge variant="default" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100"><ClockIcon /> SETUP</Badge>;
+        return (
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-6 bg-blue-400 rounded-full flex items-center p-1 mb-1">
+              <div className="w-4 h-4 bg-white rounded-full shadow-sm"></div>
+            </div>
+            <span className="text-[10px] font-bold text-gray-600 uppercase">SETUP</span>
+          </div>
+        );
       default:
         return <Badge>{status}</Badge>;
     }
+  };
+
+  const getOperatingHours = (branch: any) => {
+    if (branch.status === 'SETUP') return 'N/A';
+    if (branch.service_periods) {
+      return `${branch.service_periods.lunch?.start || '08:00'} - ${branch.service_periods.dinner?.end || '23:00'}`;
+    }
+    return `${branch.open_time || '08:00'} - ${branch.close_time || '23:00'}`;
+  };
+
+  const DEFAULT_IMAGE = 'https://placehold.co/600x400/f3f4f6/a1a1aa?text=No+Image';
+  const getImageUrl = (branch: any) => {
+    if (branch.images && Array.isArray(branch.images) && branch.images.length > 0 && branch.images[0]) {
+      return branch.images[0];
+    }
+    return DEFAULT_IMAGE;
   };
 
   return (
@@ -99,107 +146,98 @@ export function BranchList() {
         <div className="overflow-visible">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500 font-bold">
-                <th className="px-6 py-4 rounded-tl-lg">Branch Name</th>
-                <th className="px-6 py-4">Manager</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Operating Hours</th>
-                <th className="px-6 py-4">Capacity</th>
-                <th className="px-6 py-4 text-right rounded-tr-lg">Actions</th>
+              <tr className="bg-white border-b border-gray-100 text-[13px] font-semibold text-gray-600">
+                <th className="px-6 py-4 rounded-tl-lg font-semibold">Mã chi nhánh</th>
+                <th className="px-6 py-4 font-semibold">Hình ảnh</th>
+                <th className="px-6 py-4 font-semibold">Thông tin</th>
+                <th className="px-6 py-4 font-semibold">Liên hệ</th>
+                <th className="px-6 py-4 font-semibold text-center">Trạng thái</th>
+                <th className="px-6 py-4 text-center rounded-tr-lg font-semibold">Hành động</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex justify-center mb-4">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
                     </div>
-                    Loading branches...
+                    Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : paginatedBranches.length > 0 ? (
                 paginatedBranches.map((branch) => (
                   <tr key={branch._id} className="hover:bg-gray-50/50 transition-colors group">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg mr-3">
-                        {branch.name.charAt(0)}
+                    <td className="px-6 py-6 whitespace-nowrap align-top">
+                      <span className="font-bold text-gray-900 text-[15px]">SP-{branch._id.substring(branch._id.length - 4).toUpperCase()}</span>
+                    </td>
+                    <td className="px-6 py-6 whitespace-nowrap align-top">
+                      <div className="w-24 h-16 rounded-md overflow-hidden bg-gray-100 shadow-sm border border-gray-200">
+                        <img 
+                          src={getImageUrl(branch)} 
+                          alt={branch.name} 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            if (target.src !== DEFAULT_IMAGE) target.src = DEFAULT_IMAGE;
+                          }}
+                        />
                       </div>
-                      <div>
-                        <div className="font-bold text-gray-900 group-hover:text-amber-700 transition-colors">{branch.name}</div>
+                    </td>
+                    <td className="px-6 py-6 align-top">
+                      <div className="font-bold text-gray-900 text-[15px] mb-2 max-w-sm line-clamp-2 leading-snug group-hover:text-amber-700 transition-colors">
+                        {branch.name}
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {branch.manager_id && typeof branch.manager_id === 'object' && branch.manager_id.full_name ? (
-                      <div className="text-sm font-medium text-gray-900">{branch.manager_id.full_name}</div>
-                    ) : (
-                      <div className="text-sm text-gray-400 italic">Unassigned</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(branch.status)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-700 font-medium">
-                      {branch.status === 'SETUP' ? 'N/A' : `${branch.open_time} - ${branch.close_time}`}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {branch.status === 'SETUP' ? (
-                      <span className="text-sm text-gray-400 italic">N/A</span>
-                    ) : (
-                      <div className="flex items-center w-32">
-                        <div className="flex-1 bg-gray-100 rounded-full h-2 mr-3 overflow-hidden flex">
-                          <div 
-                            className={`h-2 rounded-full ${(branch.current_capacity_percent || 0) > branch.overload_threshold ? 'bg-red-500' : 'bg-green-500'}`} 
-                            style={{ width: `${branch.current_capacity_percent || 0}%` }}
-                          ></div>
-                        </div>
-                        <span className={`text-sm font-bold ${(branch.current_capacity_percent || 0) > branch.overload_threshold ? 'text-red-600' : 'text-gray-600'}`}>
-                          {branch.current_capacity_percent || 0}%
-                        </span>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <svg className="w-3.5 h-3.5 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        {typeof branch.address === 'object' ? `${branch.address.district}, ${branch.address.city}` : branch.address}
+                        <span className="mx-2 text-gray-300">•</span>
+                        {getOperatingHours(branch)}
                       </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <Dropdown 
-                      align="right"
-                      trigger={
-                        <button className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer">
-                          <MoreHorizontal className="w-5 h-5" />
+                    </td>
+                    <td className="px-6 py-6 whitespace-nowrap align-top">
+                      <div className="text-[15px] font-medium text-gray-900 mb-1">
+                        {branch.manager_id && typeof branch.manager_id === 'object' && branch.manager_id.full_name ? branch.manager_id.full_name : <span className="text-gray-400 italic">Chưa chỉ định</span>}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {branch.hotline || <span className="italic text-gray-400">Không có</span>}
+                      </div>
+                    </td>
+                    <td className="px-6 py-6 whitespace-nowrap align-top text-center">
+                      {getStatusBadge(branch.status)}
+                    </td>
+                    <td className="px-6 py-6 whitespace-nowrap align-top text-center">
+                      <div className="flex items-center justify-center gap-4">
+                        <button 
+                          onClick={() => { setViewBranch(branch); setDetailsModalOpen(true); }}
+                          className="text-gray-400 hover:text-green-600 transition-colors" 
+                          title="Xem chi tiết"
+                        >
+                          <Eye className="w-5 h-5" />
                         </button>
-                      }
-                    >
-                      <Link href={`/admin/branches/${branch._id}/edit`}>
-                        <DropdownItem className="flex items-center gap-2">
-                          <Edit2 className="w-4 h-4" />
-                          Edit Branch
-                        </DropdownItem>
-                      </Link>
-                      <Link href={`/admin/branches/${branch._id}/map-editor`}>
-                        <DropdownItem className="flex items-center gap-2">
-                          <LayoutGrid className="w-4 h-4" />
-                          Map Editor
-                        </DropdownItem>
-                      </Link>
-                      <div className="h-px bg-gray-100 my-1"></div>
-                      <DropdownItem 
-                        danger 
-                        className="flex items-center gap-2"
-                        onClick={() => handleDeactivateClick(branch._id, branch.name)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Deactivate
-                      </DropdownItem>
-                    </Dropdown>
-                  </td>
-                </tr>
-              ))) : (
+                        <Link href={`/admin/branches/${branch._id}/map-editor`} className="text-gray-400 hover:text-blue-600 transition-colors" title="Sơ đồ bàn">
+                          <LayoutGrid className="w-5 h-5" />
+                        </Link>
+                        <Link href={`/admin/branches/${branch._id}/edit`} className="text-gray-400 hover:text-amber-600 transition-colors" title="Chỉnh sửa">
+                          <Edit2 className="w-5 h-5" />
+                        </Link>
+                        <button 
+                          onClick={() => handleDeactivateClick(branch._id, branch.name)}
+                          className="text-gray-400 hover:text-red-600 transition-colors" 
+                          title="Xóa / Vô hiệu hóa"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))) : (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    No branches found matching your filters.
+                    Không tìm thấy chi nhánh nào phù hợp.
                   </td>
                 </tr>
               )}
@@ -263,6 +301,12 @@ export function BranchList() {
           branchName={selectedBranch.name}
         />
       )}
+      
+      <ViewBranchDetailsModal 
+        isOpen={detailsModalOpen} 
+        onClose={() => setDetailsModalOpen(false)} 
+        branch={viewBranch} 
+      />
     </>
   );
 }

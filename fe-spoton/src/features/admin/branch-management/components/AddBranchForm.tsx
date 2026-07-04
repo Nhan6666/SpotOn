@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { MapPin, Phone, Store, UserCircle } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import dynamic from 'next/dynamic';
+
+const MapLocationPicker = dynamic(() => import('./MapLocationPicker'), { 
+  ssr: false,
+  loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg flex items-center justify-center text-gray-500">Đang tải bản đồ...</div>
+});
 
 export interface AddBranchFormProps {
   formData: any;
@@ -106,16 +112,54 @@ export function AddBranchForm({ formData, updateFormData, currentBranchId, disab
           />
         </div>
 
-        {/* Full Address */}
+        {/* Structured Address */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tỉnh/Thành phố</label>
+            <Input value="Cần Thơ" disabled className="bg-gray-50" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Quận/Huyện <span className="text-red-500">*</span></label>
+            <Select
+              value={formData.address?.district || ''}
+              onChange={(e) => updateFormData({ address: { ...formData.address, district: e.target.value } })}
+              options={[
+                { label: 'Ninh Kiều', value: 'Ninh Kiều' },
+                { label: 'Bình Thủy', value: 'Bình Thủy' },
+                { label: 'Cái Răng', value: 'Cái Răng' },
+                { label: 'Ô Môn', value: 'Ô Môn' },
+                { label: 'Thốt Nốt', value: 'Thốt Nốt' },
+              ]}
+              placeholder="Chọn Quận/Huyện"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phường/Xã</label>
+            <Input
+              value={formData.address?.ward || ''}
+              onChange={(e) => updateFormData({ address: { ...formData.address, ward: e.target.value } })}
+              placeholder="VD: Phường Xuân Khánh"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tên đường, Số nhà</label>
+            <Input
+              value={formData.address?.street || ''}
+              onChange={(e) => updateFormData({ address: { ...formData.address, street: e.target.value } })}
+              placeholder="VD: 3/2"
+            />
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-            Full Address <span className="text-red-500">*</span>
+            Địa chỉ đầy đủ <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Input
-              value={formData.address}
-              onChange={(e) => updateFormData({ address: e.target.value })}
-              placeholder="e.g., 123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM"
+              value={formData.address?.full || ''}
+              onChange={(e) => updateFormData({ address: { ...formData.address, full: e.target.value } })}
+              placeholder="VD: Khu II, Đ. 3/2, Phường Xuân Khánh, Ninh Kiều, Cần Thơ"
               className="pl-10"
               disabled={disabled}
             />
@@ -123,6 +167,17 @@ export function AddBranchForm({ formData, updateFormData, currentBranchId, disab
               <MapPin className="w-4 h-4" />
             </div>
           </div>
+        </div>
+
+        {/* Map Location */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+            Vị trí trên bản đồ <span className="text-red-500">*</span>
+          </label>
+          <MapLocationPicker 
+            location={formData.location}
+            onChange={(coords) => updateFormData({ location: { type: 'Point', coordinates: coords } })}
+          />
         </div>
 
         {/* Hotline */}

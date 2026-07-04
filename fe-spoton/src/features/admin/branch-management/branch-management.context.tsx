@@ -24,7 +24,7 @@ interface BranchContextType {
   isLoading: boolean;
   updateBranch: (id: string, updatedData: Partial<Branch>) => Promise<void>;
   deactivateBranch: (id: string) => Promise<void>;
-  addBranch: (newBranch: Partial<Branch>) => Promise<void>;
+  addBranch: (newBranch: Partial<Branch>) => Promise<string>;
   refreshBranches: () => Promise<void>;
 }
 
@@ -113,13 +113,15 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addBranch = async (newBranch: Partial<Branch>) => {
+  const addBranch = async (newBranch: Partial<Branch>): Promise<string> => {
     try {
       // BE trả về { success, data: Branch }
       const res = await http.post<ApiSingleResponse<Branch>>(ENDPOINT, newBranch);
       if (res?.data) {
         setBranches(prev => [res.data, ...prev]);
+        return res.data._id;
       }
+      throw new Error('No data returned from server');
     } catch (error) {
       console.error('Failed to create branch:', error);
       throw error;

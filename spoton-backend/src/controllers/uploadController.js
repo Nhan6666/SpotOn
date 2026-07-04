@@ -93,4 +93,40 @@ const uploadTableImage = async (req, res) => {
   }
 };
 
-module.exports = { uploadMenuImage, uploadAvatarImage, uploadTableImage };
+// @desc   Upload ảnh chi nhánh và lưu vào Branch (Cloudinary)
+// @route  PUT /api/v1/uploads/branch/:id
+// @access Private (ADMIN, MANAGER)
+const uploadBranchImages = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng chọn file ảnh để tải lên.',
+      });
+    }
+
+    const imageUrls = req.files.map(file => file.path);
+
+    const Branch = require('../models/Branch');
+    const branch = await Branch.findByIdAndUpdate(
+      req.params.id,
+      { $push: { images: { $each: imageUrls } } },
+      { new: true }
+    );
+
+    if (!branch) {
+       return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Tải ảnh chi nhánh thành công.',
+      data: branch,
+    });
+  } catch (error) {
+    console.error('Lỗi uploadBranchImages:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+module.exports = { uploadMenuImage, uploadAvatarImage, uploadTableImage, uploadBranchImages };

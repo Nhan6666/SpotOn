@@ -24,24 +24,32 @@ export function BranchManagementFeature() {
     <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-            {user?.role === 'MANAGER' ? 'Chi nhánh của tôi' : 'Branch Management'}
-          </h1>
-          <p className="text-gray-500 mt-1 text-sm md:text-base">
-            {user?.role === 'MANAGER' 
-              ? 'Quản lý thông tin và trạng thái hoạt động chi nhánh của bạn.'
-              : 'Monitor capacity, manage operations, and oversee regional branches.'}
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Danh sách Chi nhánh</h1>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">Quản lý tất cả thông tin và trạng thái hoạt động của chi nhánh.</p>
         </div>
         <div className="flex gap-3 w-full md:w-auto">
-          {user?.role !== 'MANAGER' && (
-            <Link href="/admin/branches/new" className="flex-1 md:flex-none">
-              <Button variant="primary" size="lg" className="w-full shadow-sm">
-                <Plus className="w-5 h-5 mr-2" />
-                Add New Branch
-              </Button>
-            </Link>
-          )}
+          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setViewMode('gallery')}
+              className={`p-2 rounded transition-colors ${viewMode === 'gallery' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              title="Gallery view"
+            >
+              <LayoutGrid className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              title="List view"
+            >
+              <LayoutList className="w-5 h-5" />
+            </button>
+          </div>
+          <Link href="/admin/branches/new" className="flex-1 md:flex-none">
+            <Button variant="primary" size="lg" className="w-full shadow-sm bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold border-0">
+              <Plus className="w-5 h-5 mr-2 font-bold" />
+              Thêm chi nhánh mới
+            </Button>
+          </Link>
         </div>
       </div>
 

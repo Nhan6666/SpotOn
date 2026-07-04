@@ -10,13 +10,15 @@ export default function MainLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith('/admin') || pathname?.startsWith('/manager');
+  const isAdmin = pathname?.startsWith('/admin');
+  const isManager = pathname?.startsWith('/manager');
+  const hasOwnLayout = isAdmin || isManager;
 
   return (
     <>
-      <Navbar />
-      <div className="flex-1 flex flex-col w-full min-h-0">{children}</div>
-      {!isAdmin && <Footer />}
+      {!hasOwnLayout && <Navbar />}
+      <div className="flex-1 w-full">{children}</div>
+      {!hasOwnLayout && <Footer />}
     </>
   );
 }

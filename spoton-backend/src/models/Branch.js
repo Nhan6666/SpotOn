@@ -30,13 +30,29 @@ const BranchSchema = new mongoose.Schema(
   {
     manager_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     name: { type: String, required: true, trim: true },
-    address: { type: String, required: true },
+    address: {
+      full: { type: String, required: true },
+      city: { type: String, required: true, default: 'Cần Thơ' },
+      district: { type: String, required: true },
+      ward: { type: String },
+      street: { type: String }
+    },
+    location: {
+      type: { type: String, enum: ['Point'], default: 'Point' },
+      coordinates: { type: [Number], index: '2dsphere', required: true } // [lng, lat]
+    },
     hotline: { type: String },
     images: [{ type: String }],
-    open_time: { type: String },  // VD: "08:00"
-    close_time: { type: String }, // VD: "22:00"
+    service_periods: {
+      type: Object,
+      default: {
+        lunch: { start: "08:00", end: "13:00", last_booking: "12:00", last_order: "12:30" },
+        dinner: { start: "15:00", end: "23:00", last_booking: "22:00", last_order: "22:30" }
+      }
+    },
     status: { type: String, enum: ['OPEN', 'FULL', 'CLOSED'], default: 'OPEN' },
     overload_threshold: { type: Number, default: 95 }, // % công suất tối đa
+    amenities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Amenity' }], // Các tiện ích của chi nhánh
     zones: [ZoneSchema], // Nhúng mảng Zones vào Branch
     table_templates: {
       type: [{

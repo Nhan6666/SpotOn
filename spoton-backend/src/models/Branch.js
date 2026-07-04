@@ -21,6 +21,7 @@ const TableSchema = new mongoose.Schema({
 const ZoneSchema = new mongoose.Schema({
   name: { type: String, required: true }, // VD: "Sân vườn", "Tầng 1", "VIP"
   capacity: { type: Number },
+  status: { type: String, enum: ['OPEN', 'CLOSED'], default: 'OPEN' },
   tables: [TableSchema], // Nhúng mảng Tables vào Zone
 });
 

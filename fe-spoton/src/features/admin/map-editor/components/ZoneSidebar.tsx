@@ -50,7 +50,7 @@ export function ZoneSidebar({
   );
 
   return (
-    <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4">
+    <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 self-start sticky top-6">
       {/* Stats */}
       <div className="bg-white/90 backdrop-blur-xl rounded-2xl border border-gray-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
         <div className="flex items-center gap-2 mb-4">

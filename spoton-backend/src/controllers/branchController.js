@@ -48,6 +48,12 @@ const getBranchById = async (req, res) => {
 const createBranch = async (req, res) => {
   try {
     const branch = await Branch.create(req.body);
+
+    // Sync manager
+    if (branch.manager_id) {
+      await User.findByIdAndUpdate(branch.manager_id, { branch_id: branch._id });
+    }
+
     res.status(201).json({ 
       success: true, 
       message: 'Tạo chi nhánh thành công.',
@@ -64,6 +70,11 @@ const createBranch = async (req, res) => {
 // @access Private (ADMIN, MANAGER)
 const updateBranch = async (req, res) => {
   try {
+    const oldBranch = await Branch.findById(req.params.id);
+    if (!oldBranch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+
     // TÍNH NĂNG PHÂN QUYỀN (Tenant-based Access):
     // Nếu là Manager, chỉ được phép sửa chi nhánh mà họ được phân công quản lý
     if (req.user.role === 'MANAGER' && String(req.user.branch_id) !== String(req.params.id)) {
@@ -77,6 +88,16 @@ const updateBranch = async (req, res) => {
       new: true,
       runValidators: true,
     });
+
+    // Sync manager if changed
+    if (req.body.manager_id !== undefined && String(oldBranch.manager_id) !== String(req.body.manager_id)) {
+      if (oldBranch.manager_id) {
+        await User.findByIdAndUpdate(oldBranch.manager_id, { $unset: { branch_id: 1 } });
+      }
+      if (req.body.manager_id) {
+        await User.findByIdAndUpdate(req.body.manager_id, { branch_id: branch._id });
+      }
+    }
 
     if (!branch) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
@@ -165,14 +186,14 @@ const updateTableStatus = async (req, res) => {
 // @access Private (ADMIN, MANAGER)
 const getZonesByBranch = async (req, res) => {
   try {
-    const branch = await Branch.findById(req.params.branchId).select('name zones table_templates');
+    const branch = await Branch.findById(req.params.branchId).select('name address status zones table_templates');
     if (!branch) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
     }
     res.status(200).json({
       success: true,
       message: 'Lấy danh sách khu vực thành công.',
-      data: { branch_name: branch.name, zones: branch.zones, table_templates: branch.table_templates },
+      data: { branch_name: branch.name, branch_address: branch.address, branch_status: branch.status, zones: branch.zones, table_templates: branch.table_templates },
     });
   } catch (error) {
     console.error('Lỗi getZonesByBranch:', error);
@@ -222,7 +243,7 @@ const addZone = async (req, res) => {
 const updateZone = async (req, res) => {
   try {
     const { branchId, zoneId } = req.params;
-    const { name, capacity } = req.body;
+    const { name, capacity, status } = req.body;
 
     const branch = await Branch.findById(branchId);
     if (!branch) {
@@ -245,6 +266,7 @@ const updateZone = async (req, res) => {
       zone.name = name;
     }
     if (capacity !== undefined) zone.capacity = capacity;
+    if (status) zone.status = status;
 
     await branch.save();
     res.status(200).json({
@@ -518,6 +540,48 @@ const updateTableTemplate = async (req, res) => {
   }
 };
 
+const applyTemplate = async (req, res) => {
+  try {
+    const { branchId, zoneId } = req.params;
+    const { templateId } = req.body;
+
+    const branch = await Branch.findById(branchId);
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+
+    const zone = branch.zones.id(zoneId);
+    if (!zone) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy khu vực.' });
+    }
+
+    const MapTemplate = require('../models/MapTemplate');
+    const template = await MapTemplate.findById(templateId);
+    if (!template) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy sơ đồ mẫu.' });
+    }
+
+    if (template.zones.length === 0) {
+      return res.status(400).json({ success: false, message: 'Sơ đồ mẫu không có dữ liệu bàn.' });
+    }
+
+    // Replace branch zone tables with template's first zone tables
+    const templateTables = template.zones[0].tables;
+    zone.tables = templateTables;
+    
+    await branch.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Áp dụng sơ đồ mẫu thành công.',
+      data: zone.tables
+    });
+  } catch (error) {
+    console.error('Lỗi applyTemplate:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
 module.exports = {
   getAllBranches,
   getBranchById,
@@ -534,4 +598,5 @@ module.exports = {
   deleteTable,
   bulkUpdateTablesLayout,
   updateTableTemplate,
+  applyTemplate,
 };

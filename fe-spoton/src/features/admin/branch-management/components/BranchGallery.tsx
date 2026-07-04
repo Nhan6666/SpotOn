@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Search, Filter, MoreHorizontal, Edit2, Trash2, MapPin, Clock, LayoutGrid } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, Edit2, Trash2, MapPin, Clock, LayoutGrid, MonitorPlay, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Input } from '@/components/ui/Input';

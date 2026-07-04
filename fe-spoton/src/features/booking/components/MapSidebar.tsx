@@ -4,21 +4,23 @@ import { CapacityFilter } from '../types';
 
 interface MapSidebarProps {
   branchId: string;
+  branchName?: string;
+  branchAddress?: string;
   selectedCapacity: CapacityFilter;
   onCapacitySelect: (capacity: CapacityFilter) => void;
   liveOccupancy: number;
 }
 
-export function MapSidebar({ branchId, selectedCapacity, onCapacitySelect, liveOccupancy }: MapSidebarProps) {
-  // Hardcoded for demo, normally fetched via branchId
+export function MapSidebar({ branchId, branchName, branchAddress, selectedCapacity, onCapacitySelect, liveOccupancy }: MapSidebarProps) {
   const branchInfo = {
-    name: "SpotOn Quận 1 - Bến Nghé",
-    address: "123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM"
+    name: branchName || "SpotOn Chi nhánh",
+    address: branchAddress || "Đang tải địa chỉ..."
   };
 
   const capacityOptions: { value: CapacityFilter; label: string; details: string }[] = [
     { value: 2, label: "2 NGƯỜI", details: "60×60 cm / 70×70 cm" },
     { value: 4, label: "4 NGƯỜI", details: "120×80 cm / 110×110 cm" },
+    { value: 6, label: "6 NGƯỜI", details: "160×80 cm / 140×140 cm" },
     { value: 8, label: "8 NGƯỜI", details: "200×100 cm / Ø 160 cm" }
   ];
 

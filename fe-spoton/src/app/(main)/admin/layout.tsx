@@ -11,14 +11,13 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-1 w-full overflow-hidden bg-gray-50 h-screen">
+    <div className="flex flex-1 w-full overflow-hidden bg-gray-50">
       {/* Sidebar */}
       <AdminSidebar />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <AdminHeader />
+        {/* Page Content */}
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto relative">

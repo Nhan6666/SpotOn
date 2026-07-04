@@ -1,4 +1,5 @@
 import React from 'react';
+import { TABLE_STATUS_CONFIG, TableStatus } from '../../admin/map-editor/map-editor.types';
 
 export interface TableData {
   id: string;
@@ -7,8 +8,10 @@ export interface TableData {
   width: number;
   height: number;
   capacity: number;
-  status: 'AVAILABLE' | 'RESERVED';
+  status: TableStatus;
   shape: 'RECTANGLE' | 'CIRCLE';
+  table_number?: string;
+  image_url?: string | null;
 }
 
 interface TableShapeProps {
@@ -16,44 +19,45 @@ interface TableShapeProps {
   isSelected: boolean;
   isDisabled: boolean;
   onSelect: (id: string) => void;
+  allowAllStatuses?: boolean;
 }
 
-export function TableShape({ table, isSelected, isDisabled, onSelect }: TableShapeProps) {
+export function TableShape({ table, isSelected, isDisabled, onSelect, allowAllStatuses }: TableShapeProps) {
   // Determine colors based on status and selection
   let bgColor = '';
   let borderColor = '';
   let shadow = '';
 
+  const config = TABLE_STATUS_CONFIG[table.status] || TABLE_STATUS_CONFIG.EMPTY;
+
   if (isSelected) {
-    bgColor = 'bg-red-500';
-    borderColor = 'border-red-600';
-    shadow = 'shadow-[0_0_15px_rgba(239,68,68,0.5)]';
+    bgColor = 'bg-red-100';
+    borderColor = 'border-red-500';
+    shadow = 'shadow-[0_0_15px_rgba(239,68,68,0.5)] z-20';
   } else if (isDisabled) {
-    bgColor = 'bg-gray-200';
-    borderColor = 'border-gray-300';
+    bgColor = 'bg-gray-100';
+    borderColor = 'border-gray-200';
     shadow = '';
-  } else if (table.status === 'RESERVED') {
-    bgColor = 'bg-purple-500';
-    borderColor = 'border-purple-600';
-    shadow = 'shadow-sm';
   } else {
-    // AVAILABLE
-    bgColor = 'bg-blue-500 hover:bg-blue-400';
-    borderColor = 'border-blue-600';
-    shadow = 'hover:shadow-md';
+    bgColor = config.bg;
+    borderColor = config.border;
+    shadow = table.status === 'EMPTY' ? 'hover:shadow-md' : 'shadow-sm';
   }
 
   // Common styles
-  const baseClasses = `absolute cursor-pointer border-2 transition-all duration-200 ${bgColor} ${borderColor} ${shadow}`;
+  const isImage = !!table.image_url;
+  const baseClasses = `absolute cursor-pointer transition-all duration-200 ${isImage ? 'bg-transparent border-transparent' : `border-2 ${bgColor} ${borderColor}`} ${shadow}`;
   const shapeClasses = table.shape === 'CIRCLE' ? 'rounded-full' : 'rounded-lg';
   const disabledClasses = isDisabled ? 'opacity-50 cursor-not-allowed' : '';
 
   // Calculate chairs (dots around the table)
   // Just a simple visual representation
   const renderChairs = () => {
+    if (table.image_url) return null; // Don't render CSS chairs if we have a table image
+
     const chairs = [];
-    const chairSize = 12; // px
-    const chairOffset = -8; // px outside the table
+    const chairSize = 8; // px
+    const chairOffset = -5; // px outside the table
 
     if (table.shape === 'RECTANGLE') {
       let topCount = 0;
@@ -108,11 +112,10 @@ export function TableShape({ table, isSelected, isDisabled, onSelect }: TableSha
       }
     }
 
-    // Color the chairs based on the table status (for simplicity, we just use lighter versions of table color)
     let chairBg = 'bg-blue-300';
-    if (isSelected) chairBg = 'bg-red-300';
-    else if (isDisabled) chairBg = 'bg-gray-300';
-    else if (table.status === 'RESERVED') chairBg = 'bg-purple-300';
+    if (isSelected) chairBg = 'bg-red-400';
+    else if (isDisabled) chairBg = 'bg-gray-200';
+    else chairBg = config.border.replace('border-', 'bg-');
 
     return chairs.map((chair: any) => React.cloneElement(chair, { className: `${chair.props.className.replace('bg-blue-300', chairBg)}` }));
   };
@@ -129,15 +132,29 @@ export function TableShape({ table, isSelected, isDisabled, onSelect }: TableSha
       }}
       onClick={(e) => {
         e.stopPropagation();
-        if (!isDisabled && table.status === 'AVAILABLE') {
+        if (!isDisabled && (allowAllStatuses || table.status === 'EMPTY')) {
           onSelect(table.id);
         }
       }}
       title={`Bàn ${table.id} - ${table.capacity} người`}
     >
       {renderChairs()}
-      {/* Table number inside */}
-      <span className="text-white font-bold text-sm z-10">{table.id}</span>
+      {table.image_url ? (
+        <>
+          <img 
+            src={table.image_url} 
+            alt={`Bàn ${table.table_number || table.id}`} 
+            className={`w-full h-full object-contain pointer-events-none p-1 ${shapeClasses}`}
+            draggable={false}
+          />
+          <div className={`absolute inset-0 border-4 ${borderColor} ${shapeClasses} pointer-events-none opacity-80`} />
+          <span className="absolute bg-white/90 px-2 py-0.5 rounded shadow-sm text-gray-800 font-bold text-xs z-10">
+            {table.table_number || table.id}
+          </span>
+        </>
+      ) : (
+        <span className="text-white font-bold text-sm z-10">{table.table_number || table.id}</span>
+      )}
     </div>
   );
 }

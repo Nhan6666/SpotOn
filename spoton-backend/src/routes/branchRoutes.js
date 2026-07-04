@@ -16,6 +16,7 @@ const {
   deleteTable,
   bulkUpdateTablesLayout,
   updateTableTemplate,
+  applyTemplate,
 } = require('../controllers/branchController');
 
 // Import bảo mật vào route
@@ -94,6 +95,16 @@ router.put(
   protect,
   authorize('ADMIN', 'MANAGER'),
   updateTableTemplate
+);
+
+// =============================================
+// IMPORT TEMPLATE
+// =============================================
+router.post(
+  '/:branchId/zones/:zoneId/apply-template',
+  protect,
+  authorize('ADMIN', 'MANAGER'),
+  applyTemplate
 );
 
 module.exports = router;

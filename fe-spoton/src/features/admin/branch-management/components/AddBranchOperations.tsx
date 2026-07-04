@@ -6,12 +6,13 @@ import { Switch } from '@/components/ui/Switch';
 export interface AddBranchOperationsProps {
   formData: any;
   updateFormData: (fields: any) => void;
+  disabled?: boolean;
 }
 
-export function AddBranchOperations({ formData, updateFormData }: AddBranchOperationsProps) {
+export function AddBranchOperations({ formData, updateFormData, disabled }: AddBranchOperationsProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sm:p-8">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Operational Rules</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-6">{disabled ? 'Quy định hoạt động' : 'Operational Rules'}</h2>
       
       <div className="space-y-10">
 
@@ -114,6 +115,7 @@ export function AddBranchOperations({ formData, updateFormData }: AddBranchOpera
               checked={formData.status !== 'CLOSED'} 
               onChange={(e) => updateFormData({ status: e.target.checked ? 'OPEN' : 'CLOSED' })} 
               label={formData.status === 'CLOSED' ? 'Closed / Opening Soon' : 'Open / Accepting Orders'}
+              disabled={!disabled}
             />
           </div>
         </div>

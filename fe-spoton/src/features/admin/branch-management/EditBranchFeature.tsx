@@ -19,11 +19,23 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
 
   const [formData, setFormData] = useState({
     name: "",
-    address: "",
+    address: {
+      full: "",
+      city: "Cần Thơ",
+      district: "",
+      ward: "",
+      street: ""
+    },
+    location: {
+      type: "Point",
+      coordinates: [105.783, 10.033]
+    },
     hotline: "",
     manager_id: "",
-    open_time: "09:00",
-    close_time: "22:00",
+    service_periods: {
+      lunch: { start: '08:00', end: '13:00', last_booking: '12:00', last_order: '12:30' },
+      dinner: { start: '15:00', end: '23:00', last_booking: '22:00', last_order: '22:30' }
+    },
     status: "OPEN" as "OPEN" | "FULL" | "CLOSED",
     overload_threshold: 85,
   });
@@ -39,15 +51,22 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
           const b = result.data;
           setFormData({
             name: b.name || "",
-            address: b.address || "",
+            address: b.address || {
+              full: "", city: "Cần Thơ", district: "", ward: "", street: ""
+            },
+            location: b.location || {
+              type: "Point", coordinates: [105.783, 10.033]
+            },
             hotline: b.hotline || "",
             // manager_id có thể là object (sau populate) hoặc string (ObjectId)
             manager_id:
               typeof b.manager_id === "object" && b.manager_id
                 ? b.manager_id._id
                 : b.manager_id || "",
-            open_time: b.open_time || "09:00",
-            close_time: b.close_time || "22:00",
+            service_periods: b.service_periods || {
+              lunch: { start: '08:00', end: '13:00', last_booking: '12:00', last_order: '12:30' },
+              dinner: { start: '15:00', end: '23:00', last_booking: '22:00', last_order: '22:30' }
+            },
             status: b.status || "OPEN",
             overload_threshold: b.overload_threshold || 85,
           });
@@ -67,8 +86,8 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
   };
 
   const handleUpdate = async () => {
-    if (!formData.name || !formData.address) {
-      showError("Name and Address are required!");
+    if (!formData.name || !formData.address.full) {
+      showError("Name and Full Address are required!");
       return;
     }
 

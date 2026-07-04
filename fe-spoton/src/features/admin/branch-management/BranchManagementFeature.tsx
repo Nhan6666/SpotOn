@@ -15,8 +15,8 @@ export function BranchManagementFeature() {
     <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Branch Management</h1>
-          <p className="text-gray-500 mt-1 text-sm md:text-base">Monitor capacity, manage operations, and oversee regional branches.</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Danh sách Chi nhánh</h1>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">Quản lý tất cả thông tin và trạng thái hoạt động của chi nhánh.</p>
         </div>
         <div className="flex gap-3 w-full md:w-auto">
           <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
@@ -36,9 +36,9 @@ export function BranchManagementFeature() {
             </button>
           </div>
           <Link href="/admin/branches/new" className="flex-1 md:flex-none">
-            <Button variant="primary" size="lg" className="w-full shadow-sm">
-              <Plus className="w-5 h-5 mr-2" />
-              Add New Branch
+            <Button variant="primary" size="lg" className="w-full shadow-sm bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold border-0">
+              <Plus className="w-5 h-5 mr-2 font-bold" />
+              Thêm chi nhánh mới
             </Button>
           </Link>
         </div>

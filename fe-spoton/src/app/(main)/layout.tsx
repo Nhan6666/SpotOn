@@ -11,12 +11,14 @@ export default function MainLayout({
 }>) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
+  const isManager = pathname?.startsWith('/manager');
+  const hasOwnLayout = isAdmin || isManager;
 
   return (
     <>
-      {!isAdmin && <Navbar />}
+      {!hasOwnLayout && <Navbar />}
       <div className="flex-1 w-full">{children}</div>
-      {!isAdmin && <Footer />}
+      {!hasOwnLayout && <Footer />}
     </>
   );
 }

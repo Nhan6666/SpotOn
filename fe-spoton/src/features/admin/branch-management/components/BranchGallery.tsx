@@ -10,18 +10,22 @@ import { Badge } from '@/components/ui/Badge';
 import { Dropdown, DropdownItem } from '@/components/ui/Dropdown';
 import { useBranchContext } from '../branch-management.context';
 import { DeactivateBranchModal } from './DeactivateBranchModal';
+import { ViewBranchDetailsModal } from './ViewBranchDetailsModal';
 
 export function BranchGallery() {
   const { branches, isLoading } = useBranchContext();
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<{ id: string; name: string } | null>(null);
+  const [viewBranch, setViewBranch] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
   const filteredBranches = branches.filter(branch => {
+    const addressStr = typeof branch.address === 'object' ? branch.address.full : branch.address;
     const matchesSearch = 
       branch.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      branch.address.toLowerCase().includes(searchQuery.toLowerCase());
+      (addressStr || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "ALL" || branch.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -34,26 +38,53 @@ export function BranchGallery() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'OPEN':
-        return <Badge variant="success" className="bg-green-100 text-green-700"><span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>Open</Badge>;
+        return (
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-green-100 rounded-full text-green-700 text-[13px] font-bold shadow-sm backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
+            Open
+          </div>
+        );
       case 'FULL':
-        return <Badge variant="danger" className="bg-red-50 text-red-700"><span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>Full</Badge>;
+        return (
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-red-100 rounded-full text-red-700 text-[13px] font-bold shadow-sm backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
+            Full
+          </div>
+        );
       case 'CLOSED':
-        return <Badge variant="default" className="bg-gray-100 text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5"></span>Closed</Badge>;
+        return (
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-100/90 rounded-full text-gray-700 text-[13px] font-bold shadow-sm backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
+            Closed
+          </div>
+        );
       case 'SETUP':
-        return <Badge className="bg-yellow-100 text-yellow-700"><span className="w-1.5 h-1.5 rounded-full bg-yellow-500 mr-1.5"></span>Setup</Badge>;
+        return (
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-yellow-100 rounded-full text-yellow-700 text-[13px] font-bold shadow-sm backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
+            Setup
+          </div>
+        );
       default:
         return <Badge>{status}</Badge>;
     }
   };
 
-  const branchImages = [
-    'https://images.unsplash.com/photo-1504674900176-365891b894b7?w=600&h=400&fit=crop',
-    'https://images.unsplash.com/photo-1517457373614-b7152f800fd1?w=600&h=400&fit=crop',
-    'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=600&h=400&fit=crop',
-    'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=400&fit=crop',
-  ];
+  const getOperatingHours = (branch: any) => {
+    if (branch.status === 'SETUP') return 'N/A';
+    if (branch.service_periods) {
+      return `${branch.service_periods.lunch?.start || '08:00'} - ${branch.service_periods.dinner?.end || '23:00'}`;
+    }
+    return `${branch.open_time || '08:00'} - ${branch.close_time || '23:00'}`;
+  };
 
-  const getImageUrl = (index: number) => branchImages[index % branchImages.length];
+  const DEFAULT_IMAGE = 'https://placehold.co/600x400/f3f4f6/a1a1aa?text=No+Image';
+  const getImageUrl = (branch: any) => {
+    if (branch.images && Array.isArray(branch.images) && branch.images.length > 0 && branch.images[0]) {
+      return branch.images[0];
+    }
+    return DEFAULT_IMAGE;
+  };
 
   return (
     <>
@@ -94,47 +125,53 @@ export function BranchGallery() {
             {filteredBranches.map((branch, index) => (
               <div key={branch._id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow group">
                 {/* Image Container */}
-                <div className="relative h-48 w-full overflow-hidden bg-gray-100">
+                <div className="relative h-56 w-full overflow-hidden bg-gray-100">
                   <img
-                    src={getImageUrl(index)}
+                    src={getImageUrl(branch)}
                     alt={branch.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== DEFAULT_IMAGE) {
+                        target.src = DEFAULT_IMAGE;
+                      }
+                    }}
                   />
                   
                   {/* Overlay Badge */}
-                  <div className="absolute top-3 right-3">
+                  <div className="absolute top-4 right-4 z-10">
                     {getStatusBadge(branch.status)}
                   </div>
 
                   {/* Capacity Overlay */}
                   {branch.status !== 'SETUP' && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-white">Capacity</span>
-                        <div className="flex-1 bg-white/30 rounded-full h-1.5 overflow-hidden">
+                    <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 flex items-end">
+                      <div className="flex items-center gap-3 w-full">
+                        <span className="text-sm font-bold text-white drop-shadow-md">Capacity</span>
+                        <div className="flex-1 bg-white/20 rounded-full h-1.5 overflow-hidden backdrop-blur-sm">
                           <div 
-                            className={`h-full ${(branch.current_capacity_percent || 0) > branch.overload_threshold ? 'bg-red-400' : 'bg-green-400'}`}
+                            className={`h-full ${(branch.current_capacity_percent || 0) > branch.overload_threshold ? 'bg-red-500' : 'bg-white'}`}
                             style={{ width: `${branch.current_capacity_percent || 0}%` }}
                           ></div>
                         </div>
-                        <span className="text-xs font-bold text-white">{branch.current_capacity_percent || 0}%</span>
+                        <span className="text-sm font-bold text-white drop-shadow-md">{branch.current_capacity_percent || 0}%</span>
                       </div>
                     </div>
                   )}
                 </div>
 
                 {/* Content */}
-                <div className="p-5 space-y-4">
+                <div className="p-6 space-y-5">
                   {/* Header */}
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-900 text-lg line-clamp-2">{branch.name}</h3>
+                      <h3 className="font-extrabold text-gray-900 text-2xl line-clamp-1">{branch.name}</h3>
                     </div>
                     <Dropdown 
                       align="right"
                       trigger={
-                        <button className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors">
-                          <MoreHorizontal className="w-5 h-5" />
+                        <button className="text-gray-400 hover:text-gray-700 p-1 -mr-2 rounded-md hover:bg-gray-100 transition-colors">
+                          <MoreHorizontal className="w-6 h-6" />
                         </button>
                       }
                     >
@@ -163,40 +200,45 @@ export function BranchGallery() {
                   </div>
 
                   {/* Address */}
-                  <div className="flex items-start gap-2 text-sm">
-                    <MapPin className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-gray-600 line-clamp-2">{branch.address}</p>
+                  <div className="flex items-start gap-3 text-sm">
+                    <MapPin className="w-5 h-5 text-amber-500 flex-shrink-0" strokeWidth={1.5} />
+                    <p className="text-gray-600 line-clamp-1 font-medium">{typeof branch.address === 'object' ? branch.address.district : branch.address}</p>
                   </div>
 
                   {/* Hours */}
                   {branch.status !== 'SETUP' && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <p className="text-gray-600 font-medium">{branch.open_time} - {branch.close_time}</p>
+                    <div className="flex items-center gap-3 text-sm">
+                      <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+                      <p className="text-gray-700 font-bold">{getOperatingHours(branch)}</p>
                     </div>
                   )}
 
+                  <div className="w-full h-px bg-gray-100/80 my-2"></div>
+
                   {/* Manager */}
-                  <div className="pt-2 border-t border-gray-100">
-                    <p className="text-xs text-gray-500">Manager</p>
-                    <p className="font-medium text-gray-900">
+                  <div>
+                    <p className="text-[13px] text-gray-500 mb-1">Manager</p>
+                    <p className="font-bold text-gray-900 text-lg">
                       {branch.manager_id && typeof branch.manager_id === 'object' && branch.manager_id.full_name 
                         ? branch.manager_id.full_name 
-                        : <span className="text-gray-400 italic">Unassigned</span>
+                        : <span className="text-gray-400 italic font-medium">Unassigned</span>
                       }
                     </p>
                   </div>
 
                   {/* View Details Button */}
-                  <div className="flex gap-2">
-                    <Link href={`/admin/branches/${branch._id}/edit`} className="flex-1">
-                      <Button variant="outline" size="md" className="w-full text-amber-700 border-amber-200 hover:bg-amber-50">
-                        View Details
-                      </Button>
-                    </Link>
+                  <div className="flex gap-3 pt-2">
+                    <Button 
+                      variant="outline" 
+                      size="md" 
+                      className="flex-1 text-gray-700 border-gray-200 hover:bg-gray-50 font-bold"
+                      onClick={() => { setViewBranch(branch); setDetailsModalOpen(true); }}
+                    >
+                      View Details
+                    </Button>
                     <Link href={`/admin/branches/${branch._id}/map-editor`}>
-                      <Button variant="outline" size="md" className="text-blue-600 border-blue-200 hover:bg-blue-50" title="Floor Plan">
-                        <LayoutGrid className="w-4 h-4" />
+                      <Button variant="outline" size="md" className="text-gray-600 border-gray-200 hover:bg-gray-50 px-3" title="Floor Plan">
+                        <LayoutGrid className="w-5 h-5" strokeWidth={1.5} />
                       </Button>
                     </Link>
                   </div>
@@ -219,6 +261,12 @@ export function BranchGallery() {
           branchName={selectedBranch.name}
         />
       )}
+
+      <ViewBranchDetailsModal 
+        isOpen={detailsModalOpen} 
+        onClose={() => setDetailsModalOpen(false)} 
+        branch={viewBranch} 
+      />
     </>
   );
 }

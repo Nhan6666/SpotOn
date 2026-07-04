@@ -16,11 +16,14 @@ export interface Branch {
   name: string;
   address: string;
   hotline: string;
-  open_time: string;
-  close_time: string;
+  service_periods: {
+    lunch: { start: string; end: string; last_booking: string; last_order: string; };
+    dinner: { start: string; end: string; last_booking: string; last_order: string; };
+  };
   status: 'OPEN' | 'FULL' | 'CLOSED' | 'SETUP';
   overload_threshold: number;
   manager_id?: string | { _id: string; full_name: string; email: string };
   current_capacity_percent: number;
+  images?: string[];
   zones?: BranchZone[];
 }

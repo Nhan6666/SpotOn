@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
-const { uploadMenuImage, uploadAvatarImage, uploadTableImage } = require('../controllers/uploadController');
+const { uploadMenuImage, uploadAvatarImage, uploadTableImage, uploadBranchImages } = require('../controllers/uploadController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 // ============================================================
@@ -98,6 +98,26 @@ const uploadTable = multer({
 });
 
 // ============================================================
+// BRANCH IMAGE STORAGE (Cloudinary)
+// ============================================================
+const branchStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: async (req, file) => {
+      const branchId = req.params.id || 'unknown';
+      return `SpotOn/branches/${branchId}`;
+    },
+    allowed_formats: ['jpeg', 'jpg', 'png', 'webp', 'gif'],
+    public_id: (req, file) => `branch_img_${Date.now()}`,
+  },
+});
+
+const uploadBranch = multer({
+  storage: branchStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Max 5MB
+});
+
+// ============================================================
 // ROUTES
 // ============================================================
 
@@ -125,6 +145,15 @@ router.post(
   authorize('ADMIN', 'MANAGER'),
   uploadTable.single('image'),
   uploadTableImage
+);
+
+// PUT /api/v1/uploads/branch/:id — Upload nhiều ảnh chi nhánh (lưu Cloudinary)
+router.put(
+  '/branch/:id',
+  protect,
+  authorize('ADMIN', 'MANAGER'),
+  uploadBranch.array('images', 5), // Tối đa 5 ảnh
+  uploadBranchImages
 );
 
 module.exports = router;

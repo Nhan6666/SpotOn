@@ -15,58 +15,93 @@ export function AddBranchOperations({ formData, updateFormData }: AddBranchOpera
       
       <div className="space-y-10">
 
-        {/* Operating Hours */}
+        {/* Service Periods */}
         <div>
-          <h3 className="text-base font-bold text-gray-900 mb-1">Standard Operating Hours</h3>
-          <p className="text-sm text-gray-500 mb-4">Define the typical baseline schedule for this location.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                Opening Time
-              </label>
-              <Input 
-                type="time" 
-                value={formData.open_time}
-                onChange={(e) => updateFormData({ open_time: e.target.value })}
-                icon={<Clock className="w-4 h-4" />}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                Closing Time
-              </label>
-              <Input 
-                type="time" 
-                value={formData.close_time}
-                onChange={(e) => updateFormData({ close_time: e.target.value })}
-                icon={<Clock className="w-4 h-4" />}
-              />
+          <h3 className="text-base font-bold text-gray-900 mb-1">Service Periods (Ca phục vụ)</h3>
+          <p className="text-sm text-gray-500 mb-6">Thời gian mở cửa và nhận khách cho từng ca. Các mốc thời gian này được tải mặc định từ hệ thống.</p>
+          
+          {/* LUNCH */}
+          <div className="mb-6 p-4 border border-gray-100 rounded-xl bg-gray-50/50">
+            <h4 className="font-bold text-sm text-gray-800 mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+              Ca Trưa (Lunch)
+            </h4>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Giờ mở cửa</label>
+                <Input 
+                  type="time" 
+                  value={formData.service_periods.lunch.start}
+                  onChange={(e) => updateFormData({ service_periods: { ...formData.service_periods, lunch: { ...formData.service_periods.lunch, start: e.target.value } } })}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Đóng cửa</label>
+                <Input 
+                  type="time" 
+                  value={formData.service_periods.lunch.end}
+                  onChange={(e) => updateFormData({ service_periods: { ...formData.service_periods, lunch: { ...formData.service_periods.lunch, end: e.target.value } } })}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Nhận khách cuối</label>
+                <Input 
+                  type="time" 
+                  value={formData.service_periods.lunch.last_booking}
+                  onChange={(e) => updateFormData({ service_periods: { ...formData.service_periods, lunch: { ...formData.service_periods.lunch, last_booking: e.target.value } } })}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Order cuối</label>
+                <Input 
+                  type="time" 
+                  value={formData.service_periods.lunch.last_order}
+                  onChange={(e) => updateFormData({ service_periods: { ...formData.service_periods, lunch: { ...formData.service_periods.lunch, last_order: e.target.value } } })}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Overload Threshold */}
-        <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-base font-bold text-gray-900">Overload Threshold</h3>
-            <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded">
-              {formData.overload_threshold}%
-            </span>
-          </div>
-          <p className="text-sm text-gray-500 mb-6">
-            Alert branch managers when capacity reaches this critical level.
-          </p>
-          <input 
-            type="range" 
-            min="50" 
-            max="100" 
-            value={formData.overload_threshold} 
-            onChange={(e) => updateFormData({ overload_threshold: Number(e.target.value) })}
-            className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
-          />
-          <div className="flex justify-between text-xs font-medium text-gray-500 mt-2">
-            <span>50% (Conservative)</span>
-            <span>100% (Maximum)</span>
+          {/* DINNER */}
+          <div className="p-4 border border-gray-100 rounded-xl bg-gray-50/50">
+            <h4 className="font-bold text-sm text-gray-800 mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+              Ca Tối (Dinner)
+            </h4>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Giờ mở cửa</label>
+                <Input 
+                  type="time" 
+                  value={formData.service_periods.dinner.start}
+                  onChange={(e) => updateFormData({ service_periods: { ...formData.service_periods, dinner: { ...formData.service_periods.dinner, start: e.target.value } } })}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Đóng cửa</label>
+                <Input 
+                  type="time" 
+                  value={formData.service_periods.dinner.end}
+                  onChange={(e) => updateFormData({ service_periods: { ...formData.service_periods, dinner: { ...formData.service_periods.dinner, end: e.target.value } } })}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Nhận khách cuối</label>
+                <Input 
+                  type="time" 
+                  value={formData.service_periods.dinner.last_booking}
+                  onChange={(e) => updateFormData({ service_periods: { ...formData.service_periods, dinner: { ...formData.service_periods.dinner, last_booking: e.target.value } } })}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Order cuối</label>
+                <Input 
+                  type="time" 
+                  value={formData.service_periods.dinner.last_order}
+                  onChange={(e) => updateFormData({ service_periods: { ...formData.service_periods, dinner: { ...formData.service_periods.dinner, last_order: e.target.value } } })}
+                />
+              </div>
+            </div>
           </div>
         </div>
 

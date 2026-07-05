@@ -6,10 +6,17 @@ const {
   getBookingById,
   updateBookingStatus,
   getMyBookings,
+  checkAvailability,
+  holdBooking,
 } = require('../controllers/bookingController');
 
 // MỞ KHÓA MIDDLEWARE
 const { protect, authorize } = require('../middlewares/authMiddleware');
+
+// Public API cho Đặt Bàn
+router.get('/availability', checkAvailability);
+router.post('/hold', holdBooking);
+router.put('/:id/update-info', require('../controllers/bookingController').updateBookingInfo); // Thêm thông tin & chốt món
 
 // GET /api/v1/bookings/my-bookings     -> Booking của chính khách hàng đang login (Customer)
 router.get('/my-bookings', protect, authorize('CUSTOMER'), getMyBookings);

@@ -54,7 +54,7 @@ export function LiveMapFeature({ branchId }: LiveMapFeatureProps) {
     try {
       setIsUpdating(true);
       const res = await updateTableStatus(branchId, selectedZoneId, selectedTableId, newStatus);
-      if (res.success) {
+      if ((res as any).success) {
         // Optimistically update local state
         setZones(prev => prev.map(zone => {
           if (zone._id !== selectedZoneId) return zone;
@@ -84,7 +84,7 @@ export function LiveMapFeature({ branchId }: LiveMapFeatureProps) {
     try {
       setIsUpdating(true);
       const res = await updateZoneStatus(branchId, selectedZoneId, newStatus);
-      if (res.success) {
+      if ((res as any).success) {
         setZones(prev => prev.map(zone => {
           if (zone._id !== selectedZoneId) return zone;
           return { ...zone, status: newStatus };
@@ -102,7 +102,7 @@ export function LiveMapFeature({ branchId }: LiveMapFeatureProps) {
     try {
       setIsUpdating(true);
       const res = await updateBranchStatus(branchId, newStatus);
-      if (res.success) {
+      if ((res as any).success) {
         setBranchStatus(newStatus);
       }
     } catch (err) {

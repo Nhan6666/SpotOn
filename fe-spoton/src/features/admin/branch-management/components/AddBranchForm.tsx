@@ -18,6 +18,7 @@ export interface AddBranchFormProps {
 
 export function AddBranchForm({ formData, updateFormData, currentBranchId, disabled }: AddBranchFormProps) {
   const [managers, setManagers] = useState<{ label: string; value: string }[]>([]);
+  const [amenityList, setAmenityList] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchManagers = async () => {
@@ -42,7 +43,21 @@ export function AddBranchForm({ formData, updateFormData, currentBranchId, disab
         // Silently ignore if user API not available yet
       }
     };
+
+    const fetchAmenities = async () => {
+      try {
+        const res = await fetch('/api/v1/amenities');
+        const result = await res.json();
+        if (result.success && result.data.length > 0) {
+          setAmenityList(result.data);
+        }
+      } catch {
+        console.error('Failed to fetch amenities');
+      }
+    };
+
     fetchManagers();
+    fetchAmenities();
   }, []);
 
   if (disabled) {
@@ -88,6 +103,23 @@ export function AddBranchForm({ formData, updateFormData, currentBranchId, disab
                <UserCircle className="w-5 h-5 text-amber-500" />
                {managers.find(m => m.value === formData.manager_id)?.label || "Chưa phân công"}
              </span>
+           </div>
+
+           <div className="flex flex-col gap-2.5 md:col-span-2 pt-4 border-t border-gray-100/80">
+             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tiện ích chi nhánh</span>
+             <div className="flex flex-wrap gap-2">
+               {formData.amenities && formData.amenities.length > 0 ? (
+                 amenityList
+                   .filter(a => formData.amenities.includes(a._id))
+                   .map(amenity => (
+                     <span key={amenity._id} className="bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium px-2.5 py-1 rounded">
+                       {amenity.name}
+                     </span>
+                   ))
+               ) : (
+                 <span className="text-sm text-gray-500 italic">Không có tiện ích nào</span>
+               )}
+             </div>
            </div>
         </div>
       </div>
@@ -213,6 +245,51 @@ export function AddBranchForm({ formData, updateFormData, currentBranchId, disab
             disabled={disabled}
           />
           <p className="text-xs text-gray-500 mt-1.5">Only accounts with Manager role will appear here.</p>
+        </div>
+
+        {/* Amenities Selection */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Tiện ích chi nhánh
+          </label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {amenityList.map((amenity) => {
+              const isChecked = formData.amenities?.includes(amenity._id) || false;
+              
+              return (
+                <label 
+                  key={amenity._id} 
+                  className={`flex items-center p-3 rounded-lg border cursor-pointer transition-colors ${
+                    isChecked ? 'border-amber-500 bg-amber-50/50' : 'border-gray-200 hover:bg-gray-50'
+                  } ${disabled ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                    checked={isChecked}
+                    disabled={disabled}
+                    onChange={(e) => {
+                      if (disabled) return;
+                      const currentAmenities = formData.amenities || [];
+                      if (e.target.checked) {
+                        updateFormData({ amenities: [...currentAmenities, amenity._id] });
+                      } else {
+                        updateFormData({ amenities: currentAmenities.filter((id: string) => id !== amenity._id) });
+                      }
+                    }}
+                  />
+                  <div className="ml-3 flex flex-col">
+                    <span className={`text-sm font-medium ${isChecked ? 'text-amber-900' : 'text-gray-700'}`}>
+                      {amenity.name}
+                    </span>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+          {amenityList.length === 0 && (
+            <p className="text-sm text-gray-500 italic">Không có tiện ích nào trong hệ thống.</p>
+          )}
         </div>
       </div>
     </div>

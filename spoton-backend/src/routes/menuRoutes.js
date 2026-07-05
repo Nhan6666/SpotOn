@@ -7,11 +7,17 @@ const {
   deleteMenuItem,
   toggleCoreItem,
   toggleItemVisibility,
+  getPublicBranchMenu
 } = require('../controllers/menuController');
 
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 // ============================================================
+// PUBLIC ROUTES
+// ============================================================
+// GET /api/v1/menus/public/branch/:branchId -> Lấy Menu cho khách hàng xem chi tiết chi nhánh
+router.get('/public/branch/:branchId', getPublicBranchMenu);
+
 // ============================================================
 // ADMIN-ONLY ROUTES (UC-7.3: Master Menu Management)
 // ============================================================

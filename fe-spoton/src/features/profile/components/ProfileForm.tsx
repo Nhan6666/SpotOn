@@ -130,15 +130,15 @@ export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
               <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
               <Input
                 {...register('full_name')}
-                error={errors.full_name?.message}
               />
+              {errors.full_name?.message && <p className="text-red-500 text-xs mt-1">{errors.full_name.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
               <Input
                 {...register('phone')}
-                error={errors.phone?.message}
               />
+              {errors.phone?.message && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
             </div>
           </form>
         </div>

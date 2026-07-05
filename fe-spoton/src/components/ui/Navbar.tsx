@@ -48,11 +48,11 @@ export function Navbar() {
         return (
           <>
             <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Hồ sơ cá nhân</Link>
-            <Link href="/manager/branches" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Chi nhánh của tôi</Link>
+            <Link href="/manager/branch" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Chi nhánh của tôi</Link>
             {user?.branch_id && (
               <>
-                <Link href={`/manager/branches/${user.branch_id}/live-map`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Vận Hành (Live Map)</Link>
-                <Link href={`/manager/branches/${user.branch_id}/map-editor`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Sơ Đồ Bàn</Link>
+                <Link href="/manager/branch/map-editor" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Vận Hành (Live Map)</Link>
+                <Link href="/manager/branch/map-editor" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Sơ Đồ Bàn</Link>
               </>
             )}
             <Link href="/manager/menu" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Cập nhật Thực đơn</Link>
@@ -83,21 +83,21 @@ export function Navbar() {
   };
 
   const isOldDefaultAvatar = user?.avatar === 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg';
-  const avatarSrc = user?.avatar && user.avatar.trim() !== "" && !isOldDefaultAvatar 
-    ? user.avatar 
+  const avatarSrc = user?.avatar && user.avatar.trim() !== "" && !isOldDefaultAvatar
+    ? user.avatar
     : `https://ui-avatars.com/api/?name=${getInitials(user?.full_name)}&background=f59e0b&color=fff&length=1`;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-100 shadow-sm transition-all duration-300">
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-        
+
         {/* === Logo === */}
         <Link href="/" className="flex items-center">
-          <Image 
-            src={logoImg} 
-            alt="SpotOn Logo" 
+          <Image
+            src={logoImg}
+            alt="SpotOn Logo"
             className="h-16 w-auto object-contain"
-            priority 
+            priority
           />
         </Link>
 
@@ -119,24 +119,24 @@ export function Navbar() {
 
         {/* === Right Actions === */}
         <div className="flex items-center gap-4 sm:gap-6">
-          
+
           {/* Thanh tìm kiếm */}
           <div className="hidden lg:flex items-center bg-gray-50 rounded-full px-4 py-2 border border-gray-100">
             <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             <input type="text" placeholder="Tìm kiếm..." className="bg-transparent border-none outline-none text-sm w-32" />
           </div>
-        
+
 
           {/* Logic Phân Quyền: Nếu đã đăng nhập thì hiện Avatar Menu, chưa thì hiện Nút Đăng Nhập */}
           {isAuthenticated ? (
             <div className="relative" ref={dropdownRef}>
-              <button 
+              <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="flex items-center gap-2 focus:outline-none"
               >
-                <img 
-                  src={avatarSrc} 
-                  alt="Avatar" 
+                <img
+                  src={avatarSrc}
+                  alt="Avatar"
                   referrerPolicy="no-referrer"
                   className="w-10 h-10 rounded-full border-2 border-amber-500 object-cover shadow-sm"
                 />
@@ -157,7 +157,7 @@ export function Navbar() {
                   <div className="h-px bg-gray-100 my-1"></div>
 
                   {/* Logout Button */}
-                  <button 
+                  <button
                     onClick={() => {
                       setIsDropdownOpen(false);
                       logout();

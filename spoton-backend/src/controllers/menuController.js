@@ -443,6 +443,135 @@ const toggleItemVisibility = async (req, res) => {
   }
 };
 
+// ============================================================
+// @desc   Lấy Menu của Chi nhánh dành cho Khách hàng (Public)
+// @route  GET /api/v1/menus/public/:branchId
+// @access Public
+// ============================================================
+const getPublicBranchMenu = async (req, res) => {
+  try {
+    const branchId = req.params.branchId;
+
+    // 1. Lấy Local Menu
+    const localMenus = await Menu.find({ branch_id: branchId }).lean();
+    
+    // 2. Lấy toàn bộ Master Menu
+    const masterMenus = await Menu.find({ branch_id: null }).lean();
+
+    const categoryMap = new Map();
+
+    // Map Master Menus
+    masterMenus.forEach(menu => {
+      const items = menu.items.map(item => {
+        // Tìm override cho chi nhánh này
+        const override = item.branch_overrides?.find(o => String(o.branch_id) === String(branchId));
+        return {
+          _id: item._id,
+          name: item.name,
+          description: item.description,
+          price: item.base_price,
+          image: item.image_url,
+          is_available: override && override.is_available !== undefined ? override.is_available : false,
+          quantity: override && override.quantity !== undefined ? override.quantity : 0,
+        };
+      });
+
+      if (!categoryMap.has(menu.category_name)) {
+        categoryMap.set(menu.category_name, {
+          name: menu.category_name,
+          items: []
+        });
+      }
+      categoryMap.get(menu.category_name).items.push(...items);
+    });
+
+    // Map Local Menus
+    localMenus.forEach(menu => {
+      const items = menu.items.map(item => ({
+        _id: item._id,
+        name: item.name,
+        description: item.description,
+        price: item.base_price,
+        image: item.image_url,
+        is_available: item.is_available !== undefined ? item.is_available : true,
+        quantity: item.quantity !== undefined ? item.quantity : 0,
+      }));
+      
+      if (!categoryMap.has(menu.category_name)) {
+        categoryMap.set(menu.category_name, {
+          name: menu.category_name,
+          items: []
+        });
+      }
+      categoryMap.get(menu.category_name).items.push(...items);
+    });
+
+    const combinedCategories = Array.from(categoryMap.values()).filter(c => c.items.length > 0);
+
+    res.status(200).json({
+      success: true,
+      message: 'Lấy Menu chi nhánh thành công.',
+      data: combinedCategories,
+    });
+  } catch (error) {
+    console.error('Lỗi getPublicBranchMenu:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+// ============================================================
+// @desc   Cập nhật Override cho Master Item (is_available, quantity)
+// @route  PATCH /api/v1/menus/master/:menuId/items/:itemId/override
+// @access Private (MANAGER)
+// ============================================================
+const updateMasterItemOverride = async (req, res) => {
+  try {
+    const branchId = req.user.branch_id;
+    if (!branchId) {
+      return res.status(403).json({ success: false, message: 'Tài khoản chưa được gán chi nhánh.' });
+    }
+
+    const { is_available, quantity } = req.body;
+    
+    const menu = await Menu.findOne({ _id: req.params.menuId, branch_id: null });
+    if (!menu) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy danh mục Master.' });
+    }
+
+    const item = menu.items.id(req.params.itemId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy món ăn Master.' });
+    }
+
+    // Find override
+    let override = item.branch_overrides.find(o => String(o.branch_id) === String(branchId));
+    if (!override) {
+      // Create new override
+      override = {
+        branch_id: branchId,
+        is_available: is_available !== undefined ? is_available : item.is_available,
+        quantity: quantity !== undefined ? quantity : -1
+      };
+      item.branch_overrides.push(override);
+    } else {
+      // Update existing
+      if (is_available !== undefined) override.is_available = is_available;
+      if (quantity !== undefined) override.quantity = quantity;
+    }
+
+    await menu.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật trạng thái món ăn thành công.',
+      data: override
+    });
+  } catch (error) {
+    console.error('Lỗi updateMasterItemOverride:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
 module.exports = {
   getMasterMenus,
   addMenuItem,
@@ -450,4 +579,5 @@ module.exports = {
   deleteMenuItem,
   toggleCoreItem,
   toggleItemVisibility,
+  getPublicBranchMenu
 };

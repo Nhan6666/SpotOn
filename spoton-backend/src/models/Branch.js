@@ -6,7 +6,7 @@ const TableSchema = new mongoose.Schema({
   capacity: { type: Number, required: true },
   status: {
     type: String,
-    enum: ['EMPTY', 'HOLDING', 'LOCKED', 'RESERVED', 'OCCUPIED', 'CLEANING'],
+    enum: ['EMPTY', 'HOLDING', 'LOCKED', 'RESERVED', 'OCCUPIED', 'CLEANING', 'MAINTENANCE'],
     default: 'EMPTY',
   },
   x: { type: Number, default: 0 },

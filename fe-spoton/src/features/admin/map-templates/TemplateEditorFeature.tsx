@@ -119,7 +119,7 @@ export function TemplateEditorFeature({ templateId }: TemplateEditorFeatureProps
 
   const handleUpdateTable = async (data: { table_number: string; capacity: number; status?: TableStatus; width?: number; height?: number; shape?: string }) => {
     if (!selectedZoneId || !tableModal.tableId) return;
-    const res = await updateTableApi(templateId, selectedZoneId, tableModal.tableId, data);
+    const res = await updateTableApi(templateId, selectedZoneId, tableModal.tableId, data as any);
     if (res.success) {
       success("Cập nhật bàn thành công!");
       await loadZones();

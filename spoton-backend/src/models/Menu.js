@@ -19,6 +19,11 @@ const MenuItemSchema = new mongoose.Schema({
     default: 'ACTIVE',
   },
   branches: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Branch' }], // Chi nhánh áp dụng
+  branch_overrides: [{
+    branch_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch' },
+    is_available: { type: Boolean },
+    quantity: { type: Number, default: -1 } // -1 = Unlimited
+  }]
 });
 
 // Pre-save hook: ensure base_price is synced with price

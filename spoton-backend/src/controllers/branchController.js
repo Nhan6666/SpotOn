@@ -27,7 +27,9 @@ const getAllBranches = async (req, res) => {
 // @access Public
 const getBranchById = async (req, res) => {
   try {
-    const branch = await Branch.findById(req.params.id).populate('manager_id', 'full_name email phone');
+    const branch = await Branch.findById(req.params.id)
+      .populate('manager_id', 'full_name email phone')
+      .populate('amenities');
     if (!branch) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
     }

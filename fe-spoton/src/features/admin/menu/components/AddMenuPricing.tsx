@@ -268,7 +268,7 @@ export function AddMenuPricing({
                     <h3 className="text-[14px] font-bold text-gray-900 line-clamp-1" title={branch.name}>{branch.name}</h3>
                     <div className="flex items-center gap-1.5 mt-1">
                       <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${branch.status === 'OPEN' ? 'bg-emerald-500' : branch.status === 'CLOSED' ? 'bg-red-500' : 'bg-gray-400'}`}></div>
-                      <span className="text-[12px] font-medium text-gray-500 line-clamp-1" title={branch.address}>{branch.address || branch.status}</span>
+                      <span className="text-[12px] font-medium text-gray-500 line-clamp-1" title={typeof branch.address === 'object' ? branch.address.full : branch.address}>{typeof branch.address === 'object' ? branch.address.district : branch.address || branch.status}</span>
                     </div>
                   </div>
                   {isSelected && (

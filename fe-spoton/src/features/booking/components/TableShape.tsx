@@ -46,7 +46,8 @@ export function TableShape({ table, isSelected, isDisabled, onSelect, allowAllSt
 
   // Common styles
   const isImage = !!table.image_url;
-  const baseClasses = `absolute cursor-pointer transition-all duration-200 ${isImage ? 'bg-transparent border-transparent' : `border-2 ${bgColor} ${borderColor}`} ${shadow}`;
+  const extraClass = config.extraClass || '';
+  const baseClasses = `absolute cursor-pointer transition-all duration-200 ${isImage ? 'bg-transparent border-transparent' : `border-2 ${bgColor} ${borderColor}`} ${shadow} ${extraClass}`;
   const shapeClasses = table.shape === 'CIRCLE' ? 'rounded-full' : 'rounded-lg';
   const disabledClasses = isDisabled ? 'opacity-50 cursor-not-allowed' : '';
 

@@ -139,13 +139,13 @@ export function ManagerBookingsFeature() {
 
   const getTableColor = (status: string) => {
     switch (status) {
-      case 'EMPTY': return 'bg-emerald-50 border-emerald-200 text-emerald-900'; // Xanh ngọc nhạt (Trống)
-      case 'HOLDING': return 'bg-gray-200 border-gray-300 text-gray-500 opacity-60 cursor-not-allowed'; // Xám mờ (Đang giữ)
-      case 'RESERVED': return 'bg-gray-200 border-gray-300 text-gray-500 opacity-60 cursor-not-allowed'; // Xám mờ (Đã đặt)
-      case 'OCCUPIED': return 'bg-gray-200 border-gray-300 text-gray-500 opacity-60 cursor-not-allowed'; // Xám mờ (Đang dùng)
-      case 'CLEANING': return 'bg-gray-200 border-gray-300 text-gray-500 opacity-60 cursor-not-allowed'; // Xám mờ (Dọn dẹp)
-      case 'MAINTENANCE': return 'bg-gray-200 border-gray-300 text-gray-500 opacity-60 cursor-not-allowed line-through'; // Xám mờ (Bảo trì)
-      default: return 'bg-emerald-50 border-emerald-200 text-emerald-900';
+      case 'EMPTY': return 'bg-emerald-100 border-emerald-400 text-emerald-700'; // Xanh lá
+      case 'HOLDING': return 'bg-gray-200 border-gray-400 text-gray-700 opacity-80 cursor-not-allowed'; // Xám mờ
+      case 'RESERVED': return 'bg-blue-100 border-blue-400 text-blue-700'; // Xanh nước biển
+      case 'OCCUPIED': return 'bg-red-100 border-red-400 text-red-700'; // Đỏ
+      case 'CLEANING': return 'bg-yellow-100 border-yellow-400 text-yellow-700'; // Vàng
+      case 'MAINTENANCE': return 'bg-gray-800 border-black text-gray-100 line-through opacity-80 cursor-not-allowed'; // Đen
+      default: return 'bg-emerald-100 border-emerald-400 text-emerald-700';
     }
   };
 
@@ -184,8 +184,12 @@ export function ManagerBookingsFeature() {
         {/* Legend */}
         <div className="w-64 shrink-0 bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-fit space-y-3">
           <h3 className="font-semibold text-gray-800 text-sm mb-4">Chú giải trạng thái</h3>
-          <div className="flex items-center gap-3"><div className="w-4 h-4 rounded bg-emerald-50 border border-emerald-200"></div><span className="text-sm">Trống (Sẵn sàng)</span></div>
-          <div className="flex items-center gap-3"><div className="w-4 h-4 rounded bg-gray-200 border border-gray-300 opacity-60"></div><span className="text-sm">Đã bận / Đang giữ</span></div>
+          <div className="flex items-center gap-3"><div className="w-4 h-4 rounded bg-emerald-100 border border-emerald-400"></div><span className="text-sm">Trống (Sẵn sàng)</span></div>
+          <div className="flex items-center gap-3"><div className="w-4 h-4 rounded bg-gray-200 border border-gray-400 opacity-80"></div><span className="text-sm">Khách đang đặt</span></div>
+          <div className="flex items-center gap-3"><div className="w-4 h-4 rounded bg-blue-100 border border-blue-400"></div><span className="text-sm">Đã đặt trước</span></div>
+          <div className="flex items-center gap-3"><div className="w-4 h-4 rounded bg-red-100 border border-red-400"></div><span className="text-sm">Đang có khách</span></div>
+          <div className="flex items-center gap-3"><div className="w-4 h-4 rounded bg-yellow-100 border border-yellow-400"></div><span className="text-sm">Đang dọn dẹp</span></div>
+          <div className="flex items-center gap-3"><div className="w-4 h-4 rounded bg-gray-800 border border-black"></div><span className="text-sm">Bảo trì</span></div>
         </div>
 
         {/* Map */}

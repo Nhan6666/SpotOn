@@ -101,6 +101,10 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Error Handler Middleware
+const errorHandler = require('./middlewares/errorHandler');
+app.use(errorHandler);
+
 // =============================================
 // CHẠY SERVER & SOCKET.IO
 // =============================================

@@ -4,6 +4,7 @@
 // ============================================================
 const Booking = require('../models/Booking');
 const Branch = require('../models/Branch');
+const asyncHandler = require('../utils/asyncHandler');
 
 // Helper function
 const timeToMinutes = (timeStr) => {
@@ -181,192 +182,80 @@ const getMyBookings = async (req, res) => {
 // @desc   Kiểm tra bàn trống
 // @route  GET /api/v1/bookings/availability
 // @access Public
-const checkAvailability = async (req, res) => {
-  try {
-    const { branch_id, date, time } = req.query; // date: YYYY-MM-DD, time: "HH:MM"
+const checkAvailability = asyncHandler(async (req, res) => {
+  const { branch_id, date, time } = req.query; // date: YYYY-MM-DD, time: "HH:MM"
 
-    if (!branch_id || !date || !time) {
-      return res.status(400).json({ success: false, message: 'Thiếu tham số bắt buộc (branch_id, date, time).' });
-    }
-
-    const branch = await Branch.findById(branch_id);
-    if (!branch) {
-      return res.status(404).json({ success: false, message: 'Chi nhánh không tồn tại.' });
-    }
-
-    const targetMinutes = timeToMinutes(time);
-    const { lunch, dinner } = branch.service_periods || {};
-
-    let shift = null;
-    let shiftEnd = null;
-
-    // Check if time is in Lunch shift
-    if (lunch && lunch.start && lunch.end) {
-      const startMins = timeToMinutes(lunch.start);
-      const endMins = timeToMinutes(lunch.end);
-      if (targetMinutes >= startMins && targetMinutes <= endMins) {
-        shift = 'LUNCH';
-        shiftEnd = endMins;
-      }
-    }
-
-    // Check if time is in Dinner shift
-    if (!shift && dinner && dinner.start && dinner.end) {
-      const startMins = timeToMinutes(dinner.start);
-      const endMins = timeToMinutes(dinner.end);
-      if (targetMinutes >= startMins && targetMinutes <= endMins) {
-        shift = 'DINNER';
-        shiftEnd = endMins;
-      }
-    }
-
-    if (!shift) {
-      return res.status(400).json({ success: false, message: 'Thời gian chọn không nằm trong ca hoạt động của nhà hàng.' });
-    }
-
-    // Rule: Cannot book if within 2 hours of closing time (120 minutes)
-    if (shiftEnd - targetMinutes < 120) {
-      return res.status(400).json({ success: false, message: 'Giờ đến phải cách giờ đóng cửa ca ít nhất 2 tiếng.' });
-    }
-
-    const targetDate = new Date(date);
-    targetDate.setHours(0, 0, 0, 0);
-    const nextDate = new Date(targetDate);
-    nextDate.setDate(nextDate.getDate() + 1);
-
-    // Tìm các bàn đang được giữ hoặc đã xác nhận trong cùng ca + ngày
-    const existingBookings = await Booking.find({
-      branch_id,
-      shift,
-      reservation_date: { $gte: targetDate, $lt: nextDate },
-      $or: [
-        { status: { $in: ['PENDING_PAYMENT', 'PENDING_DEPOSIT', 'CONFIRMED'] } },
-        { status: 'HOLDING', expires_at: { $gt: new Date() } }
-      ]
-    });
-
-    const bookedTableIds = [];
-    existingBookings.forEach(b => {
-      if (b.table_ids && b.table_ids.length > 0) {
-        bookedTableIds.push(...b.table_ids.map(id => id.toString()));
-      }
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Lấy trạng thái bàn thành công.',
-      data: {
-        shift,
-        booked_table_ids: [...new Set(bookedTableIds)]
-      }
-    });
-
-  } catch (error) {
-    console.error('Lỗi checkAvailability:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  if (!branch_id || !date || !time) {
+    const err = new Error('Thiếu tham số bắt buộc (branch_id, date, time).');
+    err.statusCode = 400;
+    throw err;
   }
-};
+
+  const shift = await require('../services/bookingService').validateAndGetShift(branch_id, time);
+
+  const targetDate = new Date(date);
+  targetDate.setHours(0, 0, 0, 0);
+  const nextDate = new Date(targetDate);
+  nextDate.setDate(nextDate.getDate() + 1);
+
+  // Tìm các bàn đang được giữ hoặc đã xác nhận trong cùng ca + ngày
+  const existingBookings = await Booking.find({
+    branch_id,
+    shift,
+    reservation_date: { $gte: targetDate, $lt: nextDate },
+    $or: [
+      { status: { $in: ['PENDING_PAYMENT', 'PENDING_DEPOSIT', 'CONFIRMED', 'OCCUPIED', 'RESERVED'] } },
+      { status: 'HOLDING', expires_at: { $gt: new Date() } }
+    ]
+  });
+
+  const bookedTableIds = [];
+  existingBookings.forEach(b => {
+    if (b.table_ids && b.table_ids.length > 0) {
+      bookedTableIds.push(...b.table_ids.map(id => id.toString()));
+    }
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Lấy trạng thái bàn thành công.',
+    data: {
+      shift,
+      booked_table_ids: [...new Set(bookedTableIds)]
+    }
+  });
+});
 
 // @desc   Giữ bàn tạm thời (Hold)
 // @route  POST /api/v1/bookings/hold
 // @access Private
-const holdBooking = async (req, res) => {
-  try {
-    const { branch_id, date, time, table_ids, guest_count } = req.body;
+const holdBooking = asyncHandler(async (req, res) => {
+  const { branch_id, date, time, table_ids } = req.body;
 
-    if (!branch_id || !date || !time || !table_ids || table_ids.length === 0) {
-      return res.status(400).json({ success: false, message: 'Thiếu thông tin đặt bàn (branch, date, time, tables).' });
-    }
-
-    const branch = await Branch.findById(branch_id);
-    if (!branch) {
-      return res.status(404).json({ success: false, message: 'Chi nhánh không tồn tại.' });
-    }
-
-    const targetMinutes = timeToMinutes(time);
-    const { lunch, dinner } = branch.service_periods || {};
-
-    let shift = null;
-    let shiftEnd = null;
-
-    if (lunch && lunch.start && lunch.end) {
-      const startMins = timeToMinutes(lunch.start);
-      const endMins = timeToMinutes(lunch.end);
-      if (targetMinutes >= startMins && targetMinutes <= endMins) {
-        shift = 'LUNCH';
-        shiftEnd = endMins;
-      }
-    }
-    if (!shift && dinner && dinner.start && dinner.end) {
-      const startMins = timeToMinutes(dinner.start);
-      const endMins = timeToMinutes(dinner.end);
-      if (targetMinutes >= startMins && targetMinutes <= endMins) {
-        shift = 'DINNER';
-        shiftEnd = endMins;
-      }
-    }
-
-    if (!shift) {
-      return res.status(400).json({ success: false, message: 'Thời gian chọn không nằm trong ca hoạt động.' });
-    }
-    if (shiftEnd - targetMinutes < 120) {
-      return res.status(400).json({ success: false, message: 'Giờ đến phải cách giờ đóng cửa ca ít nhất 2 tiếng.' });
-    }
-
-    const targetDate = new Date(date);
-    targetDate.setHours(0, 0, 0, 0);
-    const nextDate = new Date(targetDate);
-    nextDate.setDate(nextDate.getDate() + 1);
-
-    // Khóa bi quan (Optimistic check): Tìm xem có booking nào chùng bàn vừa được hold không
-    const conflictingBookings = await Booking.find({
-      branch_id,
-      shift,
-      reservation_date: { $gte: targetDate, $lt: nextDate },
-      table_ids: { $in: table_ids },
-      $or: [
-        { status: { $in: ['PENDING_PAYMENT', 'PENDING_DEPOSIT', 'CONFIRMED'] } },
-        { status: 'HOLDING', expires_at: { $gt: new Date() } }
-      ]
-    });
-
-    if (conflictingBookings.length > 0) {
-      console.log('Conflicting bookings found:', conflictingBookings);
-      return res.status(409).json({ success: false, message: 'Có bàn đã được khách khác chọn. Vui lòng chọn bàn khác.' });
-    }
-
-    // Tạo booking nháp
-    const newBooking = await Booking.create({
-      branch_id,
-      customer_id: req.user ? req.user._id : null, // Gán user_id nếu có
-      reservation_date: date,
-      arrival_time: time,
-      shift,
-      guest_count: guest_count || 1,
-      table_ids,
-      status: 'HOLDING',
-      expires_at: new Date(Date.now() + 10 * 60000) // 10 phút đếm ngược
-    });
-
-    // Phát event qua WebSocket để cập nhật Real-time (User & Manager & Waiter)
-    const io = require('../socket').getIO();
-    io.to(`branch_${branch_id}`).emit('table_status_changed', {
-      action: 'HOLDING',
-      branch_id: branch_id,
-      booking_id: newBooking._id,
-      table_ids: table_ids
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Giữ bàn thành công. Bạn có 10 phút để hoàn tất.',
-      data: newBooking
-    });
-  } catch (error) {
-    console.error('Lỗi holdBooking:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  if (!branch_id || !date || !time || !table_ids || table_ids.length === 0) {
+    const err = new Error('Thiếu thông tin đặt bàn (branch, date, time, tables).');
+    err.statusCode = 400;
+    throw err;
   }
-};
+
+  // Gọi Service xử lý nghiệp vụ phức tạp + Transaction
+  const newBooking = await require('../services/bookingService').holdBookingSafe(req.body, req.user ? req.user._id : null);
+
+  // Phát event qua WebSocket để cập nhật Real-time (User & Manager & Waiter)
+  const io = require('../socket').getIO();
+  io.to(`branch_${branch_id}`).emit('table_status_changed', {
+    action: 'HOLDING',
+    branch_id: branch_id,
+    booking_id: newBooking._id,
+    table_ids: table_ids
+  });
+
+  res.status(201).json({
+    success: true,
+    message: 'Giữ bàn thành công. Bạn có 10 phút để hoàn tất.',
+    data: newBooking
+  });
+});
 
 // @desc   Cập nhật thông tin đặt bàn (Menu Cart, Thông tin KH)
 // @route  PUT /api/v1/bookings/:id/update-info

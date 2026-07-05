@@ -1,4 +1,4 @@
-export type TableStatus = 'EMPTY' | 'HOLDING' | 'LOCKED' | 'RESERVED' | 'OCCUPIED' | 'CLEANING';
+export type TableStatus = 'EMPTY' | 'HOLDING' | 'LOCKED' | 'RESERVED' | 'OCCUPIED' | 'CLEANING' | 'MAINTENANCE';
 
 export type TableShape = 'RECTANGLE' | 'CIRCLE';
 
@@ -47,11 +47,12 @@ export interface SingleResponse<T> {
   data: T;
 }
 
-export const TABLE_STATUS_CONFIG: Record<TableStatus, { label: string; color: string; bg: string; border: string }> = {
-  EMPTY:    { label: 'Trống',      color: 'text-blue-700',   bg: 'bg-blue-100',    border: 'border-blue-400' },
-  HOLDING:  { label: 'Giữ chỗ',   color: 'text-amber-700', bg: 'bg-amber-100',   border: 'border-amber-400' },
-  LOCKED:   { label: 'Chờ cọc',   color: 'text-orange-700', bg: 'bg-orange-100',   border: 'border-orange-400' },
-  RESERVED: { label: 'Đã đặt',    color: 'text-emerald-700',   bg: 'bg-emerald-100',     border: 'border-emerald-400' },
-  OCCUPIED: { label: 'Đang dùng', color: 'text-red-700',    bg: 'bg-red-100',      border: 'border-red-400' },
-  CLEANING: { label: 'Dọn dẹp',   color: 'text-gray-700', bg: 'bg-gray-200',   border: 'border-gray-400' },
+export const TABLE_STATUS_CONFIG: Record<TableStatus, { label: string; color: string; bg: string; border: string; extraClass?: string }> = {
+  EMPTY:       { label: 'Trống',      color: 'text-emerald-700', bg: 'bg-emerald-100', border: 'border-emerald-400' }, // Xanh lá
+  HOLDING:     { label: 'Giữ chỗ',    color: 'text-gray-700',    bg: 'bg-gray-200',    border: 'border-gray-400' }, // Xám
+  LOCKED:      { label: 'Chờ cọc',    color: 'text-gray-700',    bg: 'bg-gray-200',    border: 'border-gray-400' }, // Xám
+  RESERVED:    { label: 'Đã đặt',     color: 'text-blue-700',    bg: 'bg-blue-100',    border: 'border-blue-400' }, // Xanh nước biển
+  OCCUPIED:    { label: 'Đang dùng',  color: 'text-red-700',     bg: 'bg-red-100',     border: 'border-red-400' }, // Đỏ
+  CLEANING:    { label: 'Dọn dẹp',    color: 'text-yellow-700',  bg: 'bg-yellow-100',  border: 'border-yellow-400' }, // Vàng
+  MAINTENANCE: { label: 'Bảo trì',    color: 'text-gray-100',    bg: 'bg-gray-800',    border: 'border-black', extraClass: 'line-through opacity-80' }, // Đen/Gạch chéo
 };

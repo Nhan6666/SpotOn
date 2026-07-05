@@ -38,10 +38,6 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/manager/:path*',
-        destination: '/admin/:path*',
-      },
-      {
         source: '/api/:path*',
         destination: 'http://localhost:5000/api/:path*', // Proxy to Backend
       },

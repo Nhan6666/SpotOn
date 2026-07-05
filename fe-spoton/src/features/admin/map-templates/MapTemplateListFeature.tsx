@@ -106,7 +106,7 @@ export function MapTemplateListFeature() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
           <LayoutGrid className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500 mb-4">Chưa có sơ đồ mẫu nào được tạo.</p>
-          <Button onClick={handleCreate} variant="outline">Tạo Mẫu Đầu Tiên</Button>
+          <Button onClick={handleOpenCreateModal} variant="outline">Tạo Mẫu Đầu Tiên</Button>
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">

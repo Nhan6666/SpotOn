@@ -157,7 +157,8 @@ const login = async (req, res) => {
           email: user.email, 
           full_name: user.full_name, 
           role: user.role,
-          avatar: user.avatar
+          avatar: user.avatar,
+          branch_id: user.branch_id || null
         }
       }
     });
@@ -254,7 +255,8 @@ const googleAuth = async (req, res) => {
           email: user.email, 
           full_name: user.full_name, 
           role: user.role,
-          avatar: user.avatar // Trả về ảnh đại diện nếu có
+          avatar: user.avatar,
+          branch_id: user.branch_id || null
         }
       }
     });

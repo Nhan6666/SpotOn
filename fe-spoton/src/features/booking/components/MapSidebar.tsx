@@ -17,7 +17,7 @@ export function MapSidebar({ branchId, branchName, branchAddress, selectedCapaci
     address: branchAddress || "Đang tải địa chỉ..."
   };
 
-  const capacityOptions: { value: CapacityFilter; label: string; details: string }[] = [
+  const capacityOptions: { value: any; label: string; details: string }[] = [
     { value: 2, label: "2 NGƯỜI", details: "60×60 cm / 70×70 cm" },
     { value: 4, label: "4 NGƯỜI", details: "120×80 cm / 110×110 cm" },
     { value: 6, label: "6 NGƯỜI", details: "160×80 cm / 140×140 cm" },

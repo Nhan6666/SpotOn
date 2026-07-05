@@ -1,22 +1,24 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, LayoutGrid, LayoutList } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { BranchStatsCards } from './components/BranchStatsCards';
 import { BranchList } from './components/BranchList';
+import { BranchGallery } from './components/BranchGallery';
 import { useAuth } from '@/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 
 export function BranchManagementFeature() {
   const { user } = useAuth();
   const router = useRouter();
+  const [viewMode, setViewMode] = useState<'gallery' | 'list'>('list');
 
   // Redirect manager to their specific branch page
   useEffect(() => {
     if (user?.role === 'MANAGER' && user.branch_id) {
-      router.replace(`/manager/branches/${user.branch_id}/edit`);
+      router.replace(`/manager/branch/edit`);
     }
   }, [user, router]);
 
@@ -54,7 +56,7 @@ export function BranchManagementFeature() {
       </div>
 
       <BranchStatsCards />
-      <BranchList />
+      {viewMode === 'list' ? <BranchList /> : <BranchGallery />}
     </div>
   );
 }

@@ -14,7 +14,17 @@ export interface BranchZone {
 export interface Branch {
   _id: string;
   name: string;
-  address: string;
+  address: {
+    full: string;
+    city: string;
+    district: string;
+    ward: string;
+    street: string;
+  };
+  location?: {
+    type: string;
+    coordinates: number[];
+  };
   hotline: string;
   service_periods: {
     lunch: { start: string; end: string; last_booking: string; last_order: string; };

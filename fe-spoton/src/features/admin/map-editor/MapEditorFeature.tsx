@@ -231,7 +231,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
         <div className="flex items-center gap-3">
-          <Link href={user?.role === 'MANAGER' ? '/manager/branches' : '/admin/branches'}>
+          <Link href={user?.role === 'MANAGER' ? '/manager/branch' : '/admin/branches'}>
             <Button variant="outline" size="sm" className="bg-white">
               <ArrowLeft className="w-4 h-4" />
             </Button>

@@ -51,16 +51,19 @@ const BookingSchema = new mongoose.Schema(
     branch_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', required: true },
     reservation_date: { type: Date, required: true },
     arrival_time: { type: String }, // VD: "19:00"
+    shift: { type: String, enum: ['LUNCH', 'DINNER'], required: true }, // Ca đặt bàn
     guest_count: { type: Number, min: 1 },
     status: {
       type: String,
-      enum: ['PENDING_DEPOSIT', 'CONFIRMED', 'CANCELLED', 'NO_SHOW', 'COMPLETED'],
-      default: 'PENDING_DEPOSIT',
+      enum: ['HOLDING', 'PENDING_PAYMENT', 'PENDING_DEPOSIT', 'CONFIRMED', 'CANCELLED', 'NO_SHOW', 'COMPLETED'],
+      default: 'HOLDING',
     },
+    expires_at: { type: Date, index: { expires: 0 } }, // TTL index: MongoDB sẽ tự xóa hoặc kích hoạt sự kiện khi hết hạn (chỉ dùng cho HOLDING)
     cancellation_reason: { type: String },
     note: { type: String },
 
     // Dữ liệu nhúng (Embedded)
+    table_ids: [{ type: mongoose.Schema.Types.ObjectId }], // Lưu ID của bàn vật lý
     assigned_tables: [AssignedTableSchema],
     order_items: [OrderItemSchema],
     payment_info: { type: PaymentInfoSchema, default: () => ({}) }, // Object 1-1

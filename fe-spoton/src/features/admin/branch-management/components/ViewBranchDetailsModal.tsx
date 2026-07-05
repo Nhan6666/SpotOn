@@ -171,7 +171,7 @@ export function ViewBranchDetailsModal({ isOpen, onClose, branch }: ViewBranchDe
                 </div>
               ) : (
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                  <p className="text-sm text-gray-600">Giờ hoạt động chung: <span className="font-bold">{branch.open_time} - {branch.close_time}</span></p>
+                  <p className="text-sm text-gray-600">Giờ hoạt động chung: <span className="font-bold">{(branch as any).open_time || '08:00'} - {(branch as any).close_time || '23:00'}</span></p>
                 </div>
               )}
             </div>

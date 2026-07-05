@@ -28,7 +28,13 @@ const menuStorage = new CloudinaryStorage({
       };
       let cat = formatStr(req.body.category || 'other');
       let name = formatStr(req.body.itemName || 'menu_item');
-      return `SpotOn/menu/${cat}/${name}`;
+      let branchName = req.body.branchName ? formatStr(req.body.branchName) : null;
+      
+      if (branchName) {
+        return `SpotOn/${branchName}/menu/${cat}/${name}`;
+      } else {
+        return `SpotOn/menu/${cat}/${name}`;
+      }
     },
     allowed_formats: ['jpeg', 'jpg', 'png', 'webp', 'gif'],
     public_id: (req, file) => {

@@ -138,13 +138,13 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
         </h1>
         {user?.role === 'MANAGER' && (
           <div className="flex items-center gap-3">
-            <Link href={`/manager/branches/${branchId}/map-editor`}>
+            <Link href={`/manager/branch/map-editor`}>
               <Button variant="outline" className="shadow-sm flex items-center gap-2">
                 <Map className="w-4 h-4" />
                 Chỉnh Sửa Sơ Đồ Bàn
               </Button>
             </Link>
-            <Link href={`/manager/branches/${branchId}/live-map`}>
+            <Link href={`/manager/branch/live-map`}>
               <Button variant="primary" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-2">
                 <Power className="w-4 h-4" />
                 Vận Hành (Live Map)

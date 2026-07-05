@@ -19,12 +19,20 @@ export default function ManagerBranchPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-800">Chi nhánh của bạn</h2>
-            <Link
-              href={`/admin/branches/${user.branch_id}/map-editor`}
-              className="px-4 py-2 bg-[#ea580c] text-white rounded-lg text-sm font-medium hover:bg-[#c2410c] transition-colors"
-            >
-              Quản lý Sơ đồ bàn
-            </Link>
+            <div className="flex gap-3">
+              <Link
+                href={`/manager/branch/edit`}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+              >
+                Chỉnh sửa
+              </Link>
+              <Link
+                href={`/manager/branch/map-editor`}
+                className="px-4 py-2 bg-[#ea580c] text-white rounded-lg text-sm font-medium hover:bg-[#c2410c] transition-colors"
+              >
+                Quản lý Sơ đồ bàn
+              </Link>
+            </div>
           </div>
           <p className="text-gray-500 text-sm">Branch ID: <code className="bg-gray-100 px-2 py-0.5 rounded">{user.branch_id}</code></p>
         </div>

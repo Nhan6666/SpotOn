@@ -17,6 +17,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const uploadRoutes   = require('./routes/uploadRoutes');
 const bookingRoutes  = require('./routes/bookingRoutes');
 const mapTemplateRoutes = require('./routes/mapTemplateRoutes');
+const managerMenuRoutes = require('./routes/managerMenuRoutes');
 // const bookingRoutes  = require('./routes/bookingRoutes');
 const voucherRoutes  = require('./routes/voucherRoutes');
 const systemConfigRoutes = require('./routes/systemConfigRoutes');
@@ -66,6 +67,7 @@ app.use('/api/v1/auth',          authRoutes);
 app.use('/api/v1/branches',      branchRoutes);
 app.use('/api/v1/users',         userRoutes);
 app.use('/api/v1/menus',         menuRoutes);
+app.use('/api/v1/manager/menus', managerMenuRoutes);
 app.use('/api/v1/categories',    categoryRoutes);
 app.use('/api/v1/uploads',       uploadRoutes);
 app.use('/api/v1/bookings',      bookingRoutes);
@@ -100,9 +102,27 @@ app.use((err, req, res, next) => {
 });
 
 // =============================================
-// CHẠY SERVER
+// CHẠY SERVER & SOCKET.IO
 // =============================================
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const http = require('http');
+const server = http.createServer(app);
+
+const io = require('./socket').init(server);
+
+io.on('connection', (socket) => {
+  console.log(`🔌 New client connected: ${socket.id}`);
+
+  socket.on('join_branch_room', (branchId) => {
+    socket.join(`branch_${branchId}`);
+    console.log(`Client ${socket.id} joined room: branch_${branchId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`🔌 Client disconnected: ${socket.id}`);
+  });
+});
+
+server.listen(PORT, () => {
   console.log(`🚀 Server running in [${process.env.NODE_ENV || 'development'}] mode on port ${PORT}`);
 });

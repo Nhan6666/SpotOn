@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { AddBranchForm } from "./components/AddBranchForm";
 import { AddBranchOperations } from "./components/AddBranchOperations";
 import { useAuth } from "@/providers/AuthProvider";
-import { Map, Power } from "lucide-react";
+import { Map } from "lucide-react";
 import { useBranchContext } from "./branch-management.context";
 import { useToast } from "@/components/ui/Toast";
 import { useRouter } from "next/navigation";
@@ -41,6 +41,8 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
     },
     status: "OPEN" as "OPEN" | "FULL" | "CLOSED",
     overload_threshold: 85,
+    amenities: [] as string[],
+    description: "",
   });
 
   // Fetch branch data trực tiếp từ API theo branchId
@@ -72,6 +74,8 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
             },
             status: b.status || "OPEN",
             overload_threshold: b.overload_threshold || 85,
+            amenities: b.amenities?.map((a: any) => typeof a === 'string' ? a : a._id) || [],
+            description: b.description || "",
           });
         }
       } catch (error) {
@@ -89,8 +93,8 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
   };
 
   const handleUpdate = async () => {
-    if (!formData.name || !formData.address.full) {
-      showError("Name and Full Address are required!");
+    if (!formData.name || !formData.address.full || !formData.address.district) {
+      showError("Tên chi nhánh, Quận/Huyện và Địa chỉ đầy đủ là bắt buộc!");
       return;
     }
 
@@ -102,10 +106,12 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
     setIsSaving(true);
     try {
       await updateBranch(branchId, formData);
-      success(`Branch "${formData.name}" updated successfully.`);
-      router.push("/admin/branches");
+      success(`Đã cập nhật chi nhánh "${formData.name}" thành công.`);
+      if (user?.role !== 'MANAGER') {
+        router.push("/admin/branches");
+      }
     } catch (error) {
-      showError("Failed to update branch. Please try again.");
+      showError("Lỗi khi cập nhật chi nhánh. Vui lòng thử lại.");
     } finally {
       setIsSaving(false);
     }
@@ -129,25 +135,24 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-          {user?.role === 'MANAGER' ? 'Chi nhánh: ' : 'Edit Branch: '}
-          <span className="font-medium text-gray-600">
-            {formData.name || "Loading..."}
-          </span>
-        </h1>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
+            {user?.role === 'MANAGER' ? 'Chi nhánh: ' : 'Edit Branch: '}
+            <span className="font-medium text-gray-600">
+              {formData.name || "Loading..."}
+            </span>
+          </h1>
+          <p className="text-sm md:text-base text-gray-500 mt-1">
+            Quản lý thông tin và các giới hạn vận hành của chi nhánh.
+          </p>
+        </div>
         {user?.role === 'MANAGER' && (
           <div className="flex items-center gap-3">
             <Link href={`/manager/branch/map-editor`}>
               <Button variant="outline" className="shadow-sm flex items-center gap-2">
                 <Map className="w-4 h-4" />
                 Chỉnh Sửa Sơ Đồ Bàn
-              </Button>
-            </Link>
-            <Link href={`/manager/branch/live-map`}>
-              <Button variant="primary" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-2">
-                <Power className="w-4 h-4" />
-                Vận Hành (Live Map)
               </Button>
             </Link>
           </div>
@@ -164,11 +169,12 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
         <AddBranchOperations
           formData={formData}
           updateFormData={updateFormData}
-          disabled={user?.role === "MANAGER"}
+          disabled={false}
         />
       </div>
 
       <div className="flex justify-end items-center mt-8 pb-12 pt-6 border-t border-gray-200 gap-4">
+        {user?.role !== 'MANAGER' && (
           <Link href="/admin/branches">
             <Button
               variant="outline"
@@ -177,15 +183,16 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
               Hủy
             </Button>
           </Link>
-          <Button
-            variant="primary"
-            className="bg-amber-700 hover:bg-amber-800 text-white border-0"
-            onClick={handleUpdate}
-            disabled={isSaving}
-          >
-            {isSaving ? "Saving..." : "Update Changes"}
-          </Button>
-        </div>
+        )}
+        <Button
+          variant="primary"
+          className="bg-amber-700 hover:bg-amber-800 text-white border-0"
+          onClick={handleUpdate}
+          disabled={isSaving}
+        >
+          {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+        </Button>
+      </div>
     </div>
   );
 }

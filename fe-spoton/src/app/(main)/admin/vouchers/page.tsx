@@ -5,9 +5,5 @@ export const metadata = {
 };
 
 export default function VouchersPage() {
-  return (
-    <div className="p-6">
-      <VouchersFeature />
-    </div>
-  );
+  return <VouchersFeature />;
 }

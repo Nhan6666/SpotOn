@@ -66,6 +66,14 @@ export function ViewBranchDetailsModal({ isOpen, onClose, branch }: ViewBranchDe
         <div className="p-6 overflow-y-auto">
           <div className="space-y-6">
             
+            {/* Description */}
+            {branch.description && (
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Mô tả chi nhánh</p>
+                <p className="text-sm text-gray-700 italic leading-relaxed whitespace-pre-wrap">{branch.description}</p>
+              </div>
+            )}
+            
             {/* Address & Contact */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-start gap-3">
@@ -124,6 +132,9 @@ export function ViewBranchDetailsModal({ isOpen, onClose, branch }: ViewBranchDe
                       </span>
                     </div>
                   )}
+                  <p className="text-[11px] text-gray-500 mt-2">
+                    Cảnh báo khi đạt: <span className="font-bold text-red-500">{branch.overload_threshold}%</span> sức chứa
+                  </p>
                 </div>
               </div>
             </div>

@@ -27,7 +27,7 @@ export function AddBranchOperations({ formData, updateFormData, disabled }: AddB
               <span className="w-2 h-2 rounded-full bg-amber-500"></span>
               Ca Trưa (Lunch)
             </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Giờ mở cửa</label>
                 <Input 
@@ -69,7 +69,7 @@ export function AddBranchOperations({ formData, updateFormData, disabled }: AddB
               <span className="w-2 h-2 rounded-full bg-blue-500"></span>
               Ca Tối (Dinner)
             </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Giờ mở cửa</label>
                 <Input 
@@ -106,16 +106,40 @@ export function AddBranchOperations({ formData, updateFormData, disabled }: AddB
           </div>
         </div>
 
+        {/* Operation Limits */}
+        <div>
+          <h3 className="text-base font-bold text-gray-900 mb-1">Giới hạn vận hành (Operation Limits)</h3>
+          <p className="text-sm text-gray-500 mb-4">Thiết lập các ngưỡng giới hạn để hệ thống tự động chống quá tải (Overbooking).</p>
+          <div className="p-4 border border-gray-100 rounded-xl bg-gray-50/50">
+            <div className="max-w-md">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Ngưỡng quá tải chung (%)
+              </label>
+              <div className="relative">
+                <Input 
+                  type="number" 
+                  min="50" max="100"
+                  value={formData.overload_threshold}
+                  onChange={(e) => updateFormData({ overload_threshold: parseInt(e.target.value) || 85 })}
+                  disabled={disabled}
+                />
+                <span className="absolute right-3 top-2.5 text-gray-500 font-medium">%</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1.5">Hệ thống sẽ báo "Hết bàn" khi sức chứa đạt ngưỡng này.</p>
+            </div>
+          </div>
+        </div>
+
         {/* Status */}
         <div>
-          <h3 className="text-base font-bold text-gray-900 mb-1">Initial Service Status</h3>
-          <p className="text-sm text-gray-500 mb-4">Set the public-facing status for this branch upon creation.</p>
+          <h3 className="text-base font-bold text-gray-900 mb-1">Trạng thái phục vụ ban đầu</h3>
+          <p className="text-sm text-gray-500 mb-4">Thiết lập trạng thái hiển thị của chi nhánh với khách hàng.</p>
           <div className="border border-gray-200 rounded-lg p-4 flex items-center">
             <Switch 
               checked={formData.status !== 'CLOSED'} 
               onChange={(e) => updateFormData({ status: e.target.checked ? 'OPEN' : 'CLOSED' })} 
-              label={formData.status === 'CLOSED' ? 'Closed / Opening Soon' : 'Open / Accepting Orders'}
-              disabled={!disabled}
+              label={formData.status === 'CLOSED' ? 'Đóng cửa / Sắp khai trương' : 'Đang mở / Nhận đặt bàn'}
+              disabled={disabled}
             />
           </div>
         </div>

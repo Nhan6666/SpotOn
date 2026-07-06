@@ -39,6 +39,9 @@ export function AddBranchFeature() {
       dinner: { start: '15:00', end: '23:00', last_booking: '22:00', last_order: '22:30' }
     },
     status: 'OPEN' as const,
+    amenities: [] as string[],
+    description: '',
+    overload_threshold: 85,
   });
 
   useEffect(() => {
@@ -97,6 +100,9 @@ export function AddBranchFeature() {
         dinner: { start: '15:00', end: '23:00', last_booking: '22:00', last_order: '22:30' }
       },
       status: 'OPEN', 
+      amenities: [],
+      description: '',
+      overload_threshold: 85,
     });
   };
 

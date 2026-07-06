@@ -50,8 +50,9 @@ const BranchSchema = new mongoose.Schema(
         dinner: { start: "15:00", end: "23:00", last_booking: "22:00", last_order: "22:30" }
       }
     },
+    description: { type: String, trim: true },
     status: { type: String, enum: ['OPEN', 'FULL', 'CLOSED'], default: 'OPEN' },
-    overload_threshold: { type: Number, default: 95 }, // % công suất tối đa
+    overload_threshold: { type: Number, default: 85 }, // % công suất tối đa
     amenities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Amenity' }], // Các tiện ích của chi nhánh
     zones: [ZoneSchema], // Nhúng mảng Zones vào Branch
     table_templates: {

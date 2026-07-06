@@ -28,7 +28,15 @@ export function LoginFeature() {
     onSuccess: (token, user) => {
       login(token, user);
       setSuccessMessage('Đăng nhập Google thành công! Đang chuyển hướng...');
-      setTimeout(() => router.push('/'), 1000);
+      setTimeout(() => {
+        if (user?.role === 'ADMIN') {
+          router.push('/admin');
+        } else if (user?.role === 'MANAGER') {
+          router.push('/manager/branch');
+        } else {
+          router.push('/');
+        }
+      }, 1000);
     }
   });
 
@@ -82,7 +90,14 @@ export function LoginFeature() {
 
       setSuccessMessage('Đăng nhập thành công! Đang chuyển hướng...');
       setTimeout(() => {
-        router.push('/');
+        const userRole = result.data.user.role;
+        if (userRole === 'ADMIN') {
+          router.push('/admin');
+        } else if (userRole === 'MANAGER') {
+          router.push('/manager/branch');
+        } else {
+          router.push('/');
+        }
       }, 1000);
     } catch (error) {
       if (error instanceof AppError) {

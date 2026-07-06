@@ -11,13 +11,13 @@ import { menuService } from './menu.service';
 
 export function MenuFeature() {
   const { items, categories, pagination, isLoading, fetchMasterMenu } = useMenuContext();
-  const [activeTab, setActiveTab] = useState<MenuCategoryFilter>('All Items');
+  const [activeTab, setActiveTab] = useState<MenuCategoryFilter | 'Tất cả món'>('Tất cả món');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
   // Build dynamic tabs from server categories
   const categoryTabs: MenuCategoryFilter[] = useMemo(() => {
-    const tabs: MenuCategoryFilter[] = ['All Items'];
+    const tabs: MenuCategoryFilter[] = ['Tất cả món'];
     categories.forEach(cat => {
       if (cat.category_name && !tabs.includes(cat.category_name)) {
         tabs.push(cat.category_name);
@@ -31,7 +31,7 @@ export function MenuFeature() {
     fetchMasterMenu({
       page: currentPage,
       limit: 8,
-      category: activeTab === 'All Items' ? '' : activeTab,
+      category: activeTab === 'Tất cả món' ? '' : activeTab,
       search: searchQuery || undefined,
     });
   }, [fetchMasterMenu, currentPage, activeTab, searchQuery]);
@@ -61,17 +61,17 @@ export function MenuFeature() {
   };
 
   return (
-    <div className="p-8 max-w-[1200px] w-full mx-auto">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
       {/* Header section */}
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-[28px] font-bold text-[#0f172a] tracking-tight">Master Menu Management</h1>
-          <p className="text-[15px] text-[#64748b] mt-1">Define core menu items, base prices, and branch override limits.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Quản lý Thực đơn</h1>
+          <p className="text-sm md:text-base text-gray-500 mt-1">Quản lý các món ăn, giá bán và giới hạn giá cho từng chi nhánh.</p>
         </div>
         <Link href="/admin/menu/new">
-          <Button className="bg-[#e67e22] hover:bg-[#d67118] text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
+          <Button className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
             <Plus className="w-5 h-5" strokeWidth={2.5} />
-            Add New Item
+            Thêm món mới
           </Button>
         </Link>
       </div>

@@ -10,7 +10,9 @@ const User = require('../models/User');
 // @access Public
 const getAllBranches = async (req, res) => {
   try {
-    const branches = await Branch.find().populate('manager_id', 'full_name email phone');
+    const branches = await Branch.find()
+      .populate('manager_id', 'full_name email phone')
+      .populate('amenities');
     res.status(200).json({ 
       success: true, 
       message: 'Lấy danh sách chi nhánh thành công.',
@@ -89,7 +91,7 @@ const updateBranch = async (req, res) => {
     const branch = await Branch.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    });
+    }).populate('manager_id', 'full_name email phone');
 
     // Sync manager if changed
     if (req.body.manager_id !== undefined && String(oldBranch.manager_id) !== String(req.body.manager_id)) {
@@ -112,7 +114,7 @@ const updateBranch = async (req, res) => {
     });
   } catch (error) {
     console.error('Lỗi updateBranch:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+    res.status(500).json({ success: false, message: error.message || 'Lỗi server nội bộ.' });
   }
 };
 
@@ -225,7 +227,7 @@ const addZone = async (req, res) => {
     }
 
     branch.zones.push({ name, capacity: capacity || 0, tables: [] });
-    await branch.save();
+    await branch.save({ validateModifiedOnly: true });
 
     const newZone = branch.zones[branch.zones.length - 1];
     res.status(201).json({
@@ -235,13 +237,10 @@ const addZone = async (req, res) => {
     });
   } catch (error) {
     console.error('Lỗi addZone:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+    res.status(500).json({ success: false, message: error.message || 'Lỗi server nội bộ.' });
   }
 };
 
-// @desc   Cập nhật thông tin zone
-// @route  PUT /api/v1/branches/:branchId/zones/:zoneId
-// @access Private (ADMIN, MANAGER)
 const updateZone = async (req, res) => {
   try {
     const { branchId, zoneId } = req.params;
@@ -257,7 +256,6 @@ const updateZone = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy khu vực.' });
     }
 
-    // Kiểm tra trùng tên (trừ chính nó)
     if (name) {
       const duplicateZone = branch.zones.find(
         z => z.name.toLowerCase() === name.toLowerCase() && String(z._id) !== String(zoneId)
@@ -270,7 +268,7 @@ const updateZone = async (req, res) => {
     if (capacity !== undefined) zone.capacity = capacity;
     if (status) zone.status = status;
 
-    await branch.save();
+    await branch.save({ validateModifiedOnly: true });
     res.status(200).json({
       success: true,
       message: 'Cập nhật khu vực thành công.',
@@ -299,9 +297,14 @@ const deleteZone = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy khu vực.' });
     }
 
+    const hasNonEmptyTables = zone.tables.some(table => table.status !== 'EMPTY');
+    if (hasNonEmptyTables) {
+      return res.status(400).json({ success: false, message: 'Không thể xóa khu vực vì có bàn đang sử dụng hoặc đã đặt trước.' });
+    }
+
     const zoneName = zone.name;
     branch.zones.pull(zoneId);
-    await branch.save();
+    await branch.save({ validateModifiedOnly: true });
 
     res.status(200).json({
       success: true,
@@ -357,7 +360,7 @@ const addTable = async (req, res) => {
       shape: shape || 'RECTANGLE',
       image_url: image_url || null
     });
-    await branch.save();
+    await branch.save({ validateModifiedOnly: true });
 
     const newTable = zone.tables[zone.tables.length - 1];
     res.status(201).json({
@@ -413,7 +416,7 @@ const updateTable = async (req, res) => {
     if (shape !== undefined) table.shape = shape;
     if (image_url !== undefined) table.image_url = image_url;
 
-    await branch.save();
+    await branch.save({ validateModifiedOnly: true });
     res.status(200).json({
       success: true,
       message: 'Cập nhật bàn thành công.',
@@ -447,9 +450,13 @@ const deleteTable = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy bàn.' });
     }
 
+    if (table.status !== 'EMPTY') {
+      return res.status(400).json({ success: false, message: 'Không thể xóa bàn đang có khách hoặc đã đặt trước.' });
+    }
+
     const tableNumber = table.table_number;
     zone.tables.pull(tableId);
-    await branch.save();
+    await branch.save({ validateModifiedOnly: true });
 
     res.status(200).json({
       success: true,
@@ -496,7 +503,7 @@ const bulkUpdateTablesLayout = async (req, res) => {
       }
     }
 
-    await branch.save();
+    await branch.save({ validateModifiedOnly: true });
 
     res.status(200).json({
       success: true,
@@ -529,7 +536,7 @@ const updateTableTemplate = async (req, res) => {
 
     // Only update image_url for Option 1
     branch.table_templates[index].image_url = image_url;
-    await branch.save();
+    await branch.save({ validateModifiedOnly: true });
 
     res.status(200).json({
       success: true,
@@ -571,7 +578,7 @@ const applyTemplate = async (req, res) => {
     const templateTables = template.zones[0].tables;
     zone.tables = templateTables;
     
-    await branch.save();
+    await branch.save({ validateModifiedOnly: true });
 
     res.status(200).json({
       success: true,

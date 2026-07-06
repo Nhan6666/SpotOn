@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/providers/AuthProvider';
 import logoImg from '@/assets/images/Logo-SpotOn-2.png';
 
-export function Navbar() {
+export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
   const { isAuthenticated, user, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -47,26 +47,17 @@ export function Navbar() {
       case 'MANAGER':
         return (
           <>
+            <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 font-medium">Về Trang Chủ</Link>
+            <Link href="/manager/branch" className="block px-4 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold border-y border-amber-100">Vào Trang Quản Lý</Link>
             <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Hồ sơ cá nhân</Link>
-            <Link href="/manager/branch" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Chi nhánh của tôi</Link>
-            {user?.branch_id && (
-              <>
-                <Link href="/manager/branch/map-editor" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Vận Hành (Live Map)</Link>
-                <Link href="/manager/branch/map-editor" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Sơ Đồ Bàn</Link>
-              </>
-            )}
-            <Link href="/manager/menu" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Cập nhật Thực đơn</Link>
           </>
         );
       case 'ADMIN':
         return (
           <>
+            <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 font-medium">Về Trang Chủ</Link>
+            <Link href="/admin/branches" className="block px-4 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold border-y border-amber-100">Vào Trang Quản Trị</Link>
             <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Hồ sơ cá nhân</Link>
-            <Link href="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Tổng quan hệ thống</Link>
-            <Link href="/admin/branches" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Quản lý Chi nhánh</Link>
-            <Link href="/admin/staff" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Quản lý Nhân sự</Link>
-            <Link href="/admin/vouchers" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Quản lý Voucher</Link>
-            <Link href="/admin/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Cấu hình</Link>
           </>
         );
       default:
@@ -102,29 +93,33 @@ export function Navbar() {
         </Link>
 
         {/* === Center Nav === */}
-        <nav className="hidden md:flex items-center gap-8">
-          <Link href="/" className="text-sm font-medium text-amber-500 border-b-2 border-amber-500 pb-1">
-            Trang chủ
-          </Link>
-          <Link href="/branches" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
-            Chi nhánh
-          </Link>
-          <Link href="/menus" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
-            Thực đơn
-          </Link>
-          <Link href="/promotions" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
-            Khuyến mãi
-          </Link>
-        </nav>
+        {!isAdmin && (
+          <nav className="hidden md:flex items-center gap-8">
+            <Link href="/" className="text-sm font-medium text-amber-500 border-b-2 border-amber-500 pb-1">
+              Trang chủ
+            </Link>
+            <Link href="/branches" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
+              Chi nhánh
+            </Link>
+            <Link href="/menus" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
+              Thực đơn
+            </Link>
+            <Link href="/promotions" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
+              Khuyến mãi
+            </Link>
+          </nav>
+        )}
 
         {/* === Right Actions === */}
         <div className="flex items-center gap-4 sm:gap-6">
 
           {/* Thanh tìm kiếm */}
-          <div className="hidden lg:flex items-center bg-gray-50 rounded-full px-4 py-2 border border-gray-100">
-            <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            <input type="text" placeholder="Tìm kiếm..." className="bg-transparent border-none outline-none text-sm w-32" />
-          </div>
+          {!isAdmin && (
+            <div className="hidden lg:flex items-center bg-gray-50 rounded-full px-4 py-2 border border-gray-100">
+              <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <input type="text" placeholder="Tìm kiếm..." className="bg-transparent border-none outline-none text-sm w-32" />
+            </div>
+          )}
 
 
           {/* Logic Phân Quyền: Nếu đã đăng nhập thì hiện Avatar Menu, chưa thì hiện Nút Đăng Nhập */}

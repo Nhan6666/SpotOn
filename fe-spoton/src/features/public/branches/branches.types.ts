@@ -29,8 +29,9 @@ export interface PublicBranch {
     lunch?: { start: string; end: string; last_booking: string; last_order: string; };
     dinner?: { start: string; end: string; last_booking: string; last_order: string; };
   };
-  status: 'OPEN' | 'FULL' | 'CLOSED' | 'SETUP';
+  status: 'OPEN' | 'FULL' | 'CLOSED' | 'SETUP' | 'MAINTENANCE';
   current_capacity_percent: number;
   images?: string[];
   zones?: PublicZone[];
+  amenities?: { _id: string; name: string }[] | string[];
 }

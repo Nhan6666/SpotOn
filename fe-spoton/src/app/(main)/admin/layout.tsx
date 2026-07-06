@@ -1,9 +1,9 @@
 import React from 'react';
 import { BranchProvider } from '@/features/admin/branch-management/branch-management.context';
 import { AdminSidebar } from '@/features/admin/shared/components/AdminSidebar';
-import { AdminHeader } from '@/features/admin/shared/components/AdminHeader';
 import { AdminFooter } from '@/features/admin/shared/components/AdminFooter';
 import { AdminClientWrapper } from '@/features/admin/shared/components/AdminClientWrapper';
+import { Navbar } from '@/components/ui/Navbar';
 
 export default function AdminLayout({
   children,
@@ -11,13 +11,16 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-1 w-full overflow-hidden bg-gray-50">
-      {/* Sidebar */}
-      <AdminSidebar />
+    <div className="flex flex-col h-screen w-full bg-gray-50">
+      {/* Header spanning full width */}
+      <Navbar isAdmin={true} />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Page Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <AdminSidebar />
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto relative">
@@ -32,5 +35,6 @@ export default function AdminLayout({
         {/* <AdminFooter /> */}
       </div>
     </div>
+  </div>
   );
 }

@@ -277,6 +277,7 @@ export function TemplateEditorFeature({ templateId }: TemplateEditorFeatureProps
         initialData={tableModal.data}
         mode={tableModal.mode}
         zoneName={selectedZone?.name || ""}
+        isTemplate={true}
       />
 
       {/* Delete Confirm Modal */}

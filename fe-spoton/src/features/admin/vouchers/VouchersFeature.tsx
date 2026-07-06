@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Tag, Loader2, StopCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
 import {
@@ -150,40 +151,39 @@ export default function VouchersFeature() {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-6 md:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Quản lý Khuyến mãi</h1>
-                    <p className="text-slate-500 text-sm mt-1">Tạo và quản lý các mã giảm giá cho nhà hàng</p>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Quản lý Khuyến mãi</h1>
+                    <p className="text-sm md:text-base text-gray-500 mt-1">Tạo và quản lý các mã giảm giá cho nhà hàng</p>
                 </div>
-                <div className="flex gap-3">
-                    <Link
-                        href="/admin/vouchers/add"
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm active:scale-95 cursor-pointer"
-                    >
-                        <Plus size={18} />
-                        <span>Tạo Voucher mới</span>
-                    </Link>
-                </div>
+                <Link
+                    href="/admin/vouchers/add"
+                >
+                    <Button className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
+                        <Plus className="w-5 h-5" strokeWidth={2.5} />
+                        Thêm voucher mới
+                    </Button>
+                </Link>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row items-center gap-4">
-                    <div className="relative flex-1 w-full">
-                        <Search size={18} className="absolute inset-y-0 left-3 my-auto text-slate-400 pointer-events-none" />
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-gray-50/50 rounded-t-xl">
+                    <div className="relative w-full sm:max-w-md">
+                        <Search size={18} className="absolute inset-y-0 left-3 my-auto text-gray-400 pointer-events-none" />
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Tìm mã voucher..."
-                            className="block w-full py-2 pl-10 pr-3 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-slate-500 focus:border-slate-500 placeholder:text-slate-400"
+                            className="block w-full py-2 pl-10 pr-3 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 placeholder:text-gray-400"
                         />
                     </div>
-                    <div className="w-full sm:w-auto shrink-0">
+                    <div className="w-full sm:w-auto shrink-0 flex gap-2">
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="block w-full sm:w-48 py-2 px-3 text-sm text-slate-900 bg-white border border-slate-200 rounded-lg focus:ring-1 focus:ring-slate-500 focus:border-slate-500 cursor-pointer"
+                            className="block w-full sm:w-48 py-2 px-3 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 cursor-pointer"
                         >
                             <option value="all">Tất cả trạng thái</option>
                             <option value="active">Đang phát hành</option>
@@ -197,13 +197,13 @@ export default function VouchersFeature() {
                 <div className="overflow-x-auto min-h-[480px]">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50 text-xs text-slate-500 uppercase font-semibold tracking-wider border-b border-slate-100">
-                                <th className="px-6 py-4">Mã Voucher</th>
-                                <th className="px-6 py-4">Giảm giá</th>
-                                <th className="px-6 py-4">Lượt dùng</th>
-                                <th className="px-6 py-4">Thời gian áp dụng</th>
-                                <th className="px-6 py-4">Trạng thái</th>
-                                <th className="px-6 py-4 text-center">Thao tác</th>
+                            <tr className="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                                <th className="px-6 py-4">MÃ VOUCHER</th>
+                                <th className="px-6 py-4">GIẢM GIÁ</th>
+                                <th className="px-6 py-4">LƯỢT DÙNG</th>
+                                <th className="px-6 py-4">THỜI GIAN ÁP DỤNG</th>
+                                <th className="px-6 py-4">TRẠNG THÁI</th>
+                                <th className="px-6 py-4 text-right">THAO TÁC</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -252,7 +252,7 @@ export default function VouchersFeature() {
                                             <StatusBadge status={status} />
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center justify-center gap-1">
+                                            <div className="flex items-center justify-end gap-1">
                                                 <Link href={`/admin/vouchers/${promo._id}`} className="p-2 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer" title="Chỉnh sửa">
                                                     <Edit size={18} />
                                                 </Link>

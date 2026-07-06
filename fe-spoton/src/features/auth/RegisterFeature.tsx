@@ -128,8 +128,8 @@ export function RegisterFeature() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-white">
-      {/* Left Column - Form */}
+    <div className="flex min-h-screen w-full bg-white flex-row-reverse">
+      {/* Right Column - Form */}
       <div className="flex w-full flex-col justify-center px-8 md:w-1/2 md:px-16 lg:px-24 xl:px-32 relative">
         <div className="mx-auto w-full max-w-md">
 
@@ -293,7 +293,7 @@ export function RegisterFeature() {
         </div>
       </div>
 
-      {/* Right Column - Image & Overlay */}
+      {/* Left Column - Image & Overlay */}
       <div className="relative hidden w-1/2 md:block">
         <Image
           src={bgRegister}

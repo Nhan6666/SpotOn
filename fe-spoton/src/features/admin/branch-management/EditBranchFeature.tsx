@@ -19,6 +19,8 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showCloseWarning, setShowCloseWarning] = useState(false);
+  const [pendingBookingCount, setPendingBookingCount] = useState(0);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -103,6 +105,32 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
       return;
     }
 
+    // UC-6.4: Cảnh báo nếu chuyển sang CLOSED mà vẫn còn đơn chờ
+    if (formData.status === 'CLOSED') {
+      try {
+        const response = await fetch(`/api/v1/bookings?branch_id=${branchId}`);
+        const result = await response.json();
+        if (result.success && result.data) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const pendingBookings = result.data.filter((b: any) => 
+            ['PENDING', 'CONFIRMED'].includes(b.status) && new Date(b.reservation_date || b.created_at) >= today
+          );
+          if (pendingBookings.length > 0) {
+            setPendingBookingCount(pendingBookings.length);
+            setShowCloseWarning(true);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra bookings:", error);
+      }
+    }
+
+    await performUpdate();
+  };
+
+  const performUpdate = async () => {
     setIsSaving(true);
     try {
       await updateBranch(branchId, formData);
@@ -114,6 +142,7 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
       showError("Lỗi khi cập nhật chi nhánh. Vui lòng thử lại.");
     } finally {
       setIsSaving(false);
+      setShowCloseWarning(false);
     }
   };
 
@@ -193,6 +222,22 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
           {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
         </Button>
       </div>
+
+      {/* UC-6.4: Warning Modal */}
+      {showCloseWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Cảnh báo đóng chi nhánh!</h3>
+            <p className="text-gray-600 mb-6">
+              Hiện tại chi nhánh đang có <strong className="text-red-600">{pendingBookingCount}</strong> đơn đặt bàn chưa được xử lý. Bạn có chắc chắn muốn đóng cửa chi nhánh không? Khách hàng sẽ bị ảnh hưởng.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowCloseWarning(false)}>Hủy bỏ</Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={performUpdate}>Đóng chi nhánh</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

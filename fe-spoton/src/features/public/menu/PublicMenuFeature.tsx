@@ -177,7 +177,7 @@ export function PublicMenuFeature() {
                         {/* Fake Badge for visual flair */}
                         {Math.random() > 0.7 && (
                           <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-md shadow-sm">
-                            Best Seller
+                            Bán Chạy
                           </div>
                         )}
                       </div>

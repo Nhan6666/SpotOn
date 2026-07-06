@@ -6,11 +6,11 @@ export function FeaturedBranches() {
     <section className="container mx-auto px-4 py-16 mb-10">
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 font-playfair tracking-tight">Featured Branches</h2>
-          <p className="text-gray-500 text-sm">Discover our top-rated locations for your next event.</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 font-playfair tracking-tight">Chi nhánh Nổi bật</h2>
+          <p className="text-gray-500 text-sm">Khám phá các địa điểm được đánh giá cao nhất cho sự kiện tiếp theo của bạn.</p>
         </div>
         <Link href="/branches" className="text-amber-500 hover:text-amber-600 text-sm font-medium flex items-center transition-colors">
-          View All <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+          Xem tất cả <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
         </Link>
       </div>
 
@@ -32,7 +32,7 @@ export function FeaturedBranches() {
             </div>
             <div className="absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm flex items-center">
                <span className="w-1.5 h-1.5 bg-white rounded-full mr-1.5 animate-pulse"></span>
-               OPEN
+               MỞ CỬA
             </div>
           </div>
           <div className="p-6 flex flex-col justify-between flex-1">
@@ -46,13 +46,13 @@ export function FeaturedBranches() {
                 <div className="text-amber-500 text-sm font-medium">Hotline: 1900-SPOT</div>
               </div>
               <div className="text-right">
-                <span className="text-gray-400 text-xs uppercase block">From</span>
-                <span className="text-lg font-bold text-gray-900">$45<span className="text-sm font-normal text-gray-500">/person</span></span>
+                <span className="text-gray-400 text-xs uppercase block">Từ</span>
+                <span className="text-lg font-bold text-gray-900">$45<span className="text-sm font-normal text-gray-500">/khách</span></span>
               </div>
             </div>
             <div className="flex justify-end mt-4">
               <button className="px-6 py-2 bg-white text-gray-800 border border-gray-200 hover:border-amber-500 hover:text-amber-500 font-medium rounded-full transition-colors shadow-sm">
-                Book Now
+                Đặt ngay
               </button>
             </div>
           </div>
@@ -75,7 +75,7 @@ export function FeaturedBranches() {
                  <span className="text-[10px] font-bold text-gray-800">4.8</span>
               </div>
               <div className="absolute top-3 right-3 bg-red-500 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm">
-                 FULL
+                 HẾT BÀN
               </div>
             </div>
             <div className="p-4 flex flex-col justify-between flex-1">
@@ -88,11 +88,11 @@ export function FeaturedBranches() {
               </div>
               <div className="flex justify-between items-center mt-2">
                 <div>
-                   <span className="text-gray-400 text-[10px] uppercase block leading-none">From</span>
-                   <span className="text-sm font-bold text-gray-900 leading-none">$30<span className="text-[10px] font-normal text-gray-500">/p</span></span>
+                   <span className="text-gray-400 text-[10px] uppercase block leading-none">Từ</span>
+                   <span className="text-sm font-bold text-gray-900 leading-none">$30<span className="text-[10px] font-normal text-gray-500">/kh</span></span>
                 </div>
                 <button className="px-4 py-1.5 bg-gray-100 text-gray-500 hover:bg-gray-200 text-xs font-medium rounded-full transition-colors">
-                  Waitlist
+                  Danh sách chờ
                 </button>
               </div>
             </div>
@@ -114,7 +114,7 @@ export function FeaturedBranches() {
               </div>
               <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm flex items-center">
                  <span className="w-1.5 h-1.5 bg-white rounded-full mr-1 animate-pulse"></span>
-                 OPEN
+                 MỞ CỬA
               </div>
             </div>
             <div className="p-4 flex flex-col justify-between flex-1">
@@ -127,11 +127,11 @@ export function FeaturedBranches() {
               </div>
               <div className="flex justify-between items-center mt-2">
                 <div>
-                   <span className="text-gray-400 text-[10px] uppercase block leading-none">From</span>
-                   <span className="text-sm font-bold text-gray-900 leading-none">$25<span className="text-[10px] font-normal text-gray-500">/p</span></span>
+                   <span className="text-gray-400 text-[10px] uppercase block leading-none">Từ</span>
+                   <span className="text-sm font-bold text-gray-900 leading-none">$25<span className="text-[10px] font-normal text-gray-500">/kh</span></span>
                 </div>
                 <button className="px-4 py-1.5 bg-white text-amber-500 border border-amber-500 hover:bg-amber-50 text-xs font-medium rounded-full transition-colors">
-                  Book
+                  Đặt bàn
                 </button>
               </div>
             </div>

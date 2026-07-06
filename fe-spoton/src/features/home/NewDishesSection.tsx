@@ -92,7 +92,7 @@ export function NewDishesSection() {
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
-                      No Image
+                      Không có ảnh
                     </div>
                   )}
                 </div>

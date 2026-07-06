@@ -24,9 +24,9 @@ export function NewsletterSection() {
             }}
           >
             <div className="text-white">
-              <h2 className="text-xl font-bold mb-1">Subscribe to our Newsletter</h2>
+              <h2 className="text-xl font-bold mb-1">Đăng ký nhận bản tin</h2>
               <p className="text-sm" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                Get the scoop on new offers, weekend outings, &amp; culinary trends.
+                Nhận tin tức về các ưu đãi mới, xu hướng ẩm thực và địa điểm cuối tuần.
               </p>
             </div>
 
@@ -35,7 +35,7 @@ export function NewsletterSection() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                You&apos;re subscribed!
+                Bạn đã đăng ký thành công!
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="flex gap-2 w-full md:w-auto" style={{ maxWidth: 420 }}>
@@ -44,7 +44,7 @@ export function NewsletterSection() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address"
+                  placeholder="Nhập địa chỉ email của bạn"
                   required
                   className="flex-1 px-4 py-3 rounded-xl text-sm"
                   style={{
@@ -57,7 +57,7 @@ export function NewsletterSection() {
                 <button type="submit" id="newsletter-subscribe"
                   className="px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap"
                   style={{ background: '#1a1208', color: '#f0b843' }}>
-                  Subscribe
+                  Đăng ký
                 </button>
               </form>
             )}

@@ -35,7 +35,7 @@ export function MapSidebar({ branchId, branchName, branchAddress, selectedCapaci
         <p className="text-sm text-gray-500 mb-4">{branchInfo.address}</p>
         <div className="flex items-center gap-1.5 text-blue-600 text-sm font-medium">
           <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-          Now Serving
+          Đang phục vụ
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export function MapSidebar({ branchId, branchName, branchAddress, selectedCapaci
       {/* Live Occupancy */}
       <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-bold text-gray-800 text-sm tracking-wide">LIVE OCCUPANCY</h3>
+          <h3 className="font-bold text-gray-800 text-sm tracking-wide">TỈ LỆ LẤP ĐẦY</h3>
           <span className="font-bold text-gray-900">{liveOccupancy}%</span>
         </div>
         <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-2">

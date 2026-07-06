@@ -8,9 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function SettingsPage() {
-  return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
-      <BookingRulesFeature />
-    </div>
-  );
+  return <BookingRulesFeature />;
 }

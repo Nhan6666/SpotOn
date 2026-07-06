@@ -103,16 +103,19 @@ export function AmenitiesFeature() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Branch Amenities</h1>
-          <p className="text-gray-500">Quản lý các tiện ích dịch vụ cho chi nhánh nhà hàng.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Quản lý Tiện ích</h1>
+          <p className="text-sm md:text-base text-gray-500 mt-1">Quản lý các tiện ích dịch vụ cho chi nhánh nhà hàng.</p>
         </div>
-        <Button variant="primary" className="bg-amber-600 hover:bg-amber-700" onClick={() => handleOpenModal()}>
-          <Plus className="w-4 h-4 mr-2" />
+        <button
+          onClick={() => handleOpenModal()}
+          className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
+        >
+          <Plus className="w-5 h-5" strokeWidth={2.5} />
           Thêm Tiện Ích
-        </Button>
+        </button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -123,7 +126,7 @@ export function AmenitiesFeature() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiện ích</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Icon</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biểu tượng</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
               </tr>
@@ -149,7 +152,7 @@ export function AmenitiesFeature() {
                     <Switch
                       checked={amenity.is_active}
                       onChange={() => handleToggleStatus(amenity)}
-                      label={amenity.is_active ? 'Active' : 'Hidden'}
+                      label={amenity.is_active ? 'Hoạt động' : 'Ẩn'}
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -201,7 +204,7 @@ export function AmenitiesFeature() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Lucide Icon Name</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Tên biểu tượng Lucide</label>
                 <Input 
                   value={formData.icon}
                   onChange={e => setFormData(p => ({ ...p, icon: e.target.value }))}

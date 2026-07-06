@@ -119,12 +119,12 @@ export function AddBranchFeature() {
     <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
       {/* Breadcrumbs */}
       <div className="flex items-center text-sm mb-4">
-        <Link href="/admin/branches" className="text-gray-500 hover:text-amber-700 transition-colors">Branch Management</Link>
+        <Link href="/admin/branches" className="text-gray-500 hover:text-amber-700 transition-colors">Quản lý Chi nhánh</Link>
         <span className="mx-2 text-gray-300">/</span>
-        <span className="font-medium text-gray-900">Add New Branch</span>
+        <span className="font-medium text-gray-900">Thêm chi nhánh mới</span>
       </div>
 
-      <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-10">Add New Branch</h1>
+      <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-10">Thêm Chi nhánh mới</h1>
 
       <AddBranchStepper currentStep={currentStep} />
 

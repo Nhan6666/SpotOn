@@ -4,6 +4,7 @@
 // ============================================================
 const Booking = require('../models/Booking');
 const Branch = require('../models/Branch');
+const Notification = require('../models/Notification');
 const asyncHandler = require('../utils/asyncHandler');
 
 // Helper function
@@ -30,7 +31,64 @@ const createBooking = async (req, res) => {
       bookingData.branch_id = req.user.branch_id;
     }
 
+    const branch = await Branch.findById(bookingData.branch_id);
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+
+    // UC-6.1: Check if branch is FULL or CLOSED
+    if (branch.status === 'FULL') {
+      return res.status(400).json({ success: false, message: 'Chi nhánh hiện đang quá tải (Full). Vui lòng chọn chi nhánh khác hoặc thử lại sau.' });
+    }
+    if (branch.status === 'CLOSED') {
+      return res.status(400).json({ success: false, message: 'Chi nhánh hiện đang đóng cửa.' });
+    }
+
     const newBooking = await Booking.create(bookingData);
+
+    // UC-6.1: Check capacity and trigger overload alert
+    if (branch.manager_id && branch.overload_threshold) {
+      // Calculate total capacity
+      const totalCapacity = branch.zones
+        .filter(z => z.status === 'OPEN')
+        .reduce((sum, zone) => sum + (zone.capacity || 0), 0);
+
+      if (totalCapacity > 0) {
+        // Find active bookings today for this branch
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const activeBookings = await Booking.find({
+          branch_id: branch._id,
+          booking_date: { $gte: today, $lt: tomorrow },
+          status: { $in: ['PENDING', 'CONFIRMED', 'SEATED'] }
+        });
+
+        const currentGuests = activeBookings.reduce((sum, b) => sum + (b.guest_count || 0), 0);
+        const currentCapacityPercent = (currentGuests / totalCapacity) * 100;
+
+        if (currentCapacityPercent >= branch.overload_threshold) {
+          // Check if an alert was already sent recently to avoid spam (e.g. in the last hour)
+          const recentAlert = await Notification.findOne({
+            user_id: branch.manager_id,
+            type: 'OVERLOAD_ALERT',
+            created_at: { $gte: new Date(Date.now() - 60 * 60 * 1000) }
+          });
+
+          if (!recentAlert) {
+            await Notification.create({
+              user_id: branch.manager_id,
+              type: 'OVERLOAD_ALERT',
+              title: 'Cảnh báo quá tải chi nhánh!',
+              content: `Chi nhánh ${branch.name} đang đạt mức công suất ${currentCapacityPercent.toFixed(1)}% (vượt ngưỡng ${branch.overload_threshold}%). Vui lòng kiểm tra và xử lý!`
+            });
+            console.log(`[UC-6.1] Overload alert sent to manager of branch ${branch.name}`);
+          }
+        }
+      }
+    }
 
     res.status(201).json({ 
       success: true, 

@@ -170,7 +170,7 @@ export function BranchList() {
                 </Button>
               }
             >
-              <DropdownItem onClick={() => setStatusFilter("ALL")}>All Status</DropdownItem>
+              <DropdownItem onClick={() => setStatusFilter("ALL")}>Tất cả trạng thái</DropdownItem>
               <DropdownItem onClick={() => setStatusFilter("OPEN")}>OPEN</DropdownItem>
               <DropdownItem onClick={() => setStatusFilter("FULL")}>FULL</DropdownItem>
               <DropdownItem onClick={() => setStatusFilter("SETUP")}>SETUP</DropdownItem>
@@ -287,7 +287,7 @@ export function BranchList() {
         {/* Pagination */}
         <div className="flex justify-between items-center px-6 py-4 border-t border-gray-200 rounded-b-xl">
           <div className="text-sm text-gray-500">
-            Showing {filteredBranches.length === 0 ? 0 : startIndex + 1} to {Math.min(startIndex + ITEMS_PER_PAGE, filteredBranches.length)} of {filteredBranches.length} branches
+            Hiển thị {filteredBranches.length === 0 ? 0 : startIndex + 1} đến {Math.min(startIndex + ITEMS_PER_PAGE, filteredBranches.length)} trong số {filteredBranches.length} chi nhánh
           </div>
           <div className="flex gap-2">
             <Button 

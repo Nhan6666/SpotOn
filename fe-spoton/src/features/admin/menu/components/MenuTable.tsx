@@ -134,12 +134,12 @@ export function MenuTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-100 bg-[#f8fafc]">
-              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider w-[35%]">ITEM</th>
-              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">CATEGORY</th>
-              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">BASE PRICE (VND)</th>
-              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">PRICE RANGE (MIN-MAX)</th>
-              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">STATUS</th>
-              <th className="text-right py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">ACTIONS</th>
+              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider w-[35%]">MÓN ĂN</th>
+              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">DANH MỤC</th>
+              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">GIÁ CƠ BẢN (VNĐ)</th>
+              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">KHOẢNG GIÁ (MIN-MAX)</th>
+              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">TRẠNG THÁI</th>
+              <th className="text-right py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">THAO TÁC</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">

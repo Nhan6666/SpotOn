@@ -20,7 +20,7 @@ export interface Branch {
     district: string;
     ward: string;
     street: string;
-  };
+  } | string;
   location?: {
     type: string;
     coordinates: number[];
@@ -34,6 +34,8 @@ export interface Branch {
   overload_threshold: number;
   manager_id?: string | { _id: string; full_name: string; email: string };
   current_capacity_percent: number;
+  amenities?: string[] | any[];
   images?: string[];
+  description?: string;
   zones?: BranchZone[];
 }

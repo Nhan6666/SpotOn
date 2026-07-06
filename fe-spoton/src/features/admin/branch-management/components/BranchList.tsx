@@ -12,7 +12,7 @@ import { ViewBranchDetailsModal } from './ViewBranchDetailsModal';
 import Link from 'next/link';
 
 export function BranchList() {
-  const { branches, isLoading } = useBranchContext();
+  const { branches, isLoading, updateBranch } = useBranchContext();
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<{ id: string; name: string } | null>(null);
@@ -26,9 +26,35 @@ export function BranchList() {
 
   // Compute filtered branches
   const filteredBranches = branches.filter(branch => {
+    const searchLower = searchQuery.toLowerCase();
+    
+    // 1. Mã UI (VD: SP-32B1)
+    const uiCode = `SP-${branch._id.substring(branch._id.length - 4)}`.toLowerCase();
+    
+    // 2. Tên chi nhánh
+    const branchName = (branch.name || '').toLowerCase();
+    
+    // 3. Địa chỉ (kết hợp full, district, city)
+    let addressStr = '';
+    if (typeof branch.address === 'object' && branch.address !== null) {
+      addressStr = `${branch.address.full || ''} ${branch.address.district || ''} ${branch.address.city || ''} ${branch.address.ward || ''}`.toLowerCase();
+    } else if (typeof branch.address === 'string') {
+      addressStr = branch.address.toLowerCase();
+    }
+
+    // 4. Tên quản lý
+    let managerStr = '';
+    if (branch.manager_id && typeof branch.manager_id === 'object' && branch.manager_id.full_name) {
+      managerStr = branch.manager_id.full_name.toLowerCase();
+    }
+
     const matchesSearch = 
-      branch.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      branch._id.toLowerCase().includes(searchQuery.toLowerCase());
+      branchName.includes(searchLower) || 
+      uiCode.includes(searchLower) ||
+      branch._id.toLowerCase().includes(searchLower) || // Giữ lại dự phòng
+      addressStr.includes(searchLower) ||
+      managerStr.includes(searchLower);
+
     const matchesStatus = statusFilter === "ALL" || branch.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -49,6 +75,16 @@ export function BranchList() {
   const handleDeactivateClick = (id: string, name: string) => {
     setSelectedBranch({ id, name });
     setDeactivateModalOpen(true);
+  };
+
+  const handleToggleStatus = async (branch: any) => {
+    try {
+      const newStatus = branch.status === 'OPEN' || branch.status === 'FULL' ? 'CLOSED' : 'OPEN';
+      await updateBranch(branch._id, { status: newStatus });
+    } catch (error) {
+      console.error('Failed to toggle status:', error);
+      alert('Không thể cập nhật trạng thái chi nhánh. Vui lòng thử lại.');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -117,7 +153,7 @@ export function BranchList() {
         <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-gray-50/50 rounded-t-xl">
           <div className="w-full sm:max-w-md">
             <Input 
-              placeholder="Search branch name or ID..." 
+              placeholder="Tìm theo Mã, Tên, Địa chỉ, Quản lý..." 
               icon={<Search className="w-4 h-4" />}
               className="bg-white"
               value={searchQuery}
@@ -146,13 +182,13 @@ export function BranchList() {
         <div className="overflow-visible">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-white border-b border-gray-100 text-[13px] font-semibold text-gray-600">
-                <th className="px-6 py-4 rounded-tl-lg font-semibold">Mã chi nhánh</th>
-                <th className="px-6 py-4 font-semibold">Hình ảnh</th>
-                <th className="px-6 py-4 font-semibold">Thông tin</th>
-                <th className="px-6 py-4 font-semibold">Liên hệ</th>
-                <th className="px-6 py-4 font-semibold text-center">Trạng thái</th>
-                <th className="px-6 py-4 text-center rounded-tr-lg font-semibold">Hành động</th>
+              <tr className="bg-white border-b border-gray-100 text-[11px] uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 rounded-tl-lg font-bold">MÃ CHI NHÁNH</th>
+                <th className="px-6 py-4 font-bold">HÌNH ẢNH</th>
+                <th className="px-6 py-4 font-bold">THÔNG TIN</th>
+                <th className="px-6 py-4 font-bold">LIÊN HỆ</th>
+                <th className="px-6 py-4 font-bold">TRẠNG THÁI</th>
+                <th className="px-6 py-4 rounded-tr-lg font-bold">HÀNH ĐỘNG</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
@@ -207,7 +243,13 @@ export function BranchList() {
                       </div>
                     </td>
                     <td className="px-6 py-6 whitespace-nowrap align-top text-center">
-                      {getStatusBadge(branch.status)}
+                      <div 
+                        onClick={() => handleToggleStatus(branch)} 
+                        className="cursor-pointer hover:opacity-80 transition-opacity inline-block"
+                        title="Nhấn để chuyển đổi trạng thái"
+                      >
+                        {getStatusBadge(branch.status)}
+                      </div>
                     </td>
                     <td className="px-6 py-6 whitespace-nowrap align-top text-center">
                       <div className="flex items-center justify-center gap-4">
@@ -218,9 +260,6 @@ export function BranchList() {
                         >
                           <Eye className="w-5 h-5" />
                         </button>
-                        <Link href={`/admin/branches/${branch._id}/map-editor`} className="text-gray-400 hover:text-blue-600 transition-colors" title="Sơ đồ bàn">
-                          <LayoutGrid className="w-5 h-5" />
-                        </Link>
                         <Link href={`/admin/branches/${branch._id}/edit`} className="text-gray-400 hover:text-amber-600 transition-colors" title="Chỉnh sửa">
                           <Edit2 className="w-5 h-5" />
                         </Link>

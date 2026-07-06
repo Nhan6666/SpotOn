@@ -86,15 +86,15 @@ export function MapTemplateListFeature() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Quản lý Sơ đồ mẫu</h1>
-          <p className="text-gray-500 text-sm">Tạo và chỉnh sửa các sơ đồ để các chi nhánh sử dụng.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Quản lý Sơ đồ mẫu</h1>
+          <p className="text-sm md:text-base text-gray-500 mt-1">Tạo và chỉnh sửa các sơ đồ để các chi nhánh sử dụng.</p>
         </div>
-        <Button onClick={handleOpenCreateModal} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Tạo Sơ đồ Mới
+        <Button onClick={handleOpenCreateModal} className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
+          <Plus className="w-5 h-5" strokeWidth={2.5} />
+          Thêm sơ đồ mới
         </Button>
       </div>
 
@@ -109,15 +109,15 @@ export function MapTemplateListFeature() {
           <Button onClick={handleOpenCreateModal} variant="outline">Tạo Mẫu Đầu Tiên</Button>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tên sơ đồ</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Mô tả</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ngày tạo</th>
-                  <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Hành động</th>
+                  <th scope="col" className="px-6 py-4 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">TÊN SƠ ĐỒ</th>
+                  <th scope="col" className="px-6 py-4 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">MÔ TẢ</th>
+                  <th scope="col" className="px-6 py-4 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">NGÀY TẠO</th>
+                  <th scope="col" className="px-6 py-4 text-right text-[11px] font-bold text-gray-500 uppercase tracking-wider">THAO TÁC</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">

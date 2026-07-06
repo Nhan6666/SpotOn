@@ -14,15 +14,15 @@ interface MenuCategory {
 export function CategoryManagementFeature() {
   const t = (key: string) => {
     const map: Record<string, string> = {
-      'admin.categories.title': 'Quản Lý Danh Mục',
-      'admin.categories.description': 'Thêm, sửa, xóa các danh mục thực đơn của nhà hàng.',
-      'admin.categories.addCategory': 'Thêm Danh Mục',
+      'admin.categories.title': 'Quản lý Danh mục',
+      'admin.categories.description': 'Thêm, sửa, xóa các danh mục thực đơn của hệ thống.',
+      'admin.categories.addCategory': 'Thêm danh mục mới',
       'admin.categories.editCategory': 'Sửa',
       'admin.categories.deleteCategory': 'Xóa',
-      'admin.categories.categoryName': 'Tên danh mục',
+      'admin.categories.categoryName': 'TÊN DANH MỤC',
       'admin.categories.categoryNamePlaceholder': 'VD: Khai vị',
-      'admin.categories.itemCount': 'Số món',
-      'admin.categories.actions': 'Thao tác',
+      'admin.categories.itemCount': 'SỐ MÓN',
+      'admin.categories.actions': 'THAO TÁC',
       'admin.categories.confirmDelete': 'Bạn có chắc chắn muốn xóa danh mục này không?',
       'admin.categories.createSuccess': 'Tạo danh mục thành công',
       'admin.categories.updateSuccess': 'Cập nhật danh mục thành công',
@@ -132,17 +132,17 @@ export function CategoryManagementFeature() {
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-      <div className="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('admin.categories.title')}</h1>
-          <p className="text-sm text-gray-500 mt-1">{t('admin.categories.description')}</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{t('admin.categories.title')}</h1>
+          <p className="text-sm md:text-base text-gray-500 mt-1">{t('admin.categories.description')}</p>
         </div>
         <button
           onClick={() => handleOpenForm()}
-          className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+          className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-5 h-5" strokeWidth={2.5} />
           {t('admin.categories.addCategory')}
         </button>
       </div>
@@ -201,9 +201,9 @@ export function CategoryManagementFeature() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-6 py-4 font-semibold text-gray-600 text-sm">{t('admin.categories.categoryName')}</th>
-                <th className="px-6 py-4 font-semibold text-gray-600 text-sm">{t('admin.categories.itemCount')}</th>
-                <th className="px-6 py-4 font-semibold text-gray-600 text-sm text-right">{t('admin.categories.actions')}</th>
+                <th className="px-6 py-4 font-bold text-gray-500 text-[11px] uppercase tracking-wider">{t('admin.categories.categoryName')}</th>
+                <th className="px-6 py-4 font-bold text-gray-500 text-[11px] uppercase tracking-wider">{t('admin.categories.itemCount')}</th>
+                <th className="px-6 py-4 font-bold text-gray-500 text-[11px] uppercase tracking-wider text-right">{t('admin.categories.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">

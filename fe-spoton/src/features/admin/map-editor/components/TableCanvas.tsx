@@ -42,6 +42,8 @@ export function TableCanvas({
   });
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -60,6 +62,7 @@ export function TableCanvas({
   useEffect(() => {
     const handleGlobalMouseUp = () => {
       setIsDragging(false);
+      setIsPanning(false);
       setDraggedTableId(null);
       setResizingTableId(null);
     };
@@ -121,7 +124,32 @@ export function TableCanvas({
     }
   };
 
+  const handleCanvasMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    
+    // Only pan if clicking directly on canvas or grid lines
+    if (e.target !== canvasRef.current && !(e.target as HTMLElement).classList.contains('pointer-events-none')) {
+      return;
+    }
+
+    setIsPanning(true);
+    setPanStart({
+      x: e.clientX,
+      y: e.clientY,
+      scrollLeft: containerRef.current?.scrollLeft || 0,
+      scrollTop: containerRef.current?.scrollTop || 0,
+    });
+  };
+
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (isPanning && containerRef.current) {
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
+      containerRef.current.scrollLeft = panStart.scrollLeft - dx;
+      containerRef.current.scrollTop = panStart.scrollTop - dy;
+      return;
+    }
+
     if (isDragging && draggedTableId) {
       const canvasRect = canvasRef.current?.getBoundingClientRect();
       if (canvasRect) {
@@ -182,6 +210,7 @@ export function TableCanvas({
 
   const handleMouseUp = () => {
     setIsDragging(false);
+    setIsPanning(false);
     setDraggedTableId(null);
     setResizingTableId(null);
   };
@@ -318,7 +347,10 @@ export function TableCanvas({
 
       {/* Canvas Area */}
       <div className="flex-1 p-6 flex flex-col h-[calc(100vh-140px)]">
-        <div className="relative w-full h-full overflow-auto rounded-2xl border border-gray-200/60 shadow-inner bg-gray-50">
+        <div 
+          ref={containerRef}
+          className="relative w-full h-full overflow-auto rounded-2xl border border-gray-200/60 shadow-inner bg-gray-50"
+        >
           <div
             ref={canvasRef}
             className="relative bg-[#f8fafc] bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] select-none"
@@ -326,8 +358,9 @@ export function TableCanvas({
               width: "2000px",
               height: "2000px",
               backgroundSize: "16px 16px",
-              cursor: isDragging ? "grabbing" : "default",
+              cursor: isPanning ? "grabbing" : (isDragging ? "grabbing" : "grab"),
             }}
+            onMouseDown={handleCanvasMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}

@@ -152,3 +152,87 @@ select:focus {
 .delay-400 {
   animation-delay: 0.4s;
 }
+
+/* ===== REACT-DATEPICKER CUSTOMIZATION ===== */
+.spoton-datepicker-popper {
+  z-index: 50 !important;
+}
+
+.spoton-datepicker-popper .react-datepicker {
+  font-family: var(--font-lexend), sans-serif;
+  border: 1px solid #f3f4f6;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  background-color: white;
+}
+
+.spoton-datepicker-popper .react-datepicker__header {
+  background-color: transparent;
+  border-bottom: none;
+  padding-top: 10px;
+}
+
+.spoton-datepicker-popper .react-datepicker__current-month {
+  color: #1f2937;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.spoton-datepicker-popper .react-datepicker__day-name {
+  color: #6b7280;
+  font-weight: 600;
+  margin: 0.25rem;
+  width: 2rem;
+}
+
+.spoton-datepicker-popper .react-datepicker__day {
+  color: #4b5563;
+  margin: 0.25rem;
+  width: 2rem;
+  line-height: 2rem;
+  border-radius: 50%;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.spoton-datepicker-popper .react-datepicker__day:hover {
+  background-color: #fff7ed;
+  color: #ea580c;
+  border-radius: 50%;
+}
+
+.spoton-datepicker-popper .react-datepicker__day--selected,
+.spoton-datepicker-popper .react-datepicker__day--keyboard-selected {
+  background-color: #ea580c !important;
+  color: white !important;
+  border-radius: 50% !important;
+  font-weight: 700;
+}
+
+.spoton-datepicker-popper .react-datepicker__day--disabled {
+  color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.spoton-datepicker-popper .react-datepicker__day--disabled:hover {
+  background-color: transparent;
+  color: #d1d5db;
+}
+
+.spoton-datepicker-popper .react-datepicker__navigation {
+  top: 14px;
+}
+.spoton-datepicker-popper .react-datepicker__navigation-icon::before {
+  border-color: #9ca3af;
+  border-width: 2px 2px 0 0;
+  top: 10px;
+}
+.spoton-datepicker-popper .react-datepicker__navigation:hover .react-datepicker__navigation-icon::before {
+  border-color: #ea580c;
+}
+
+/* Hide the little triangle arrow */
+.spoton-datepicker-popper .react-datepicker__triangle {
+  display: none;
+}

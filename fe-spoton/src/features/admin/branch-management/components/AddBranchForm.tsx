@@ -89,11 +89,15 @@ export function AddBranchForm({ formData, updateFormData, currentBranchId, disab
              </span>
            </div>
            
-           <div className="flex flex-col gap-1.5 md:col-span-2">
+            <div className="flex flex-col gap-1.5 md:col-span-2">
              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Địa chỉ</span>
              <span className="text-gray-900 font-medium flex items-start gap-2">
                <MapPin className="w-4 h-4 text-amber-500 mt-0.5" />
-               <span className="leading-relaxed">{formData.address}</span>
+               <span className="leading-relaxed">
+                 {typeof formData.address === 'object' 
+                   ? formData.address?.full || [formData.address?.street, formData.address?.ward, formData.address?.district, formData.address?.city || 'Cần Thơ'].filter(Boolean).join(', ')
+                   : formData.address}
+               </span>
              </span>
            </div>
            
@@ -140,6 +144,19 @@ export function AddBranchForm({ formData, updateFormData, currentBranchId, disab
             value={formData.name}
             onChange={(e) => updateFormData({ name: e.target.value })}
             placeholder="e.g., SpotOn Quận 1 - Bến Nghé"
+            disabled={disabled}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+            Mô tả chi nhánh
+          </label>
+          <textarea
+            value={formData.description || ''}
+            onChange={(e) => updateFormData({ description: e.target.value })}
+            placeholder="Giới thiệu ngắn về không gian, phong cách phục vụ của chi nhánh..."
+            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm py-2 px-3 disabled:opacity-50 disabled:bg-gray-50 border min-h-[80px]"
             disabled={disabled}
           />
         </div>

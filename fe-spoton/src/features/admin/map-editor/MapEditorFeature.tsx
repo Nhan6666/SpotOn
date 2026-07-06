@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, RefreshCcw, PanelLeftClose, PanelLeft, Download } from "lucide-react";
+import { ArrowLeft, RefreshCcw, PanelLeftClose, PanelLeft, Download, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/providers/AuthProvider";
@@ -70,6 +70,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
   }>({ open: false, type: "zone", id: "", name: "" });
 
   const [importModal, setImportModal] = useState(false);
+  const [importConfirm, setImportConfirm] = useState<{ open: boolean; templateId: string }>({ open: false, templateId: "" });
   const [availableTemplates, setAvailableTemplates] = useState<any[]>([]);
 
   // Selected zone object
@@ -195,11 +196,11 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
 
   const handleImportTemplate = async (templateId: string) => {
     if (!selectedZoneId) return;
-    if (!window.confirm(`Cảnh báo: Hành động này sẽ XÓA TOÀN BỘ bàn hiện tại trong khu vực "${selectedZone?.name}" và thay thế bằng sơ đồ mẫu. Bạn có chắc chắn không?`)) return;
     try {
       const res = await applyTemplateApi(branchId, selectedZoneId, templateId);
       if (res.success) {
         success("Đã áp dụng sơ đồ mẫu thành công!");
+        setImportConfirm({ open: false, templateId: "" });
         setImportModal(false);
         await loadZones();
       }
@@ -411,7 +412,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
               ) : (
                 <div className="space-y-3">
                   {availableTemplates.map(tpl => (
-                    <div key={tpl._id} className="p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors flex justify-between items-center group cursor-pointer" onClick={() => handleImportTemplate(tpl._id)}>
+                    <div key={tpl._id} className="p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors flex justify-between items-center group cursor-pointer" onClick={() => setImportConfirm({ open: true, templateId: tpl._id })}>
                       <div>
                         <p className="font-semibold text-gray-900 text-sm">{tpl.name}</p>
                         <p className="text-xs text-gray-500 line-clamp-1">{tpl.description}</p>
@@ -424,6 +425,25 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
             </div>
             <div className="p-4 border-t border-gray-100 flex justify-end">
               <Button variant="outline" onClick={() => setImportModal(false)}>Hủy</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Import Modal */}
+      {importConfirm.open && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-7 h-7 text-amber-600" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Xác nhận ghi đè?</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Hành động này sẽ xóa <strong className="text-gray-700">toàn bộ</strong> bàn hiện tại trong khu vực &ldquo;{selectedZone?.name}&rdquo; và thay thế bằng sơ đồ mẫu. Bạn có chắc chắn không?
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setImportConfirm({ open: false, templateId: "" })}>Hủy</Button>
+              <Button variant="primary" className="flex-1 bg-amber-600 hover:bg-amber-700 border-0" onClick={() => handleImportTemplate(importConfirm.templateId)}>Xác nhận</Button>
             </div>
           </div>
         </div>

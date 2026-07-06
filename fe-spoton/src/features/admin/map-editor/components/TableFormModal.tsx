@@ -17,11 +17,12 @@ interface TableFormModalProps {
   initialData?: { table_number: string; capacity: number; status: TableStatus; width?: number; height?: number; shape?: "RECTANGLE" | "CIRCLE"; x?: number; y?: number; image_url?: string | null } | null;
   mode: "create" | "edit";
   zoneName: string;
+  isTemplate?: boolean;
 }
 
 const ALL_STATUSES: TableStatus[] = ["EMPTY", "HOLDING", "LOCKED", "RESERVED", "OCCUPIED", "CLEANING"];
 
-export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialData, mode, zoneName }: TableFormModalProps) {
+export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialData, mode, zoneName, isTemplate = false }: TableFormModalProps) {
   const [tableNumber, setTableNumber] = useState("");
   const [capacity, setCapacity] = useState(2);
   const [status, setStatus] = useState<TableStatus>("EMPTY");
@@ -259,7 +260,7 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
             </div>
           </div>
 
-          {mode === "edit" && (
+          {mode === "edit" && !isTemplate && (
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                 Trạng thái
@@ -291,9 +292,10 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
               <Button
                 type="button"
                 variant="outline"
-                className="text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
+                className={`text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 ${status !== 'EMPTY' ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={onDelete}
-                disabled={isSubmitting}
+                disabled={isSubmitting || status !== 'EMPTY'}
+                title={status !== 'EMPTY' ? "Không thể xóa bàn đang có khách hoặc đã đặt" : "Xóa bàn"}
               >
                 <Trash2 className="w-4 h-4 mr-1.5" />
                 Xóa bàn

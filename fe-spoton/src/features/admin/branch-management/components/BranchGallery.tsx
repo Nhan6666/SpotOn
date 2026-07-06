@@ -181,12 +181,6 @@ export function BranchGallery() {
                           Edit
                         </DropdownItem>
                       </Link>
-                      <Link href={`/admin/branches/${branch._id}/map-editor`}>
-                        <DropdownItem className="flex items-center gap-2">
-                          <LayoutGrid className="w-4 h-4" />
-                          Floor Plan
-                        </DropdownItem>
-                      </Link>
                       <div className="h-px bg-gray-100 my-1"></div>
                       <DropdownItem 
                         danger
@@ -236,11 +230,6 @@ export function BranchGallery() {
                     >
                       View Details
                     </Button>
-                    <Link href={`/admin/branches/${branch._id}/map-editor`}>
-                      <Button variant="outline" size="md" className="text-gray-600 border-gray-200 hover:bg-gray-50 px-3" title="Floor Plan">
-                        <LayoutGrid className="w-5 h-5" strokeWidth={1.5} />
-                      </Button>
-                    </Link>
                   </div>
                 </div>
               </div>

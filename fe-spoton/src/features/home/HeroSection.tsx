@@ -3,6 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const CAN_THO_LOCATIONS = [
   "Quận Ninh Kiều, Cần Thơ",
@@ -21,18 +23,77 @@ export function HeroSection() {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const locationRef = useRef<HTMLDivElement>(null);
 
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [time, setTime] = useState('19:00');
-  const [guestCount, setGuestCount] = useState(2);
+  const [date, setDate] = useState<Date | null>(null);
+  const [time, setTime] = useState('');
+  const [showTimeDropdown, setShowTimeDropdown] = useState(false);
+  const timeRef = useRef<HTMLDivElement>(null);
+  const [guestCount, setGuestCount] = useState<number | null>(null);
   const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
   const guestsRef = useRef<HTMLDivElement>(null);
 
   const GUEST_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, '10+'];
 
+
+  
+  const TIME_OPTIONS = [
+    "09:00", "09:15", "09:30", "09:45", 
+    "10:00", "10:15", "10:30", "10:45",
+    "11:00", "11:15", "11:30", "11:45", 
+    "12:00", "12:15", "12:30", "12:45",
+    "13:00", "13:15", "13:30", "13:45", 
+    "14:00", "14:15", "14:30", "14:45",
+    "15:00", "15:15", "15:30", "15:45", 
+    "16:00", "16:15", "16:30", "16:45",
+    "17:00", "17:15", "17:30", "17:45", 
+    "18:00", "18:15", "18:30", "18:45",
+    "19:00", "19:15", "19:30", "19:45", 
+    "20:00", "20:15", "20:30", "20:45",
+    "21:00", "21:15", "21:30", "21:45", 
+    "22:00"
+  ];
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/[^0-9:]/g, ''); // Chỉ cho phép số và dấu :
+    
+    // Tự động thêm dấu : nếu nhập 3 hoặc 4 số (vd 103 -> 10:3, 1030 -> 10:30)
+    if (val.length === 3 && !val.includes(':')) {
+      val = val.substring(0, 2) + ':' + val.substring(2);
+    } else if (val.length === 4 && !val.includes(':')) {
+      val = val.substring(0, 2) + ':' + val.substring(2);
+    }
+    
+    if (val.length <= 5) setTime(val);
+  };
+
+  const handleTimeBlur = () => {
+    if (!time) return;
+    
+    // Validate đúng format HH:MM
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    
+    if (!timeRegex.test(time)) {
+      // Thử chuẩn hóa (VD: 9:30 -> 09:30, 8:00 -> 08:00)
+      const parts = time.split(':');
+      if (parts.length === 2) {
+        const h = parseInt(parts[0]);
+        const m = parseInt(parts[1]);
+        if (!isNaN(h) && !isNaN(m) && h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+          setTime(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+          return;
+        }
+      }
+      // Nếu nhập sai hoàn toàn thì xóa
+      setTime('');
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (locationRef.current && !locationRef.current.contains(event.target as Node)) {
         setShowLocationDropdown(false);
+      }
+      if (timeRef.current && !timeRef.current.contains(event.target as Node)) {
+        setShowTimeDropdown(false);
       }
       if (guestsRef.current && !guestsRef.current.contains(event.target as Node)) {
         setShowGuestsDropdown(false);
@@ -138,27 +199,56 @@ export function HeroSection() {
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             <div className="ml-3 flex flex-col flex-1 overflow-hidden">
               <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Date</span>
-              <input 
-                type="date" 
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-pointer" 
+              <DatePicker
+                selected={date}
+                onChange={(d: Date | null) => setDate(d)}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Chọn ngày"
+                minDate={new Date()}
+                className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-pointer custom-datepicker-input"
+                wrapperClassName="w-full"
+                popperClassName="spoton-datepicker-popper"
               />
             </div>
           </div>
 
           {/* TIME */}
-          <div className="flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
+          <div ref={timeRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <div className="ml-3 flex flex-col flex-1 overflow-hidden">
+            <div className="ml-3 flex flex-col flex-1 overflow-hidden" onClick={() => setShowTimeDropdown(true)}>
               <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Time</span>
               <input 
-                type="time" 
+                type="text" 
+                placeholder="VD: 10:15"
                 value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-pointer" 
+                onChange={handleTimeChange}
+                onBlur={handleTimeBlur}
+                className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-text" 
               />
             </div>
+
+            {/* Dropdown for Time */}
+            {showTimeDropdown && (
+              <div className="absolute top-[110%] left-0 w-full md:w-[150%] bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 max-h-64 overflow-y-auto">
+                <div className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Chọn giờ đến
+                </div>
+                <div className="grid grid-cols-3 gap-1 px-2">
+                  {TIME_OPTIONS.map((t, index) => (
+                    <div 
+                      key={index}
+                      className="px-2 py-2 text-center hover:bg-amber-50 cursor-pointer rounded-lg transition-colors text-sm font-medium text-gray-700 hover:text-[#ef5914]"
+                      onClick={() => {
+                        setTime(t);
+                        setShowTimeDropdown(false);
+                      }}
+                    >
+                      {t}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* GUESTS */}
@@ -169,7 +259,8 @@ export function HeroSection() {
               <input 
                 type="text" 
                 readOnly
-                value={`${guestCount} Khách`} 
+                placeholder="Số lượng"
+                value={guestCount ? `${guestCount} Khách` : ''} 
                 className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-pointer" 
               />
             </div>
@@ -201,7 +292,14 @@ export function HeroSection() {
           <div className="p-1.5 w-full md:w-auto mt-2 md:mt-0 flex-shrink-0">
             <button 
               onClick={() => {
-                window.location.href = `/branches?date=${date}&time=${time}&guests=${guestCount}`;
+                // Format location to just the district name for the filter
+                let districtParam = "Tất cả quận";
+                if (location) {
+                  const parts = location.split(',');
+                  districtParam = parts[0].replace('Quận ', '').replace('Huyện ', '').trim();
+                }
+                const dateString = date ? date.toLocaleDateString('en-CA') : ''; // yyyy-mm-dd
+                window.location.href = `/branches?district=${encodeURIComponent(districtParam)}&date=${dateString}&time=${time}&guests=${guestCount || ''}`;
               }}
               className="w-full md:w-auto px-8 py-3.5 bg-[#ef5914] hover:bg-[#d44e11] text-white font-bold rounded-full transition-colors flex items-center justify-center shadow-md"
             >

@@ -51,7 +51,25 @@ const getBranchById = async (req, res) => {
 // @access Private (ADMIN)
 const createBranch = async (req, res) => {
   try {
-    const branch = await Branch.create(req.body);
+    const branchData = { ...req.body };
+
+    // UC-7.3 BR: Configuration Inheritance
+    // Lấy cấu hình mặc định từ SystemConfig nếu có
+    if (!branchData.service_periods) {
+      const config = await SystemConfig.findOne({ config_key: 'DEFAULT_BOOKING_RULES' });
+      if (config && config.config_value) {
+        try {
+          const parsedConfig = JSON.parse(config.config_value);
+          if (parsedConfig.service_periods) {
+            branchData.service_periods = parsedConfig.service_periods;
+          }
+        } catch (e) {
+          console.error("Lỗi parse DEFAULT_BOOKING_RULES", e);
+        }
+      }
+    }
+
+    const branch = await Branch.create(branchData);
 
     // Sync manager
     if (branch.manager_id) {
@@ -408,7 +426,13 @@ const updateTable = async (req, res) => {
       table.table_number = table_number;
     }
     if (capacity !== undefined) table.capacity = capacity;
-    if (status) table.status = status;
+    if (status) {
+      // UC-6.8: Chặn khóa bàn nếu đang có khách
+      if (status === 'LOCKED' && ['OCCUPIED', 'RESERVED', 'HOLDING'].includes(table.status)) {
+        return res.status(400).json({ success: false, message: 'Không thể khóa bàn đang có khách hoặc đã đặt trước.' });
+      }
+      table.status = status;
+    }
     if (x !== undefined) table.x = x;
     if (y !== undefined) table.y = y;
     if (width !== undefined) table.width = width;

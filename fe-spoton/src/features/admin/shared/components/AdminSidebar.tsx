@@ -7,18 +7,18 @@ import { LayoutDashboard, Store, UtensilsCrossed, TicketPercent, BarChart3, Sett
 import { useAuth } from '@/providers/AuthProvider';
 
 const MENU_ITEMS = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/branches', label: 'Branch Management', icon: Store, matchPrefix: true },
-  { href: '/admin/map-templates', label: 'Map Templates', icon: LayoutGrid, matchPrefix: true },
-  { href: '/admin/menu', label: 'Menu', icon: UtensilsCrossed, matchPrefix: true },
-  { href: '/admin/categories', label: 'Categories', icon: Tags, matchPrefix: true },
-  { href: '/admin/vouchers', label: 'Vouchers', icon: TicketPercent, matchPrefix: true },
-  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, matchPrefix: true },
+  { href: '/admin', label: 'Tổng quan', icon: LayoutDashboard },
+  { href: '/admin/branches', label: 'Quản lý Chi nhánh', icon: Store, matchPrefix: true },
+  { href: '/admin/map-templates', label: 'Mẫu Sơ đồ bàn', icon: LayoutGrid, matchPrefix: true },
+  { href: '/admin/menu', label: 'Thực đơn', icon: UtensilsCrossed, matchPrefix: true },
+  { href: '/admin/categories', label: 'Danh mục', icon: Tags, matchPrefix: true },
+  { href: '/admin/vouchers', label: 'Khuyến mãi', icon: TicketPercent, matchPrefix: true },
+  { href: '/admin/analytics', label: 'Phân tích', icon: BarChart3, matchPrefix: true },
 ];
 
 const SYSTEM_CONFIGS = [
-  { href: '/admin/system-configs/booking-rules', label: 'Booking Rules', icon: Settings, matchPrefix: true },
-  { href: '/admin/system-configs/amenities', label: 'Amenities', icon: Tags, matchPrefix: true },
+  { href: '/admin/system-configs/booking-rules', label: 'Chính sách đặt bàn', icon: Settings, matchPrefix: true },
+  { href: '/admin/system-configs/amenities', label: 'Tiện ích', icon: Tags, matchPrefix: true },
 ];
 
 export function AdminSidebar() {
@@ -68,7 +68,7 @@ export function AdminSidebar() {
         {visibleMenuItems.map(renderLink)}
         
         <div className="pt-4 pb-2">
-          <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">System Configs</p>
+          <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Cấu hình hệ thống</p>
         </div>
         
         {SYSTEM_CONFIGS.map(renderLink)}

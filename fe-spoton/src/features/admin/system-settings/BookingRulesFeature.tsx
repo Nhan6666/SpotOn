@@ -22,6 +22,7 @@ export function BookingRulesFeature() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { success, error: showError } = useToast();
 
   useEffect(() => {
@@ -40,8 +41,8 @@ export function BookingRulesFeature() {
     }
   };
 
-  const handleSave = async () => {
-    // Validate
+  // Step 1: Validate và mở Modal xác nhận
+  const handleSave = () => {
     if (rules.deposit_percent < 0 || rules.deposit_percent > 100) {
       showError('Tỷ lệ cọc phải từ 0-100%.');
       return;
@@ -50,7 +51,13 @@ export function BookingRulesFeature() {
       showError('Vui lòng nhập các giá trị hợp lệ lớn hơn 0.');
       return;
     }
+    // BR: Two-Step Confirmation — Mở modal xác nhận trước khi lưu
+    setShowConfirmModal(true);
+  };
 
+  // Step 2: Xác nhận và thực sự lưu
+  const handleConfirmSave = async () => {
+    setShowConfirmModal(false);
     setIsSaving(true);
     try {
       const updatedData = await systemSettingsService.updateBookingRules(rules);
@@ -79,21 +86,20 @@ export function BookingRulesFeature() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">System Settings</h1>
-        <p className="text-gray-500">Manage global configurations for the SpotOn platform.</p>
+    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Cài đặt Hệ thống</h1>
+          <p className="text-sm md:text-base text-gray-500 mt-1">Quản lý cấu hình chung cho toàn bộ nền tảng SpotOn.</p>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-6 sm:p-8">
           <div className="flex items-start justify-between mb-8">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-1">Global Booking Policies</h2>
-              <p className="text-sm text-gray-500">These rules apply to all branches by default unless overridden.</p>
-            </div>
-            <div className="bg-amber-50 p-2 rounded-lg text-amber-600">
-              <AlertCircle className="w-5 h-5" />
+              <h2 className="text-xl font-bold text-gray-900 mb-1">Chính sách Đặt bàn Toàn cầu</h2>
+              <p className="text-sm text-gray-500">Những quy định này áp dụng cho tất cả chi nhánh theo mặc định.</p>
             </div>
           </div>
 
@@ -101,8 +107,8 @@ export function BookingRulesFeature() {
             {/* Deposit Percent */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start pb-6 border-b border-gray-100">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Deposit Percent</label>
-                <p className="text-xs text-gray-500">Amount required to secure a reservation (%).</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">Tỷ lệ cọc</label>
+                <p className="text-xs text-gray-500">Số tiền cọc yêu cầu để giữ chỗ (đơn vị %).</p>
               </div>
               <div className="sm:col-span-2">
                 <div className="relative max-w-xs">
@@ -124,8 +130,8 @@ export function BookingRulesFeature() {
             {/* Min Advance Hours */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start pb-6 border-b border-gray-100">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Minimum Advance Time</label>
-                <p className="text-xs text-gray-500">How many hours in advance guests must book.</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">Đặt trước tối thiểu</label>
+                <p className="text-xs text-gray-500">Số giờ tối thiểu khách cần đặt trước.</p>
               </div>
               <div className="sm:col-span-2">
                 <div className="relative max-w-xs">
@@ -136,7 +142,7 @@ export function BookingRulesFeature() {
                     onChange={(e) => handleChange('min_advance_hours', e.target.value)}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <span className="text-gray-500 sm:text-sm">hours</span>
+                    <span className="text-gray-500 sm:text-sm">giờ</span>
                   </div>
                 </div>
               </div>
@@ -145,8 +151,8 @@ export function BookingRulesFeature() {
             {/* Max Advance Days */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start pb-6 border-b border-gray-100">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Maximum Advance Time</label>
-                <p className="text-xs text-gray-500">How far in the future guests can make reservations.</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">Đặt trước tối đa</label>
+                <p className="text-xs text-gray-500">Số ngày tối đa cho phép khách đặt trước.</p>
               </div>
               <div className="sm:col-span-2">
                 <div className="relative max-w-xs">
@@ -157,7 +163,7 @@ export function BookingRulesFeature() {
                     onChange={(e) => handleChange('max_advance_days', e.target.value)}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <span className="text-gray-500 sm:text-sm">days</span>
+                    <span className="text-gray-500 sm:text-sm">ngày</span>
                   </div>
                 </div>
               </div>
@@ -166,8 +172,8 @@ export function BookingRulesFeature() {
             {/* Max Party Size */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Maximum Party Size</label>
-                <p className="text-xs text-gray-500">Largest group size allowed per single booking.</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">Số khách tối đa</label>
+                <p className="text-xs text-gray-500">Số khách lớn nhất cho phép trong một lần đặt bàn.</p>
               </div>
               <div className="sm:col-span-2">
                 <div className="relative max-w-xs">
@@ -178,7 +184,7 @@ export function BookingRulesFeature() {
                     onChange={(e) => handleChange('max_party_size', e.target.value)}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <span className="text-gray-500 sm:text-sm">guests</span>
+                    <span className="text-gray-500 sm:text-sm">khách</span>
                   </div>
                 </div>
               </div>
@@ -194,10 +200,52 @@ export function BookingRulesFeature() {
             disabled={isSaving}
           >
             <Save className="w-4 h-4 mr-2" />
-            {isSaving ? 'Saving...' : 'Save Policies'}
+            {isSaving ? 'Đang lưu...' : 'Lưu chính sách'}
           </Button>
         </div>
       </div>
+
+      {/* BR: Two-Step Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-start gap-4 mb-5">
+              <div className="p-2.5 bg-amber-100 text-amber-600 rounded-lg flex-shrink-0">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">Xác nhận thay đổi cấu hình</h3>
+                <p className="text-sm text-gray-500">
+                  Bạn sắp thay đổi chính sách đặt bàn áp dụng cho <strong>toàn bộ chuỗi</strong>. 
+                  Thay đổi này sẽ có hiệu lực ngay lập tức trên tất cả chi nhánh.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4 mb-5 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-gray-500">Tỷ lệ cọc</span><span className="font-semibold text-gray-900">{rules.deposit_percent}%</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Đặt trước tối thiểu</span><span className="font-semibold text-gray-900">{rules.min_advance_hours} giờ</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Đặt trước tối đa</span><span className="font-semibold text-gray-900">{rules.max_advance_days} ngày</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Số khách tối đa</span><span className="font-semibold text-gray-900">{rules.max_party_size} khách</span></div>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={handleConfirmSave}
+                className="px-4 py-2 text-sm font-bold text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
+              >
+                Xác nhận lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

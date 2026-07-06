@@ -328,13 +328,15 @@ export function ManagerBookingsFeature() {
                 const statusConfig = TABLE_STATUS_CONFIG[status] || TABLE_STATUS_CONFIG.EMPTY;
                 const isCircle = table.shape === 'CIRCLE';
                 const shapeClasses = isCircle ? 'rounded-full' : 'rounded-lg';
+                const isZoneClosed = currentZone?.status === 'CLOSED';
+                const tableDisabledClass = isZoneClosed ? 'opacity-30 grayscale pointer-events-none' : '';
 
                 return (
                   <div
                     key={table._id}
                     className={`absolute flex flex-col items-center justify-center transition-all group pointer-events-none
                       ${table.image_url ? 'bg-transparent border-transparent' : `border-2 shadow-sm ${statusConfig.bg} ${statusConfig.border}`}
-                      ${shapeClasses}
+                      ${shapeClasses} ${tableDisabledClass}
                     `}
                     style={{
                       left: `${table.x}px`,

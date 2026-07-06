@@ -28,7 +28,7 @@ function GuideCard({ guide, index }: { guide: DiningGuide; index: number }) {
           <div className="flex items-center justify-between mt-auto pt-2" style={{ borderTop: '1px solid #ede8df' }}>
             <span className="text-xs" style={{ color: '#c8a870' }}>{guide.date}</span>
             <button className="flex items-center gap-1 text-xs font-medium transition-all duration-200 hover:gap-2" style={{ color: '#c8891a' }}>
-              Read more
+              Đọc thêm
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -46,11 +46,11 @@ export function DiningGuidesSection() {
       <div className="max-w-6xl mx-auto">
         <AOS animation="fade-up" duration={500} delay={0}>
           <div className="text-center mb-8">
-            <p className="text-xs font-semibold tracking-widest uppercase mb-2" style={{ color: '#c8891a' }}>Editorial</p>
+            <p className="text-xs font-semibold tracking-widest uppercase mb-2" style={{ color: '#c8891a' }}>Bài viết</p>
             <h2 className="text-3xl font-bold" style={{ fontFamily: "var(--font-playfair,'Playfair Display',serif)", color: '#1a1208' }}>
-              Latest Dining Guides
+              Cẩm nang Ẩm thực
             </h2>
-            <p className="text-sm mt-2" style={{ color: '#6b5d4a' }}>Stay updated with the latest culinary trends and recommendations.</p>
+            <p className="text-sm mt-2" style={{ color: '#6b5d4a' }}>Cập nhật những xu hướng và gợi ý ẩm thực mới nhất.</p>
           </div>
         </AOS>
 

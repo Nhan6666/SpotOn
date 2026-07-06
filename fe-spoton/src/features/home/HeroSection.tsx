@@ -130,14 +130,14 @@ export function HeroSection() {
             Trải Nghiệm Ẩm Thực Đỉnh Cao Tại<br />SpotOn
           </h1>
           <p className="text-gray-600 mb-8 max-w-2xl mx-auto text-lg">
-            Enterprise-grade reservation and catering management for the discerning diner and the efficient operator.
+            Giải pháp quản lý đặt bàn và dịch vụ ăn uống cấp doanh nghiệp dành cho thực khách sành điệu và nhà quản lý hiệu quả.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button className="px-8 py-3 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-full transition-colors shadow-md">
               Đặt Bàn Ngay
             </button>
             <button className="px-8 py-3 bg-white hover:bg-gray-50 text-amber-500 font-medium rounded-full transition-colors shadow-sm border border-amber-500">
-              View Menu
+              Xem thực đơn
             </button>
           </div>
         </div>
@@ -151,10 +151,10 @@ export function HeroSection() {
           <div ref={locationRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             <div className="ml-3 flex flex-col flex-1 overflow-hidden">
-              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Location</span>
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Địa điểm</span>
               <input 
                 type="text" 
-                placeholder="Where are you going?" 
+                placeholder="Bạn muốn đến đâu?" 
                 className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5"
                 value={location}
                 onChange={(e) => {
@@ -198,7 +198,7 @@ export function HeroSection() {
           <div className="flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             <div className="ml-3 flex flex-col flex-1 overflow-hidden">
-              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Date</span>
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Ngày đến</span>
               <DatePicker
                 selected={date}
                 onChange={(d: Date | null) => setDate(d)}
@@ -216,7 +216,7 @@ export function HeroSection() {
           <div ref={timeRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <div className="ml-3 flex flex-col flex-1 overflow-hidden" onClick={() => setShowTimeDropdown(true)}>
-              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Time</span>
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Giờ đến</span>
               <input 
                 type="text" 
                 placeholder="VD: 10:15"
@@ -255,7 +255,7 @@ export function HeroSection() {
           <div ref={guestsRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
             <div className="ml-3 flex flex-col flex-1 overflow-hidden" onClick={() => setShowGuestsDropdown(!showGuestsDropdown)}>
-              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Guests</span>
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Số khách</span>
               <input 
                 type="text" 
                 readOnly

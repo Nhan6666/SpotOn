@@ -2,6 +2,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { Banknote, Tag, Target, Globe, Check, AlertCircle } from 'lucide-react';
 import { http } from '@/lib/http';
 import { Branch } from '../../branch-management/branch-management.types';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 interface AddMenuPricingProps {
   basePrice: string;
@@ -44,7 +45,7 @@ export function AddMenuPricing({
           setBranches(res.data);
         }
       } catch (error) {
-        console.error('Failed to fetch branches:', error);
+        console.error(ADMIN_TEXTS.menu.pricingFetchError, error);
       } finally {
         setIsLoadingBranches(false);
       }
@@ -60,14 +61,14 @@ export function AddMenuPricing({
     const mx = parseFloat(maxPrice) || 0;
 
     if (minPrice && maxPrice && mn > mx)
-      errs.min = 'Min Price must be less than or equal to Max Price.';
+      errs.min = ADMIN_TEXTS.menu.pricingErrMinMax;
     if (basePrice && minPrice && b < mn) {
-      errs.base = 'Base Price must be >= Min Price.';
-      errs.min = errs.min || 'Min Price must be <= Base Price.';
+      errs.base = ADMIN_TEXTS.menu.pricingErrBaseMin;
+      errs.min = errs.min || ADMIN_TEXTS.menu.pricingErrMinBase;
     }
     if (basePrice && maxPrice && b > mx) {
-      errs.base = (errs.base ? errs.base + ' ' : '') + 'Base Price must be <= Max Price.';
-      errs.max = 'Max Price must be >= Base Price.';
+      errs.base = (errs.base ? errs.base + ' ' : '') + ADMIN_TEXTS.menu.pricingErrBaseMax;
+      errs.max = ADMIN_TEXTS.menu.pricingErrMaxBase;
     }
     return errs;
   }, [basePrice, minPrice, maxPrice]);
@@ -109,10 +110,10 @@ export function AddMenuPricing({
           <div className="text-[#e67e22]">
             <Banknote className="w-6 h-6" strokeWidth={2.5} />
           </div>
-          <h2 className="text-[17px] font-bold text-gray-900">Pricing & Branch Override Rules</h2>
+          <h2 className="text-[17px] font-bold text-gray-900">{ADMIN_TEXTS.menu.pricingTitle}</h2>
         </div>
         <p className="text-[13px] text-gray-500 mb-6 ml-9">
-          Set the global base price and define the min/max range that branch managers can adjust within.
+          {ADMIN_TEXTS.menu.pricingDesc}
         </p>
 
         {/* BR-01 error banner */}
@@ -120,9 +121,9 @@ export function AddMenuPricing({
           <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" strokeWidth={2} />
             <div>
-              <p className="text-[13px] font-bold text-red-700 mb-0.5">Price Range Violation (BR-01)</p>
+              <p className="text-[13px] font-bold text-red-700 mb-0.5">{ADMIN_TEXTS.menu.pricingBr01Title}</p>
               <p className="text-[12px] text-red-600">
-                Base Price must be between Min and Max Price (Min ≤ Base ≤ Max).
+                {ADMIN_TEXTS.menu.pricingBr01Desc}
               </p>
             </div>
           </div>
@@ -132,7 +133,7 @@ export function AddMenuPricing({
           {/* Min Price */}
           <div>
             <label className="block text-[13px] font-bold text-gray-700 mb-2">
-              Min Price <span className="text-red-500">*</span>
+              {ADMIN_TEXTS.menu.pricingMinPrice} <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -157,8 +158,8 @@ export function AddMenuPricing({
           {/* Base Price */}
           <div>
             <label className="block text-[13px] font-bold text-gray-700 mb-2">
-              Base Price <span className="text-red-500">*</span>
-              <span className="ml-2 text-[11px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Global default</span>
+              {ADMIN_TEXTS.menu.pricingBasePrice} <span className="text-red-500">*</span>
+              <span className="ml-2 text-[11px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">{ADMIN_TEXTS.menu.pricingGlobalDefault}</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -183,7 +184,7 @@ export function AddMenuPricing({
           {/* Max Price */}
           <div>
             <label className="block text-[13px] font-bold text-gray-700 mb-2">
-              Max Price <span className="text-red-500">*</span>
+              {ADMIN_TEXTS.menu.pricingMaxPrice} <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -209,7 +210,7 @@ export function AddMenuPricing({
         {/* Visual range indicator */}
         {!hasError && basePrice && minPrice && maxPrice && (
           <div className="mt-5 pt-5 border-t border-gray-100">
-            <p className="text-[12px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Branch Override Range</p>
+            <p className="text-[12px] font-bold text-gray-500 mb-2 uppercase tracking-wider">{ADMIN_TEXTS.menu.pricingOverrideRange}</p>
             <div className="flex items-center gap-3">
               <span className="text-[12px] text-gray-500 w-24 text-right">{parseInt(minPrice).toLocaleString('vi-VN')}</span>
               <div className="flex-1 h-2 bg-gray-100 rounded-full relative">
@@ -222,13 +223,13 @@ export function AddMenuPricing({
               <span className="text-[12px] text-gray-500 w-24">{parseInt(maxPrice).toLocaleString('vi-VN')}</span>
             </div>
             <p className="text-[11px] text-gray-400 mt-1.5 text-center">
-              Base Price <strong className="text-amber-700">{parseInt(basePrice).toLocaleString('vi-VN')} VND</strong> is within the allowed range.
+              {ADMIN_TEXTS.menu.pricingBasePrice} <strong className="text-amber-700">{parseInt(basePrice).toLocaleString('vi-VN')} VND</strong> {ADMIN_TEXTS.menu.pricingWithinRangeInfo}
             </p>
           </div>
         )}
 
         <p className="text-[12px] text-gray-400 mt-4 pt-4 border-t border-gray-50">
-          Branch managers can adjust their local price within [Min–Max]. Base Price is the system default applied globally.
+          {ADMIN_TEXTS.menu.pricingAdjustInfo}
         </p>
       </div>
 
@@ -239,13 +240,13 @@ export function AddMenuPricing({
             <div className="text-[#e67e22]">
               <Target className="w-6 h-6" strokeWidth={2.5} />
             </div>
-            <h2 className="text-[17px] font-bold text-gray-900">Branch Distribution</h2>
+            <h2 className="text-[17px] font-bold text-gray-900">{ADMIN_TEXTS.menu.pricingBranchDist}</h2>
           </div>
           <button onClick={handleSelectAll} className="text-[13px] font-bold text-[#e67e22] hover:text-[#d67118] transition-colors">
-            Select All
+            {ADMIN_TEXTS.menu.pricingBtnSelectAll}
           </button>
         </div>
-        <p className="text-[13px] text-gray-500 mb-6">Select locations to feature this item.</p>
+        <p className="text-[13px] text-gray-500 mb-6">{ADMIN_TEXTS.menu.pricingSelectInfo}</p>
 
         <div className="grid grid-cols-2 gap-4">
           {isLoadingBranches ? (
@@ -253,7 +254,7 @@ export function AddMenuPricing({
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#e67e22]"></div>
             </div>
           ) : branches.length === 0 ? (
-            <div className="col-span-2 text-center py-4 text-sm text-gray-500 border border-dashed border-gray-200 rounded-lg">No branches found.</div>
+            <div className="col-span-2 text-center py-4 text-sm text-gray-500 border border-dashed border-gray-200 rounded-lg">{ADMIN_TEXTS.menu.pricingNoBranches}</div>
           ) : branches.map((branch) => {
             const isSelected = selectedBranches.includes(branch._id);
             return (
@@ -290,8 +291,8 @@ export function AddMenuPricing({
             <Globe className="w-6 h-6" strokeWidth={2.5} />
           </div>
           <div>
-            <h2 className="text-[17px] font-bold text-gray-900">Global Availability</h2>
-            <p className="text-[13px] text-gray-500 mt-1 max-w-[280px]">Set initial status across all selected branches upon creation.</p>
+            <h2 className="text-[17px] font-bold text-gray-900">{ADMIN_TEXTS.menu.pricingGlobalAvailTitle}</h2>
+            <p className="text-[13px] text-gray-500 mt-1 max-w-[280px]">{ADMIN_TEXTS.menu.pricingGlobalAvailDesc}</p>
           </div>
         </div>
         <div className="flex bg-gray-100 p-1 rounded-lg">
@@ -300,14 +301,14 @@ export function AddMenuPricing({
             className={`px-6 py-2 rounded-md text-[13px] font-bold transition-all ${globalStatus === 'Active' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}
           >
-            Active
+            {ADMIN_TEXTS.menu.pricingBtnActive}
           </button>
           <button
             onClick={() => setGlobalStatus('Draft')}
             className={`px-6 py-2 rounded-md text-[13px] font-bold transition-all ${globalStatus === 'Draft' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}
           >
-            Draft
+            {ADMIN_TEXTS.menu.pricingBtnDraft}
           </button>
         </div>
       </div>

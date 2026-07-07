@@ -16,6 +16,7 @@ import {
   type ForgotPasswordOtpSchema,
   type ResetPasswordSchema,
 } from './auth.schema';
+import { AUTH_TEXTS } from '@/constants/texts/auth';
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export function ForgotPasswordFeature() {
@@ -29,6 +30,8 @@ export function ForgotPasswordFeature() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const { forgotPassword: fpText } = AUTH_TEXTS;
+
   // --- Step 1: Request OTP ---
   const emailForm = useForm<ForgotPasswordSchema>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -41,12 +44,12 @@ export function ForgotPasswordFeature() {
       await authService.forgotPassword(data.email);
       setEmail(data.email);
       setStep(2);
-      setSuccessMessage('Mã OTP đã được gửi đến email của bạn.');
+      setSuccessMessage(fpText.messages.otpSent);
     } catch (error) {
       if (error instanceof AppError && error.statusCode === 404) {
-        setServerError('Không tìm thấy tài khoản với email này.');
+        setServerError(fpText.messages.notFound);
       } else {
-        setServerError('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+        setServerError(fpText.messages.error);
       }
     }
   };
@@ -63,12 +66,12 @@ export function ForgotPasswordFeature() {
       await authService.verifyForgotPasswordOtp({ email, otp: data.otp });
       setOtpCode(data.otp);
       setStep(3);
-      setSuccessMessage('Vui lòng nhập mật khẩu mới.');
+      setSuccessMessage(fpText.messages.enterNewPass);
     } catch (error) {
       if (error instanceof AppError && error.statusCode === 400) {
-        setServerError('Mã OTP không đúng hoặc đã hết hạn.');
+        setServerError(fpText.messages.invalidOtp);
       } else {
-        setServerError('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+        setServerError(fpText.messages.error);
       }
     }
   };
@@ -87,16 +90,16 @@ export function ForgotPasswordFeature() {
         otp: otpCode,
         newPassword: data.newPassword,
       });
-      setSuccessMessage('Đặt lại mật khẩu thành công! Đang chuyển hướng...');
+      setSuccessMessage(fpText.messages.success);
       setTimeout(() => {
         router.push('/login');
       }, 2000);
     } catch (error) {
       if (error instanceof AppError && error.statusCode === 400) {
-        setServerError('Mã OTP không đúng hoặc đã hết hạn.');
+        setServerError(fpText.messages.invalidOtp);
         setStep(2); // Quay lại bước OTP
       } else {
-        setServerError('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+        setServerError(fpText.messages.error);
       }
     }
   };
@@ -105,11 +108,11 @@ export function ForgotPasswordFeature() {
     <div className="flex min-h-[100dvh] w-full items-center justify-center bg-gray-50/50 p-4">
       <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl border border-gray-100">
         <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Quên Mật Khẩu</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">{fpText.title}</h2>
           <p className="text-sm text-gray-500">
-            {step === 1 && 'Nhập email của bạn để nhận mã xác nhận OTP.'}
-            {step === 2 && 'Nhập mã OTP 6 chữ số đã được gửi đến email của bạn.'}
-            {step === 3 && 'Tạo mật khẩu mới cho tài khoản của bạn.'}
+            {step === 1 && fpText.step1Desc}
+            {step === 2 && fpText.step2Desc}
+            {step === 3 && fpText.step3Desc}
           </p>
         </div>
 
@@ -130,12 +133,12 @@ export function ForgotPasswordFeature() {
           <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-5">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Email
+                {fpText.emailLabel}
               </label>
               <input
                 type="email"
                 {...emailForm.register('email')}
-                placeholder="Nhập email của bạn"
+                placeholder={fpText.emailPlaceholder}
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#c58b39] focus:ring-2 focus:ring-[#c58b39]/20 transition-all duration-200 outline-none"
               />
               {emailForm.formState.errors.email?.message && (
@@ -150,7 +153,7 @@ export function ForgotPasswordFeature() {
               disabled={emailForm.formState.isSubmitting}
               className="w-full py-3 px-4 bg-[#c58b39] hover:bg-[#b07a2f] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {emailForm.formState.isSubmitting ? 'Đang gửi...' : 'Gửi mã xác nhận'}
+              {emailForm.formState.isSubmitting ? fpText.submittingBtn1 : fpText.submitBtn1}
             </button>
           </form>
         )}
@@ -160,7 +163,7 @@ export function ForgotPasswordFeature() {
           <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-5">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Mã OTP
+                {fpText.otpLabel}
               </label>
               <input
                 type="text"
@@ -172,7 +175,7 @@ export function ForgotPasswordFeature() {
                   e.target.value = val;
                   otpForm.setValue('otp', val, { shouldValidate: true });
                 }}
-                placeholder="Nhập mã 6 số"
+                placeholder={fpText.otpPlaceholder}
                 maxLength={6}
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#c58b39] focus:ring-2 focus:ring-[#c58b39]/20 transition-all duration-200 outline-none tracking-widest text-center text-xl font-bold"
               />
@@ -189,13 +192,13 @@ export function ForgotPasswordFeature() {
                 onClick={() => { setStep(1); setSuccessMessage(null); setServerError(null); }}
                 className="w-1/3 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-all duration-200"
               >
-                Quay lại
+                {fpText.backBtn}
               </button>
               <button
                 type="submit"
                 className="w-2/3 py-3 px-4 bg-[#c58b39] hover:bg-[#b07a2f] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
               >
-                Tiếp tục
+                {fpText.continueBtn}
               </button>
             </div>
           </form>
@@ -206,12 +209,12 @@ export function ForgotPasswordFeature() {
           <form onSubmit={resetForm.handleSubmit(onResetSubmit)} className="space-y-5">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Mật khẩu mới
+                {fpText.newPassLabel}
               </label>
               <input
                 type="password"
                 {...resetForm.register('newPassword')}
-                placeholder="Nhập mật khẩu mới"
+                placeholder={fpText.newPassPlaceholder}
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#c58b39] focus:ring-2 focus:ring-[#c58b39]/20 transition-all duration-200 outline-none"
               />
               {resetForm.formState.errors.newPassword?.message && (
@@ -223,12 +226,12 @@ export function ForgotPasswordFeature() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Xác nhận mật khẩu
+                {fpText.confirmPassLabel}
               </label>
               <input
                 type="password"
                 {...resetForm.register('confirmPassword')}
-                placeholder="Nhập lại mật khẩu mới"
+                placeholder={fpText.confirmPassPlaceholder}
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#c58b39] focus:ring-2 focus:ring-[#c58b39]/20 transition-all duration-200 outline-none"
               />
               {resetForm.formState.errors.confirmPassword?.message && (
@@ -244,14 +247,14 @@ export function ForgotPasswordFeature() {
                 onClick={() => { setStep(2); setSuccessMessage(null); setServerError(null); }}
                 className="w-1/3 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-all duration-200"
               >
-                Quay lại
+                {fpText.backBtn}
               </button>
               <button
                 type="submit"
                 disabled={resetForm.formState.isSubmitting}
                 className="w-2/3 py-3 px-4 bg-[#c58b39] hover:bg-[#b07a2f] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {resetForm.formState.isSubmitting ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+                {resetForm.formState.isSubmitting ? fpText.submittingBtn3 : fpText.submitBtn3}
               </button>
             </div>
           </form>
@@ -260,9 +263,9 @@ export function ForgotPasswordFeature() {
         {/* --- Back to Login Link --- */}
         <div className="mt-8 pt-6 border-t border-gray-100 text-center">
           <p className="text-sm text-gray-600">
-            Nhớ mật khẩu?{' '}
+            {fpText.rememberPass}{' '}
             <Link href="/login" className="font-semibold text-[#c58b39] hover:underline transition-colors">
-              Đăng nhập ngay
+              {fpText.loginNow}
             </Link>
           </p>
         </div>

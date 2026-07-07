@@ -8,6 +8,7 @@ import { uploadTableImageApi } from "../map-editor.service";
 import Image from "next/image";
 import type { TableStatus } from "../map-editor.types";
 import { TABLE_STATUS_CONFIG } from "../map-editor.types";
+import { ADMIN_TEXTS } from "@/constants/texts/admin";
 
 interface TableFormModalProps {
   isOpen: boolean;
@@ -83,11 +84,11 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
 
     // Validate type and size (5MB)
     if (!file.type.startsWith("image/")) {
-      alert("Vui lòng chọn file hình ảnh hợp lệ.");
+      alert(ADMIN_TEXTS.mapEditor.modalTableErrorInvalidImage);
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert("Kích thước ảnh tối đa là 5MB.");
+      alert(ADMIN_TEXTS.mapEditor.modalTableErrorImageSize);
       return;
     }
 
@@ -97,11 +98,11 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
       if (res.success) {
         setImageUrl(res.data.url);
       } else {
-        alert(res.message || "Lỗi khi tải ảnh lên.");
+        alert(res.message || ADMIN_TEXTS.mapEditor.modalTableErrorUploadFail);
       }
     } catch (error) {
       console.error(error);
-      alert("Đã xảy ra lỗi khi tải ảnh lên.");
+      alert(ADMIN_TEXTS.mapEditor.modalTableErrorUploadError);
     } finally {
       setIsUploading(false);
       // Reset input
@@ -117,14 +118,14 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-white">
-              {mode === "create" ? "Thêm Bàn Mới" : "Chỉnh Sửa Bàn"}
+              {mode === "create" ? ADMIN_TEXTS.mapEditor.modalTableTitleCreate : ADMIN_TEXTS.mapEditor.modalTableTitleEdit}
             </h2>
             <button type="button" aria-label="Đóng" onClick={onClose} className="text-white/70 hover:text-white transition-colors rounded-full p-1 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none">
               <X className="w-5 h-5" />
             </button>
           </div>
           <p className="text-blue-100 text-sm mt-1">
-            Khu vực: <span className="font-semibold">{zoneName}</span>
+            {ADMIN_TEXTS.mapEditor.modalTableZoneLabel} <span className="font-semibold">{zoneName}</span>
           </p>
         </div>
 
@@ -133,12 +134,12 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Số bàn <span className="text-red-500">*</span>
+                {ADMIN_TEXTS.mapEditor.modalTableNumber} <span className="text-red-500">*</span>
               </label>
               <Input
                 value={tableNumber}
                 onChange={(e) => setTableNumber(e.target.value)}
-                placeholder='VD: "A1"'
+                placeholder={ADMIN_TEXTS.mapEditor.modalTableNumberPlaceholder}
                 required
                 autoFocus
                 className="h-8 text-sm"
@@ -147,7 +148,7 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Sức chứa <span className="text-red-500">*</span>
+                {ADMIN_TEXTS.mapEditor.modalTableCapacity} <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
@@ -164,7 +165,7 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Chiều rộng (px)
+                {ADMIN_TEXTS.mapEditor.modalTableWidth}
               </label>
               <Input
                 type="number"
@@ -176,7 +177,7 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Chiều dài (px)
+                {ADMIN_TEXTS.mapEditor.modalTableHeight}
               </label>
               <Input
                 type="number"
@@ -184,7 +185,7 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                 onChange={(e) => setHeight(Number(e.target.value))}
                 min={30}
                 disabled={shape === "CIRCLE"}
-                title={shape === "CIRCLE" ? "Bàn tròn sẽ dùng chung một đường kính" : ""}
+                title={shape === "CIRCLE" ? ADMIN_TEXTS.mapEditor.modalTableHeightHint : ""}
                 className="h-8 text-sm"
               />
             </div>
@@ -192,7 +193,7 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
 
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Hình ảnh bàn (Tùy chọn)
+              {ADMIN_TEXTS.mapEditor.modalTableImage}
             </label>
             <div className="border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all duration-300 rounded-xl p-3 flex flex-col items-center justify-center bg-gray-50/50 text-center relative group">
               <input
@@ -218,8 +219,8 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                         type="button"
                         onClick={() => setImageUrl(null)}
                         className="p-1.5 bg-red-600/90 text-white rounded-full hover:bg-red-700 hover:scale-105 transition-all focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-none"
-                        title="Xóa ảnh"
-                        aria-label="Xóa ảnh"
+                        title={ADMIN_TEXTS.mapEditor.modalTableBtnDeleteImg}
+                        aria-label={ADMIN_TEXTS.mapEditor.modalTableBtnDeleteImg}
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
@@ -233,7 +234,7 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
                   >
-                    {isUploading ? "Đang tải..." : "Đổi ảnh"}
+                    {isUploading ? ADMIN_TEXTS.mapEditor.modalTableBtnUploading : ADMIN_TEXTS.mapEditor.modalTableBtnChangeImg}
                   </Button>
                 </div>
               ) : (
@@ -242,7 +243,7 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                     <ImageIcon className="w-4 h-4" />
                   </div>
                   <p className="text-[10px] text-gray-500 mb-2 max-w-[200px] leading-tight">
-                    Tải ảnh bàn thực tế (Tối đa 5MB)
+                    {ADMIN_TEXTS.mapEditor.modalTableImgHint}
                   </p>
                   <Button
                     type="button"
@@ -253,7 +254,7 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                     className="bg-white shadow-sm hover:shadow-md transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none h-7 text-[11px] px-3"
                   >
                     {isUploading ? <RefreshCcw className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}
-                    {isUploading ? "Đang tải..." : "Chọn ảnh"}
+                    {isUploading ? ADMIN_TEXTS.mapEditor.modalTableBtnUploading : ADMIN_TEXTS.mapEditor.modalTableBtnUploadImg}
                   </Button>
                 </div>
               )}
@@ -263,7 +264,7 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
           {mode === "edit" && !isTemplate && (
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Trạng thái
+                {ADMIN_TEXTS.mapEditor.modalTableStatusLabel}
               </label>
               <div className="grid grid-cols-3 gap-1.5">
                 {ALL_STATUSES.map((s) => {
@@ -295,10 +296,10 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                 className={`text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 ${status !== 'EMPTY' ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={onDelete}
                 disabled={isSubmitting || status !== 'EMPTY'}
-                title={status !== 'EMPTY' ? "Không thể xóa bàn đang có khách hoặc đã đặt" : "Xóa bàn"}
+                title={status !== 'EMPTY' ? ADMIN_TEXTS.mapEditor.modalTableBtnDeleteDisabledHint : ADMIN_TEXTS.mapEditor.modalTableBtnDelete}
               >
                 <Trash2 className="w-4 h-4 mr-1.5" />
-                Xóa bàn
+                {ADMIN_TEXTS.mapEditor.modalTableBtnDelete}
               </Button>
             )}
             <div className="flex-1" />
@@ -308,7 +309,7 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Hủy
+              {ADMIN_TEXTS.mapEditor.modalTableBtnCancel}
             </Button>
             <Button
               type="submit"
@@ -317,7 +318,7 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
               disabled={isSubmitting || isUploading || !tableNumber.trim() || capacity < 1}
             >
               {isSubmitting && <RefreshCcw className="w-4 h-4 mr-1.5 animate-spin" />}
-              {isSubmitting ? "Đang lưu..." : mode === "create" ? "Thêm Bàn" : "Lưu"}
+              {isSubmitting ? ADMIN_TEXTS.mapEditor.modalTableBtnSaving : mode === "create" ? ADMIN_TEXTS.mapEditor.modalTableBtnCreate : ADMIN_TEXTS.mapEditor.modalTableBtnSave}
             </Button>
           </div>
         </form>

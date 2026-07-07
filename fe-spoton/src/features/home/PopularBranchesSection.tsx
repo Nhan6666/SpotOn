@@ -1,6 +1,7 @@
 import { POPULAR_BRANCHES } from './home.constants';
 import type { Branch } from './home.types';
 import { AOS } from '@/providers/AOS';
+import { HOME_TEXTS } from '@/constants/texts/home';
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -53,7 +54,7 @@ function BranchCard({ branch, index }: { branch: Branch; index: number }) {
               Từ <span className="font-semibold text-sm" style={{ color: '#c8891a' }}>${branch.priceFrom}</span>/khách
             </span>
             <button className="flex items-center gap-1 text-xs font-medium transition-all duration-200 hover:gap-2" style={{ color: '#c8891a' }}>
-              Đặt bàn
+              {HOME_TEXTS.popularBranches.bookingBtn}
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -74,9 +75,9 @@ export function PopularBranchesSection() {
           <div className="text-center mb-8">
             <p className="text-xs font-semibold tracking-widest uppercase mb-2" style={{ color: '#c8891a' }}>Được yêu thích nhất</p>
             <h2 className="text-3xl font-bold" style={{ fontFamily: "var(--font-playfair,'Playfair Display',serif)", color: '#1a1208' }}>
-              Chi nhánh Nổi bật
+              {HOME_TEXTS.popularBranches.title}
             </h2>
-            <p className="text-sm mt-2" style={{ color: '#6b5d4a' }}>Khám phá những địa điểm được nhiều khách hàng ghé thăm nhất tháng này.</p>
+            <p className="text-sm mt-2" style={{ color: '#6b5d4a' }}>{HOME_TEXTS.popularBranches.subtitle}</p>
           </div>
         </AOS>
 
@@ -93,7 +94,7 @@ export function PopularBranchesSection() {
             <a href="/branches" id="view-all-branches"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200 hover:scale-105"
               style={{ border: '2px solid #c8891a', color: '#c8891a' }}>
-              Xem tất cả chi nhánh
+              {HOME_TEXTS.popularBranches.viewAllBtn}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

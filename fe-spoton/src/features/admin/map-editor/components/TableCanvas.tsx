@@ -5,6 +5,7 @@ import { Plus, Save, Undo2, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { EditorTable, EditorZone } from "../map-editor.types";
 import { TABLE_STATUS_CONFIG } from "../map-editor.types";
+import { ADMIN_TEXTS } from "@/constants/texts/admin";
 
 interface TableCanvasProps {
   zone: EditorZone | null;
@@ -88,9 +89,9 @@ export function TableCanvas({
             />
           </svg>
         </div>
-        <h3 className="text-xl font-bold text-gray-700 mb-2">Chọn khu vực</h3>
+        <h3 className="text-xl font-bold text-gray-700 mb-2">{ADMIN_TEXTS.mapEditor.canvasSelectAreaTitle}</h3>
         <p className="text-gray-500 text-center max-w-sm">
-          Vui lòng chọn hoặc tạo một khu vực để bắt đầu sắp xếp bàn
+          {ADMIN_TEXTS.mapEditor.canvasSelectAreaHint}
         </p>
       </div>
     );
@@ -283,7 +284,7 @@ export function TableCanvas({
         onDropTemplate(templateData, x, y);
       }
     } catch (error) {
-      console.error("Lỗi khi drop template:", error);
+      console.error(ADMIN_TEXTS.mapEditor.canvasDropTemplateError, error);
     }
   };
 
@@ -295,8 +296,8 @@ export function TableCanvas({
           <div>
             <h2 className="text-lg font-bold text-gray-900">{zone.name}</h2>
             <p className="text-sm text-gray-500 mt-0.5">
-              {tables.length} bàn
-              {zone.capacity > 0 && ` · Sức chứa: ${zone.capacity} người`}
+              {tables.length} {ADMIN_TEXTS.mapEditor.canvasUnitTable}
+              {zone.capacity > 0 && ` · ${ADMIN_TEXTS.mapEditor.canvasUnitCapacity}${zone.capacity}${ADMIN_TEXTS.mapEditor.canvasUnitPerson}`}
             </p>
           </div>
 
@@ -310,7 +311,7 @@ export function TableCanvas({
                   disabled={isSaving}
                 >
                   <Undo2 className="w-4 h-4 mr-1.5" />
-                  Hủy thay đổi
+                  {ADMIN_TEXTS.mapEditor.canvasBtnUndo}
                 </Button>
                 <Button
                   variant="primary"
@@ -320,7 +321,7 @@ export function TableCanvas({
                   disabled={isSaving}
                 >
                   <Save className="w-4 h-4 mr-1.5" />
-                  {isSaving ? "Đang lưu..." : "Lưu Sơ Đồ"}
+                  {isSaving ? ADMIN_TEXTS.mapEditor.canvasBtnSaving : ADMIN_TEXTS.mapEditor.canvasBtnSave}
                 </Button>
               </>
             )}
@@ -380,10 +381,10 @@ export function TableCanvas({
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center">
                   <p className="text-gray-400 font-medium text-lg">
-                    Chưa có bàn nào
+                    {ADMIN_TEXTS.mapEditor.canvasEmptyTitle}
                   </p>
                   <p className="text-gray-400 text-sm mt-1">
-                    Nhấn "Thêm bàn" để bắt đầu
+                    {ADMIN_TEXTS.mapEditor.canvasEmptyHint}
                   </p>
                 </div>
               </div>
@@ -410,12 +411,12 @@ export function TableCanvas({
                       width: table.width || 70,
                       height: (isCircle ? table.width : table.height) || 70, // Circles use width for both
                     }}
-                    title={`Bàn ${table.table_number} - ${table.capacity} chỗ`}
+                    title={`${ADMIN_TEXTS.mapEditor.canvasTableTitlePrefix}${table.table_number} - ${table.capacity}${ADMIN_TEXTS.mapEditor.canvasSeatSuffix}`}
                   >
                     {/* Edit overlay */}
                     <button
                       type="button"
-                      aria-label={`Sửa bàn ${table.table_number}`}
+                      aria-label={`${ADMIN_TEXTS.mapEditor.canvasEditTable}${table.table_number}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         onEditTable(table);
@@ -429,7 +430,7 @@ export function TableCanvas({
                       <>
                         <img
                           src={table.image_url}
-                          alt={`Bàn ${table.table_number}`}
+                          alt={`${ADMIN_TEXTS.mapEditor.canvasTableTitlePrefix}${table.table_number}`}
                           className={`w-full h-full object-contain pointer-events-none p-1 ${shapeClasses}`}
                           draggable={false}
                         />
@@ -451,7 +452,7 @@ export function TableCanvas({
                           <span
                             className={`text-xs ${statusConfig.color} opacity-80 mt-1 pointer-events-none`}
                           >
-                            {table.capacity} chỗ
+                            {table.capacity}{ADMIN_TEXTS.mapEditor.canvasSeatSuffix}
                           </span>
                         )}
                       </>
@@ -461,10 +462,10 @@ export function TableCanvas({
                     <div
                       tabIndex={0}
                       role="button"
-                      aria-label={`Kéo để thay đổi kích thước bàn ${table.table_number}`}
+                      aria-label={`${ADMIN_TEXTS.mapEditor.canvasResizeTable}${table.table_number}`}
                       className="absolute -bottom-2 -right-2 w-5 h-5 bg-white/80 backdrop-blur-md border border-gray-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-nwse-resize opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all z-50 flex items-center justify-center rounded-full hover:scale-110 hover:bg-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
                       onMouseDown={(e) => handleMouseDownResize(e, table)}
-                      title="Kéo để thay đổi kích thước"
+                      title={`${ADMIN_TEXTS.mapEditor.canvasResizeTable}${table.table_number}`}
                     >
                       <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
                     </div>

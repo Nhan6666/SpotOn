@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { EditorZone } from "../map-editor.types";
+import { ADMIN_TEXTS } from "@/constants/texts/admin";
 
 interface ZoneSidebarProps {
   zones: EditorZone[];
@@ -58,22 +59,22 @@ export function ZoneSidebar({
             <Layers className="w-5 h-5 text-amber-700" />
           </div>
           <div>
-            <h3 className="font-bold text-gray-900 text-sm">Tổng Quan</h3>
-            <p className="text-xs text-gray-500">Sơ đồ bàn chi nhánh</p>
+            <h3 className="font-bold text-gray-900 text-sm">{ADMIN_TEXTS.mapEditor.sidebarOverviewTitle}</h3>
+            <p className="text-xs text-gray-500">{ADMIN_TEXTS.mapEditor.sidebarOverviewSubtitle}</p>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-amber-50 rounded-lg p-3 text-center">
             <div className="text-xl font-bold text-amber-700">{zones.length}</div>
-            <div className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">Khu vực</div>
+            <div className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">{ADMIN_TEXTS.mapEditor.sidebarStatZones}</div>
           </div>
           <div className="bg-blue-50 rounded-lg p-3 text-center">
             <div className="text-xl font-bold text-blue-700">{totalTables}</div>
-            <div className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">Tổng bàn</div>
+            <div className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">{ADMIN_TEXTS.mapEditor.sidebarStatTables}</div>
           </div>
           <div className="bg-green-50 rounded-lg p-3 text-center">
             <div className="text-xl font-bold text-green-700">{emptyTables}</div>
-            <div className="text-[10px] font-semibold text-green-600 uppercase tracking-wider">Còn trống</div>
+            <div className="text-[10px] font-semibold text-green-600 uppercase tracking-wider">{ADMIN_TEXTS.mapEditor.sidebarStatEmpty}</div>
           </div>
         </div>
       </div>
@@ -82,17 +83,17 @@ export function ZoneSidebar({
       <div className="bg-white/90 backdrop-blur-xl rounded-2xl border border-gray-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden flex-1 flex flex-col">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-bold text-gray-800 text-sm tracking-wide uppercase">
-            Danh sách khu vực
+            {ADMIN_TEXTS.mapEditor.sidebarListTitle}
           </h3>
           <Button
             variant="primary"
             size="sm"
             className="bg-amber-600 hover:bg-amber-700 shadow-md hover:shadow-lg transition-all duration-300 border-0 text-xs px-3 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:outline-none"
             onClick={onAddZone}
-            aria-label="Thêm khu vực mới"
+            aria-label={ADMIN_TEXTS.mapEditor.sidebarBtnAdd}
           >
             <Plus className="w-3.5 h-3.5 mr-1" />
-            Thêm
+            {ADMIN_TEXTS.mapEditor.sidebarBtnAdd}
           </Button>
         </div>
 
@@ -100,15 +101,15 @@ export function ZoneSidebar({
           {isLoading ? (
             <div className="p-8 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">Đang tải...</p>
+              <p className="text-sm text-gray-500">{ADMIN_TEXTS.mapEditor.sidebarLoading}</p>
             </div>
           ) : zones.length === 0 ? (
             <div className="p-8 text-center">
               <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
                 <MapPin className="w-6 h-6 text-gray-400" />
               </div>
-              <p className="text-sm text-gray-500 mb-1">Chưa có khu vực nào</p>
-              <p className="text-xs text-gray-400">Nhấn &quot;Thêm&quot; để tạo khu vực đầu tiên</p>
+              <p className="text-sm text-gray-500 mb-1">{ADMIN_TEXTS.mapEditor.sidebarEmptyList}</p>
+              <p className="text-xs text-gray-400">{ADMIN_TEXTS.mapEditor.sidebarEmptyHint}</p>
             </div>
           ) : (
             zones.map((zone) => {
@@ -141,7 +142,7 @@ export function ZoneSidebar({
                   >
                     <button
                       type="button"
-                      aria-label={isExpanded ? "Thu gọn khu vực" : "Mở rộng khu vực"}
+                      aria-label={isExpanded ? ADMIN_TEXTS.mapEditor.sidebarCollapseArea : ADMIN_TEXTS.mapEditor.sidebarExpandArea}
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleExpand(zone._id);
@@ -160,33 +161,33 @@ export function ZoneSidebar({
                         {zone.name}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {zone.tables.length} bàn
-                        {zone.capacity > 0 && ` · ${zone.capacity} chỗ`}
+                        {zone.tables.length} {ADMIN_TEXTS.mapEditor.sidebarTableUnit}
+                        {zone.capacity > 0 && ` · ${zone.capacity} ${ADMIN_TEXTS.mapEditor.sidebarSeatUnit}`}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                       <button
                         type="button"
-                        aria-label={`Sửa khu vực ${zone.name}`}
+                        aria-label={`${ADMIN_TEXTS.mapEditor.sidebarEditArea} ${zone.name}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           onEditZone(zone);
                         }}
                         className="p-1.5 rounded-md hover:bg-amber-100 text-gray-400 hover:text-amber-700 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
-                        title="Sửa khu vực"
+                        title={ADMIN_TEXTS.mapEditor.sidebarEditArea}
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
-                        aria-label={`Xóa khu vực ${zone.name}`}
+                        aria-label={`${ADMIN_TEXTS.mapEditor.sidebarDeleteArea} ${zone.name}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           onDeleteZone(zone);
                         }}
                         className="p-1.5 rounded-md hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
-                        title="Xóa khu vực"
+                        title={ADMIN_TEXTS.mapEditor.sidebarDeleteArea}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -203,8 +204,8 @@ export function ZoneSidebar({
                             className="flex items-center gap-2 text-xs text-gray-500 py-1 transition-colors hover:text-gray-900"
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-indigo-300 shrink-0" />
-                            <span className="font-medium">Bàn {table.table_number}</span>
-                            <span className="text-gray-400">· {table.capacity} chỗ</span>
+                            <span className="font-medium">{ADMIN_TEXTS.mapEditor.sidebarTableUnit} {table.table_number}</span>
+                            <span className="text-gray-400">· {table.capacity} {ADMIN_TEXTS.mapEditor.sidebarSeatUnit}</span>
                           </div>
                         ))}
                       </div>
@@ -213,7 +214,7 @@ export function ZoneSidebar({
 
                   {isExpanded && zone.tables.length === 0 && (
                     <div className="px-4 pb-3 pl-12 animate-in slide-in-from-top-2 fade-in duration-300">
-                      <p className="text-xs text-gray-400 italic">Chưa có bàn nào</p>
+                      <p className="text-xs text-gray-400 italic">{ADMIN_TEXTS.mapEditor.sidebarNoTable}</p>
                     </div>
                   )}
                 </div>

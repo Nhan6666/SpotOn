@@ -1,6 +1,9 @@
 import Link from 'next/link';
+import { COMMON_TEXTS } from '@/constants/texts/common';
 
 export function Footer() {
+  const { footer } = COMMON_TEXTS;
+
   return (
     <footer className="bg-white border-t border-gray-100 pt-16 pb-8 mt-auto">
       <div className="container mx-auto px-4">
@@ -11,7 +14,7 @@ export function Footer() {
               <span className="text-2xl font-bold tracking-tight text-gray-900">Spot<span className="text-amber-500">On</span></span>
             </Link>
             <p className="text-gray-500 text-sm mb-6 max-w-sm leading-relaxed">
-              Giải pháp quản lý đặt bàn và chăm sóc khách hàng toàn diện dành cho nhà hàng cao cấp.
+              {footer.description}
             </p>
             <div className="flex gap-4">
               {/* Social icons can be added here */}
@@ -23,28 +26,28 @@ export function Footer() {
 
           {/* Về chúng tôi */}
           <div>
-            <h4 className="text-sm font-bold text-gray-900 mb-6 uppercase tracking-wider">Khám Phá</h4>
+            <h4 className="text-sm font-bold text-gray-900 mb-6 uppercase tracking-wider">{footer.explore.title}</h4>
             <ul className="flex flex-col gap-3">
-              <li><Link href="#" className="text-sm text-gray-500 hover:text-amber-500 transition-colors">Về SpotOn</Link></li>
-              <li><Link href="#" className="text-sm text-gray-500 hover:text-amber-500 transition-colors">Chi Nhánh</Link></li>
-              <li><Link href="#" className="text-sm text-gray-500 hover:text-amber-500 transition-colors">Thực Đơn</Link></li>
+              <li><Link href="#" className="text-sm text-gray-500 hover:text-amber-500 transition-colors">{footer.explore.about}</Link></li>
+              <li><Link href="#" className="text-sm text-gray-500 hover:text-amber-500 transition-colors">{footer.explore.branches}</Link></li>
+              <li><Link href="#" className="text-sm text-gray-500 hover:text-amber-500 transition-colors">{footer.explore.menus}</Link></li>
             </ul>
           </div>
 
           {/* Hỗ trợ */}
           <div>
-            <h4 className="text-sm font-bold text-gray-900 mb-6 uppercase tracking-wider">Hỗ Trợ</h4>
+            <h4 className="text-sm font-bold text-gray-900 mb-6 uppercase tracking-wider">{footer.support.title}</h4>
             <ul className="flex flex-col gap-3">
-              <li><Link href="#" className="text-sm text-gray-500 hover:text-amber-500 transition-colors">Trung Tâm Trợ Giúp</Link></li>
-              <li><Link href="#" className="text-sm text-gray-500 hover:text-amber-500 transition-colors">Bảo Mật</Link></li>
-              <li><Link href="#" className="text-sm text-gray-500 hover:text-amber-500 transition-colors">Điều Khoản</Link></li>
+              <li><Link href="#" className="text-sm text-gray-500 hover:text-amber-500 transition-colors">{footer.support.helpCenter}</Link></li>
+              <li><Link href="#" className="text-sm text-gray-500 hover:text-amber-500 transition-colors">{footer.support.privacy}</Link></li>
+              <li><Link href="#" className="text-sm text-gray-500 hover:text-amber-500 transition-colors">{footer.support.terms}</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-gray-100 text-xs text-gray-400">
-          <p>© {new Date().getFullYear()} SpotOn. Đã đăng ký bản quyền.</p>
-          <p className="mt-2 md:mt-0">Thiết kế bởi SpotOn Team</p>
+          <p>© {new Date().getFullYear()} {footer.copyright}</p>
+          <p className="mt-2 md:mt-0">{footer.designBy}</p>
         </div>
       </div>
     </footer>

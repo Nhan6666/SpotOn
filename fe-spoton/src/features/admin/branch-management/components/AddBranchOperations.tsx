@@ -2,6 +2,7 @@ import React from 'react';
 import { Clock } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Switch } from '@/components/ui/Switch';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 export interface AddBranchOperationsProps {
   formData: any;
@@ -12,24 +13,24 @@ export interface AddBranchOperationsProps {
 export function AddBranchOperations({ formData, updateFormData, disabled }: AddBranchOperationsProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sm:p-8">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">{disabled ? 'Quy định hoạt động' : 'Operational Rules'}</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-6">{disabled ? ADMIN_TEXTS.addBranchOps.titleRules : ADMIN_TEXTS.addBranchOps.titleOpsRules}</h2>
       
       <div className="space-y-10">
 
         {/* Service Periods */}
         <div>
-          <h3 className="text-base font-bold text-gray-900 mb-1">Service Periods (Ca phục vụ)</h3>
-          <p className="text-sm text-gray-500 mb-6">Thời gian mở cửa và nhận khách cho từng ca. Các mốc thời gian này được tải mặc định từ hệ thống.</p>
+          <h3 className="text-base font-bold text-gray-900 mb-1">{ADMIN_TEXTS.addBranchOps.titleServicePeriods}</h3>
+          <p className="text-sm text-gray-500 mb-6">{ADMIN_TEXTS.addBranchOps.descServicePeriods}</p>
           
           {/* LUNCH */}
           <div className="mb-6 p-4 border border-gray-100 rounded-xl bg-gray-50/50">
             <h4 className="font-bold text-sm text-gray-800 mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-              Ca Trưa (Lunch)
+              {ADMIN_TEXTS.addBranchOps.lunch}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Giờ mở cửa</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{ADMIN_TEXTS.addBranchOps.timeOpen}</label>
                 <Input 
                   type="time" 
                   value={formData.service_periods.lunch.start}
@@ -37,7 +38,7 @@ export function AddBranchOperations({ formData, updateFormData, disabled }: AddB
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Đóng cửa</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{ADMIN_TEXTS.addBranchOps.timeClose}</label>
                 <Input 
                   type="time" 
                   value={formData.service_periods.lunch.end}
@@ -45,7 +46,7 @@ export function AddBranchOperations({ formData, updateFormData, disabled }: AddB
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Nhận khách cuối</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{ADMIN_TEXTS.addBranchOps.timeLastBooking}</label>
                 <Input 
                   type="time" 
                   value={formData.service_periods.lunch.last_booking}
@@ -53,7 +54,7 @@ export function AddBranchOperations({ formData, updateFormData, disabled }: AddB
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Order cuối</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{ADMIN_TEXTS.addBranchOps.timeLastOrder}</label>
                 <Input 
                   type="time" 
                   value={formData.service_periods.lunch.last_order}
@@ -67,11 +68,11 @@ export function AddBranchOperations({ formData, updateFormData, disabled }: AddB
           <div className="p-4 border border-gray-100 rounded-xl bg-gray-50/50">
             <h4 className="font-bold text-sm text-gray-800 mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-              Ca Tối (Dinner)
+              {ADMIN_TEXTS.addBranchOps.dinner}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Giờ mở cửa</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{ADMIN_TEXTS.addBranchOps.timeOpen}</label>
                 <Input 
                   type="time" 
                   value={formData.service_periods.dinner.start}
@@ -79,7 +80,7 @@ export function AddBranchOperations({ formData, updateFormData, disabled }: AddB
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Đóng cửa</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{ADMIN_TEXTS.addBranchOps.timeClose}</label>
                 <Input 
                   type="time" 
                   value={formData.service_periods.dinner.end}
@@ -87,7 +88,7 @@ export function AddBranchOperations({ formData, updateFormData, disabled }: AddB
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Nhận khách cuối</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{ADMIN_TEXTS.addBranchOps.timeLastBooking}</label>
                 <Input 
                   type="time" 
                   value={formData.service_periods.dinner.last_booking}
@@ -95,7 +96,7 @@ export function AddBranchOperations({ formData, updateFormData, disabled }: AddB
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Order cuối</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{ADMIN_TEXTS.addBranchOps.timeLastOrder}</label>
                 <Input 
                   type="time" 
                   value={formData.service_periods.dinner.last_order}
@@ -108,12 +109,12 @@ export function AddBranchOperations({ formData, updateFormData, disabled }: AddB
 
         {/* Operation Limits */}
         <div>
-          <h3 className="text-base font-bold text-gray-900 mb-1">Giới hạn vận hành (Operation Limits)</h3>
-          <p className="text-sm text-gray-500 mb-4">Thiết lập các ngưỡng giới hạn để hệ thống tự động chống quá tải (Overbooking).</p>
+          <h3 className="text-base font-bold text-gray-900 mb-1">{ADMIN_TEXTS.addBranchOps.titleLimits}</h3>
+          <p className="text-sm text-gray-500 mb-4">{ADMIN_TEXTS.addBranchOps.descLimits}</p>
           <div className="p-4 border border-gray-100 rounded-xl bg-gray-50/50">
             <div className="max-w-md">
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Ngưỡng quá tải chung (%)
+                {ADMIN_TEXTS.addBranchOps.thresholdLabel}
               </label>
               <div className="relative">
                 <Input 
@@ -125,20 +126,20 @@ export function AddBranchOperations({ formData, updateFormData, disabled }: AddB
                 />
                 <span className="absolute right-3 top-2.5 text-gray-500 font-medium">%</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1.5">Hệ thống sẽ báo "Hết bàn" khi sức chứa đạt ngưỡng này.</p>
+              <p className="text-xs text-gray-500 mt-1.5">{ADMIN_TEXTS.addBranchOps.thresholdHint}</p>
             </div>
           </div>
         </div>
 
         {/* Status */}
         <div>
-          <h3 className="text-base font-bold text-gray-900 mb-1">Trạng thái phục vụ ban đầu</h3>
-          <p className="text-sm text-gray-500 mb-4">Thiết lập trạng thái hiển thị của chi nhánh với khách hàng.</p>
+          <h3 className="text-base font-bold text-gray-900 mb-1">{ADMIN_TEXTS.addBranchOps.titleStatus}</h3>
+          <p className="text-sm text-gray-500 mb-4">{ADMIN_TEXTS.addBranchOps.descStatus}</p>
           <div className="border border-gray-200 rounded-lg p-4 flex items-center">
             <Switch 
               checked={formData.status !== 'CLOSED'} 
               onChange={(e) => updateFormData({ status: e.target.checked ? 'OPEN' : 'CLOSED' })} 
-              label={formData.status === 'CLOSED' ? 'Đóng cửa / Sắp khai trương' : 'Đang mở / Nhận đặt bàn'}
+              label={formData.status === 'CLOSED' ? ADMIN_TEXTS.addBranchOps.statusClosed : ADMIN_TEXTS.addBranchOps.statusOpen}
               disabled={disabled}
             />
           </div>

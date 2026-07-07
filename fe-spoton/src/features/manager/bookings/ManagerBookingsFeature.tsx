@@ -6,6 +6,7 @@ import { http } from '@/lib/http';
 import { socket } from '@/lib/socket';
 import { RefreshCw } from 'lucide-react';
 import { TABLE_STATUS_CONFIG, TableStatus } from '@/features/admin/map-editor/map-editor.types';
+import { MANAGER_TEXTS } from '@/constants/texts/manager';
 
 interface Table {
   _id: string;
@@ -46,14 +47,14 @@ interface Booking {
 }
 
 const BOOKING_STATUS_CONFIG: Record<string, { label: string, color: string, bg: string }> = {
-  HOLDING: { label: 'Giữ chỗ', color: 'text-gray-700', bg: 'bg-gray-100' },
-  PENDING_PAYMENT: { label: 'Chờ thanh toán', color: 'text-amber-700', bg: 'bg-amber-100' },
-  PENDING_DEPOSIT: { label: 'Chờ cọc', color: 'text-amber-700', bg: 'bg-amber-100' },
-  CONFIRMED: { label: 'Đã xác nhận', color: 'text-blue-700', bg: 'bg-blue-100' },
-  OCCUPIED: { label: 'Đang dùng bữa', color: 'text-green-700', bg: 'bg-green-100' },
-  COMPLETED: { label: 'Hoàn thành', color: 'text-emerald-700', bg: 'bg-emerald-100' },
-  CANCELLED: { label: 'Đã hủy', color: 'text-red-700', bg: 'bg-red-100' },
-  NO_SHOW: { label: 'Không đến', color: 'text-red-700', bg: 'bg-red-100' },
+  HOLDING: { label: MANAGER_TEXTS.bookings.status.HOLDING, color: 'text-gray-700', bg: 'bg-gray-100' },
+  PENDING_PAYMENT: { label: MANAGER_TEXTS.bookings.status.PENDING_PAYMENT, color: 'text-amber-700', bg: 'bg-amber-100' },
+  PENDING_DEPOSIT: { label: MANAGER_TEXTS.bookings.status.PENDING_DEPOSIT, color: 'text-amber-700', bg: 'bg-amber-100' },
+  CONFIRMED: { label: MANAGER_TEXTS.bookings.status.CONFIRMED, color: 'text-blue-700', bg: 'bg-blue-100' },
+  OCCUPIED: { label: MANAGER_TEXTS.bookings.status.OCCUPIED, color: 'text-green-700', bg: 'bg-green-100' },
+  COMPLETED: { label: MANAGER_TEXTS.bookings.status.COMPLETED, color: 'text-emerald-700', bg: 'bg-emerald-100' },
+  CANCELLED: { label: MANAGER_TEXTS.bookings.status.CANCELLED, color: 'text-red-700', bg: 'bg-red-100' },
+  NO_SHOW: { label: MANAGER_TEXTS.bookings.status.NO_SHOW, color: 'text-red-700', bg: 'bg-red-100' },
 };
 
 export function ManagerBookingsFeature() {
@@ -175,7 +176,7 @@ export function ManagerBookingsFeature() {
   }, [user?.branch_id, fetchBookings]);
 
   if (!branch) {
-    return <div className="p-8 text-center text-gray-500">Đang tải dữ liệu chi nhánh...</div>;
+    return <div className="p-8 text-center text-gray-500">{MANAGER_TEXTS.bookings.loading}</div>;
   }
 
   const currentZone = branch.zones.find(z => z._id === selectedZone);
@@ -196,9 +197,9 @@ export function ManagerBookingsFeature() {
     <div className="p-6 md:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Quản lý Đặt bàn & Sơ đồ</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{MANAGER_TEXTS.bookings.title}</h1>
           <p className="text-sm md:text-base text-gray-500 mt-1">
-            Theo dõi trạng thái bàn theo thời gian thực (Real-time).
+            {MANAGER_TEXTS.bookings.subtitle}
           </p>
         </div>
         <button 
@@ -206,14 +207,14 @@ export function ManagerBookingsFeature() {
           className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50"
         >
           <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          Làm mới
+          {MANAGER_TEXTS.bookings.refreshBtn}
         </button>
       </div>
 
       {/* Date Filter */}
       <div className="flex gap-4 items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Ngày</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">{MANAGER_TEXTS.bookings.filterDateLabel}</label>
           <input 
             type="date" 
             value={date} 
@@ -222,14 +223,14 @@ export function ManagerBookingsFeature() {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Ca phục vụ</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">{MANAGER_TEXTS.bookings.filterShiftLabel}</label>
           <select 
             value={shift} 
             onChange={(e) => setShift(e.target.value)}
             className="border-gray-300 rounded-md text-sm py-2"
           >
-            <option value="LUNCH">Ca Trưa</option>
-            <option value="DINNER">Ca Tối</option>
+            <option value="LUNCH">{MANAGER_TEXTS.bookings.shiftLunch}</option>
+            <option value="DINNER">{MANAGER_TEXTS.bookings.shiftDinner}</option>
           </select>
         </div>
       </div>
@@ -239,15 +240,15 @@ export function ManagerBookingsFeature() {
         {/* Cột trái: Booking List */}
         <div className="xl:col-span-1 bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-[700px] flex flex-col">
           <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">
-            Danh sách đặt bàn ({bookings.length})
+            {MANAGER_TEXTS.bookings.listTitle.replace('{count}', bookings.length.toString())}
           </h2>
           <div className="flex-1 overflow-y-auto pr-2 space-y-3">
             {bookings.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-8">Không có đơn đặt bàn nào trong ca này.</p>
+              <p className="text-sm text-gray-500 text-center py-8">{MANAGER_TEXTS.bookings.emptyList}</p>
             ) : (
               bookings.map((booking) => {
-                const customerName = booking.customer_id?.full_name || booking.walk_in_name || 'Khách vãng lai';
-                const customerPhone = booking.customer_id?.phone || booking.walk_in_phone || 'N/A';
+                const customerName = booking.customer_id?.full_name || booking.walk_in_name || MANAGER_TEXTS.bookings.guestWalkIn;
+                const customerPhone = booking.customer_id?.phone || booking.walk_in_phone || MANAGER_TEXTS.bookings.phoneNa;
                 const bStatus = BOOKING_STATUS_CONFIG[booking.status] || BOOKING_STATUS_CONFIG.HOLDING;
                 
                 return (
@@ -263,12 +264,12 @@ export function ManagerBookingsFeature() {
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs mt-3">
                       <div className="bg-white p-1.5 rounded border border-gray-100">
-                        <span className="text-gray-500 block mb-0.5">Thời gian</span>
-                        <span className="font-medium">{booking.arrival_time || 'N/A'}</span>
+                        <span className="text-gray-500 block mb-0.5">{MANAGER_TEXTS.bookings.timeLabel}</span>
+                        <span className="font-medium">{booking.arrival_time || MANAGER_TEXTS.bookings.timeNa}</span>
                       </div>
                       <div className="bg-white p-1.5 rounded border border-gray-100">
-                        <span className="text-gray-500 block mb-0.5">Số khách</span>
-                        <span className="font-medium">{booking.guest_count || 1} người</span>
+                        <span className="text-gray-500 block mb-0.5">{MANAGER_TEXTS.bookings.guestCountLabel}</span>
+                        <span className="font-medium">{booking.guest_count || 1} {MANAGER_TEXTS.bookings.guestCountUnit}</span>
                       </div>
                     </div>
                   </div>
@@ -344,7 +345,7 @@ export function ManagerBookingsFeature() {
                       width: `${table.width}px`,
                       height: `${isCircle ? table.width : table.height}px`,
                     }}
-                    title={`Bàn ${table.table_number} - Trạng thái: ${statusConfig.label}`}
+                    title={`${MANAGER_TEXTS.bookings.tablePrefix} ${table.table_number} - ${MANAGER_TEXTS.bookings.statusPrefix} ${statusConfig.label}`}
                   >
                     {table.image_url ? (
                       <>
@@ -360,7 +361,7 @@ export function ManagerBookingsFeature() {
                         </span>
                         {(!isCircle || table.width >= 50) && (
                           <span className={`text-xs ${statusConfig.color} opacity-80 mt-1 pointer-events-none`}>
-                            {table.capacity} chỗ
+                            {table.capacity} {MANAGER_TEXTS.bookings.capacityUnit}
                           </span>
                         )}
                       </>

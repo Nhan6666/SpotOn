@@ -5,20 +5,21 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Store, UtensilsCrossed, TicketPercent, BarChart3, Settings, Tags, LayoutGrid, Map } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 const MENU_ITEMS = [
-  { href: '/admin', label: 'Tổng quan', icon: LayoutDashboard },
-  { href: '/admin/branches', label: 'Quản lý Chi nhánh', icon: Store, matchPrefix: true },
-  { href: '/admin/map-templates', label: 'Mẫu Sơ đồ bàn', icon: LayoutGrid, matchPrefix: true },
-  { href: '/admin/menu', label: 'Thực đơn', icon: UtensilsCrossed, matchPrefix: true },
-  { href: '/admin/categories', label: 'Danh mục', icon: Tags, matchPrefix: true },
-  { href: '/admin/vouchers', label: 'Khuyến mãi', icon: TicketPercent, matchPrefix: true },
-  { href: '/admin/analytics', label: 'Phân tích', icon: BarChart3, matchPrefix: true },
+  { href: '/admin', label: ADMIN_TEXTS.layout.sidebar.overview, icon: LayoutDashboard },
+  { href: '/admin/branches', label: ADMIN_TEXTS.layout.sidebar.branches, icon: Store, matchPrefix: true },
+  { href: '/admin/map-templates', label: ADMIN_TEXTS.layout.sidebar.mapTemplates, icon: LayoutGrid, matchPrefix: true },
+  { href: '/admin/menu', label: ADMIN_TEXTS.layout.sidebar.menu, icon: UtensilsCrossed, matchPrefix: true },
+  { href: '/admin/categories', label: ADMIN_TEXTS.layout.sidebar.categories, icon: Tags, matchPrefix: true },
+  { href: '/admin/vouchers', label: ADMIN_TEXTS.layout.sidebar.vouchers, icon: TicketPercent, matchPrefix: true },
+  { href: '/admin/analytics', label: ADMIN_TEXTS.layout.sidebar.analytics, icon: BarChart3, matchPrefix: true },
 ];
 
 const SYSTEM_CONFIGS = [
-  { href: '/admin/system-configs/booking-rules', label: 'Chính sách đặt bàn', icon: Settings, matchPrefix: true },
-  { href: '/admin/system-configs/amenities', label: 'Tiện ích', icon: Tags, matchPrefix: true },
+  { href: '/admin/system-configs/booking-rules', label: ADMIN_TEXTS.layout.sidebar.bookingRules, icon: Settings, matchPrefix: true },
+  { href: '/admin/system-configs/amenities', label: ADMIN_TEXTS.layout.sidebar.amenities, icon: Tags, matchPrefix: true },
 ];
 
 export function AdminSidebar() {
@@ -32,7 +33,7 @@ export function AdminSidebar() {
       items = items.filter(item => item.href !== '/admin/map-templates');
       const branchItem = items.find(i => i.href === '/admin/branches');
       if (branchItem) {
-        branchItem.label = 'Chi nhánh của tôi';
+        branchItem.label = ADMIN_TEXTS.layout.sidebar.myBranch;
       }
     } else if (user?.role === 'ADMIN') {
       // Admin sees Map Templates, no specific branch map shortcut
@@ -68,7 +69,7 @@ export function AdminSidebar() {
         {visibleMenuItems.map(renderLink)}
         
         <div className="pt-4 pb-2">
-          <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Cấu hình hệ thống</p>
+          <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">{ADMIN_TEXTS.layout.sidebar.systemConfig}</p>
         </div>
         
         {SYSTEM_CONFIGS.map(renderLink)}

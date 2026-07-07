@@ -1,6 +1,7 @@
 import { DINING_GUIDES } from './home.constants';
 import type { DiningGuide } from './home.types';
 import { AOS } from '@/providers/AOS';
+import { HOME_TEXTS } from '@/constants/texts/home';
 
 function GuideCard({ guide, index }: { guide: DiningGuide; index: number }) {
   return (
@@ -48,9 +49,9 @@ export function DiningGuidesSection() {
           <div className="text-center mb-8">
             <p className="text-xs font-semibold tracking-widest uppercase mb-2" style={{ color: '#c8891a' }}>Bài viết</p>
             <h2 className="text-3xl font-bold" style={{ fontFamily: "var(--font-playfair,'Playfair Display',serif)", color: '#1a1208' }}>
-              Cẩm nang Ẩm thực
+              {HOME_TEXTS.guides.title}
             </h2>
-            <p className="text-sm mt-2" style={{ color: '#6b5d4a' }}>Cập nhật những xu hướng và gợi ý ẩm thực mới nhất.</p>
+            <p className="text-sm mt-2" style={{ color: '#6b5d4a' }}>{HOME_TEXTS.guides.subtitle}</p>
           </div>
         </AOS>
 

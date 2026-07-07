@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AOS } from '@/providers/AOS';
+import { HOME_TEXTS } from '@/constants/texts/home';
 
 export function NewsletterSection() {
   const [email, setEmail] = useState('');
@@ -24,9 +25,9 @@ export function NewsletterSection() {
             }}
           >
             <div className="text-white">
-              <h2 className="text-xl font-bold mb-1">Đăng ký nhận bản tin</h2>
+              <h2 className="text-xl font-bold mb-1">{HOME_TEXTS.newsletter.title}</h2>
               <p className="text-sm" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                Nhận tin tức về các ưu đãi mới, xu hướng ẩm thực và địa điểm cuối tuần.
+                {HOME_TEXTS.newsletter.subtitle}
               </p>
             </div>
 
@@ -44,7 +45,7 @@ export function NewsletterSection() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Nhập địa chỉ email của bạn"
+                  placeholder={HOME_TEXTS.newsletter.emailPlaceholder}
                   required
                   className="flex-1 px-4 py-3 rounded-xl text-sm"
                   style={{
@@ -57,7 +58,7 @@ export function NewsletterSection() {
                 <button type="submit" id="newsletter-subscribe"
                   className="px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap"
                   style={{ background: '#1a1208', color: '#f0b843' }}>
-                  Đăng ký
+                  {HOME_TEXTS.newsletter.subscribeBtn}
                 </button>
               </form>
             )}

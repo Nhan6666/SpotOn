@@ -1,0 +1,103 @@
+export const AUTH_TEXTS = {
+  login: {
+    title: "Chào mừng trở lại",
+    subtitle: "Đăng nhập để quản lý đặt bàn và ưu đãi của bạn.",
+    emailLabel: "Email",
+    emailPlaceholder: "ví dụ@domain.com",
+    passwordLabel: "Mật khẩu",
+    passwordPlaceholder: "Nhập mật khẩu của bạn",
+    forgotPassword: "Quên mật khẩu?",
+    submitBtn: "Đăng nhập",
+    submittingBtn: "Đang đăng nhập...",
+    googleBtn: "Tiếp tục với Google",
+    googleConnecting: "Đang kết nối...",
+    noAccount: "Chưa có tài khoản?",
+    registerLink: "Đăng ký ngay",
+    orText: "Hoặc tiếp tục với",
+    bannerTitle: '"Tiếp thêm năng lượng sôi động cho nhà hàng bằng hệ thống quản lý chuẩn xác."',
+    bannerSubtitle: "Tối ưu hóa đặt bàn và quản lý các chi nhánh với sự rõ ràng và hiệu quả vượt trội.",
+    messages: {
+      success: "Đăng nhập thành công! Đang chuyển hướng...",
+      invalidCreds: "Email hoặc mật khẩu không chính xác.",
+      unverified: "Tài khoản chưa được xác thực. Vui lòng kiểm tra email.",
+      noConnection: "Không thể kết nối đến máy chủ. Vui lòng thử lại.",
+      error: "Đã có lỗi xảy ra. Vui lòng thử lại sau."
+    }
+  },
+  register: {
+    title: "Tạo Tài Khoản Mới",
+    fullNameLabel: "Họ và Tên",
+    fullNamePlaceholder: "Nhập họ và tên của bạn",
+    emailLabel: "Email",
+    emailPlaceholder: "ví dụ@domain.com",
+    phoneLabel: "Số điện thoại",
+    phonePlaceholder: "Nhập số điện thoại",
+    passwordLabel: "Mật khẩu",
+    passwordPlaceholder: "Tạo mật khẩu an toàn",
+    confirmPasswordLabel: "Xác nhận mật khẩu",
+    confirmPasswordPlaceholder: "Nhập lại mật khẩu",
+    submitBtn: "Đăng Ký Tài Khoản",
+    submittingBtn: "Đang xử lý...",
+    googleBtn: "Tiếp tục với Google",
+    googleConnecting: "Đang kết nối...",
+    hasAccount: "Đã có tài khoản?",
+    loginLink: "Đăng nhập tại đây",
+    orText: "Hoặc tiếp tục với",
+    bannerTitle: "Kiểm soát hoàn toàn chuỗi nhà hàng của bạn",
+    bannerSubtitle: "Quản lý đặt bàn, tối ưu hóa công suất và phân tích dữ liệu hiệu quả với giao diện được thiết kế riêng cho người quản lý cấp cao.",
+    messages: {
+      success: "Đăng ký thành công! Đang chuyển đến trang xác thực...",
+      googleSuccess: "Đăng nhập Google thành công! Đang chuyển hướng...",
+      emailExists: "Email hoặc số điện thoại đã được sử dụng.",
+      noConnection: "Không thể kết nối đến máy chủ. Vui lòng thử lại.",
+      error: "Đăng ký thất bại. Vui lòng thử lại sau.",
+      generalError: "Đã có lỗi xảy ra. Vui lòng thử lại sau."
+    }
+  },
+  forgotPassword: {
+    title: "Quên Mật Khẩu",
+    step1Desc: "Nhập email của bạn để nhận mã xác nhận OTP.",
+    step2Desc: "Nhập mã OTP 6 chữ số đã được gửi đến email của bạn.",
+    step3Desc: "Tạo mật khẩu mới cho tài khoản của bạn.",
+    emailLabel: "Email",
+    emailPlaceholder: "Nhập email của bạn",
+    otpLabel: "Mã OTP",
+    otpPlaceholder: "Nhập mã 6 số",
+    submitBtn1: "Gửi mã xác nhận",
+    submittingBtn1: "Đang gửi...",
+    backBtn: "Quay lại",
+    continueBtn: "Tiếp tục",
+    newPassLabel: "Mật khẩu mới",
+    newPassPlaceholder: "Nhập mật khẩu mới",
+    confirmPassLabel: "Xác nhận mật khẩu",
+    confirmPassPlaceholder: "Nhập lại mật khẩu mới",
+    submitBtn3: "Đổi mật khẩu",
+    submittingBtn3: "Đang xử lý...",
+    rememberPass: "Nhớ mật khẩu?",
+    loginNow: "Đăng nhập ngay",
+    messages: {
+      otpSent: "Mã OTP đã được gửi đến email của bạn.",
+      notFound: "Không tìm thấy tài khoản với email này.",
+      enterNewPass: "Vui lòng nhập mật khẩu mới.",
+      invalidOtp: "Mã OTP không đúng hoặc đã hết hạn.",
+      success: "Đặt lại mật khẩu thành công! Đang chuyển hướng...",
+      error: "Đã có lỗi xảy ra. Vui lòng thử lại sau."
+    }
+  },
+  verifyOtp: {
+    title: "Xác Thực Email",
+    descPrefix: "Chúng tôi đã gửi mã OTP gồm 6 chữ số đến ",
+    submitBtn: "Xác Nhận",
+    submittingBtn: "Đang xác thực...",
+    notReceived: "Không nhận được mã?",
+    resendLink: "Quay lại đăng ký",
+    messages: {
+      success: "Xác thực thành công! Đang chuyển hướng...",
+      incomplete: "Vui lòng nhập đủ 6 chữ số OTP.",
+      invalid: "Mã OTP không đúng hoặc đã hết hạn. Vui lòng thử lại.",
+      noConnection: "Không thể kết nối đến máy chủ. Vui lòng thử lại.",
+      fail: "Xác thực thất bại. Vui lòng thử lại sau.",
+      error: "Đã có lỗi xảy ra. Vui lòng thử lại sau."
+    }
+  }
+};

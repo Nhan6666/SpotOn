@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/Toast';
 import { Switch } from '@/components/ui/Switch';
 import { Amenity, CreateAmenityDto } from '../amenities.types';
 import { amenitiesService } from '../amenities.service';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 // Icon renderer dynamically if possible, or fallback to text. We will just show the icon name as text for simplicity or import lucide dynamically
 import * as LucideIcons from 'lucide-react';
 
@@ -34,7 +35,7 @@ export function AmenitiesFeature() {
       setAmenities(data);
     } catch (error) {
       console.error('Failed to load amenities:', error);
-      showError('Lỗi tải danh sách tiện ích.');
+      showError(ADMIN_TEXTS.amenities.errLoadAmenities);
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +60,7 @@ export function AmenitiesFeature() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
-      showError('Vui lòng nhập tên tiện ích.');
+      showError(ADMIN_TEXTS.amenities.errRequireName);
       return;
     }
 
@@ -67,28 +68,28 @@ export function AmenitiesFeature() {
       if (editingId) {
         const updated = await amenitiesService.update(editingId, formData);
         setAmenities(prev => prev.map(a => a._id === editingId ? updated : a));
-        success('Cập nhật thành công.');
+        success(ADMIN_TEXTS.amenities.successUpdate);
       } else {
         const created = await amenitiesService.create(formData);
         setAmenities(prev => [created, ...prev]);
-        success('Tạo tiện ích thành công.');
+        success(ADMIN_TEXTS.amenities.successCreate);
       }
       handleCloseModal();
     } catch (error: any) {
       console.error('Submit error:', error);
-      showError(error.message || 'Có lỗi xảy ra.');
+      showError(error.message || ADMIN_TEXTS.amenities.errSubmit);
     }
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Bạn có chắc muốn xóa tiện ích "${name}" không?`)) return;
+    if (!confirm(ADMIN_TEXTS.amenities.confirmDelete.replace('{name}', name))) return;
     try {
       await amenitiesService.delete(id);
       setAmenities(prev => prev.filter(a => a._id !== id));
-      success('Đã xóa tiện ích.');
+      success(ADMIN_TEXTS.amenities.successDelete);
     } catch (error: any) {
       console.error('Delete error:', error);
-      showError('Lỗi xóa tiện ích.');
+      showError(ADMIN_TEXTS.amenities.errDelete);
     }
   };
 
@@ -98,37 +99,37 @@ export function AmenitiesFeature() {
       setAmenities(prev => prev.map(a => a._id === amenity._id ? updated : a));
     } catch (error) {
       console.error('Toggle error:', error);
-      showError('Lỗi cập nhật trạng thái.');
+      showError(ADMIN_TEXTS.amenities.errToggleStatus);
     }
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
+    <div className="max-w-6xl mx-auto py-8 flex flex-col gap-6 px-4 xl:px-0">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Quản lý Tiện ích</h1>
-          <p className="text-sm md:text-base text-gray-500 mt-1">Quản lý các tiện ích dịch vụ cho chi nhánh nhà hàng.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{ADMIN_TEXTS.amenities.title}</h1>
+          <p className="text-sm md:text-base text-gray-500 mt-1">{ADMIN_TEXTS.amenities.subtitle}</p>
         </div>
         <button
           onClick={() => handleOpenModal()}
           className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
         >
           <Plus className="w-5 h-5" strokeWidth={2.5} />
-          Thêm Tiện Ích
+          {ADMIN_TEXTS.amenities.btnAddAmenity}
         </button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-gray-500 animate-pulse">Đang tải dữ liệu...</div>
+          <div className="p-8 text-center text-gray-500 animate-pulse">{ADMIN_TEXTS.amenities.loadingData}</div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiện ích</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biểu tượng</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{ADMIN_TEXTS.amenities.tableColName}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{ADMIN_TEXTS.amenities.tableColIcon}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{ADMIN_TEXTS.amenities.tableColStatus}</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{ADMIN_TEXTS.amenities.tableColActions}</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -141,7 +142,7 @@ export function AmenitiesFeature() {
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-gray-900">{amenity.name}</div>
-                        <div className="text-xs text-gray-500 max-w-xs truncate">{amenity.description || 'Không có mô tả'}</div>
+                        <div className="text-xs text-gray-500 max-w-xs truncate">{amenity.description || ADMIN_TEXTS.amenities.noDescription}</div>
                       </div>
                     </div>
                   </td>
@@ -152,7 +153,7 @@ export function AmenitiesFeature() {
                     <Switch
                       checked={amenity.is_active}
                       onChange={() => handleToggleStatus(amenity)}
-                      label={amenity.is_active ? 'Hoạt động' : 'Ẩn'}
+                      label={amenity.is_active ? ADMIN_TEXTS.amenities.statusActive : ADMIN_TEXTS.amenities.statusInactive}
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -174,7 +175,7 @@ export function AmenitiesFeature() {
               {amenities.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
-                    Chưa có tiện ích nào.
+                    {ADMIN_TEXTS.amenities.emptyList}
                   </td>
                 </tr>
               )}
@@ -188,41 +189,41 @@ export function AmenitiesFeature() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-              <h3 className="font-bold text-gray-900">{editingId ? 'Cập nhật tiện ích' : 'Thêm tiện ích mới'}</h3>
+              <h3 className="font-bold text-gray-900">{editingId ? ADMIN_TEXTS.amenities.modalTitleUpdate : ADMIN_TEXTS.amenities.modalTitleAdd}</h3>
               <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Tên tiện ích <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{ADMIN_TEXTS.amenities.lblName} <span className="text-red-500">*</span></label>
                 <Input 
                   value={formData.name}
                   onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
-                  placeholder="VD: Bãi đỗ xe ô tô"
+                  placeholder={ADMIN_TEXTS.amenities.placeholderName}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Tên biểu tượng Lucide</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{ADMIN_TEXTS.amenities.lblIcon}</label>
                 <Input 
                   value={formData.icon}
                   onChange={e => setFormData(p => ({ ...p, icon: e.target.value }))}
-                  placeholder="VD: Car, Wifi, Baby..."
+                  placeholder={ADMIN_TEXTS.amenities.placeholderIcon}
                 />
-                <p className="text-xs text-gray-500 mt-1">Tìm tên icon tại lucide.dev/icons</p>
+                <p className="text-xs text-gray-500 mt-1">{ADMIN_TEXTS.amenities.iconHint}</p>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Mô tả</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{ADMIN_TEXTS.amenities.lblDesc}</label>
                 <Input 
                   value={formData.description || ''}
                   onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
-                  placeholder="Mô tả ngắn gọn..."
+                  placeholder={ADMIN_TEXTS.amenities.placeholderDesc}
                 />
               </div>
               <div className="pt-4 flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={handleCloseModal}>Hủy</Button>
-                <Button type="submit" variant="primary" className="bg-amber-600 hover:bg-amber-700">Lưu</Button>
+                <Button type="button" variant="outline" onClick={handleCloseModal}>{ADMIN_TEXTS.amenities.btnCancel}</Button>
+                <Button type="submit" variant="primary" className="bg-amber-600 hover:bg-amber-700">{ADMIN_TEXTS.amenities.btnSave}</Button>
               </div>
             </form>
           </div>

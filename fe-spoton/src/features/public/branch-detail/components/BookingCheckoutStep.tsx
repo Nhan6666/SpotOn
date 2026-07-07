@@ -7,12 +7,12 @@ import { z } from 'zod';
 import Image from 'next/image';
 import { AlertCircle, Clock, ShoppingCart, Trash2, CheckCircle2 } from 'lucide-react';
 import { PublicBranchDetail } from '../branch-detail.types';
-import { branchDetailService } from '../branch-detail.service';
+import { PUBLIC_TEXTS } from '@/constants/texts/public';
 
 const checkoutSchema = z.object({
-  walk_in_name: z.string().min(2, 'Tên phải có ít nhất 2 ký tự').max(50, 'Tên không được quá 50 ký tự'),
-  walk_in_phone: z.string().regex(/^(0|\+84)[3|5|7|8|9][0-9]{8}$/, 'Số điện thoại không hợp lệ'),
-  note: z.string().max(200, 'Ghi chú không được quá 200 ký tự').optional(),
+  walk_in_name: z.string().min(2, PUBLIC_TEXTS.branchDetail.checkout.form.errors.nameMin).max(50, PUBLIC_TEXTS.branchDetail.checkout.form.errors.nameMax),
+  walk_in_phone: z.string().regex(/^(0|\+84)[3|5|7|8|9][0-9]{8}$/, PUBLIC_TEXTS.branchDetail.checkout.form.errors.phoneInvalid),
+  note: z.string().max(200, PUBLIC_TEXTS.branchDetail.checkout.form.errors.noteMax).optional(),
 });
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
@@ -50,7 +50,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
       setTimeLeft(remaining);
       if (remaining <= 0) {
         clearInterval(timer);
-        alert('Đã hết thời gian giữ bàn. Vui lòng chọn lại bàn từ đầu.');
+        alert(PUBLIC_TEXTS.branchDetail.checkout.timer.timeoutAlert);
         onCancel();
       }
     }, 1000);
@@ -111,7 +111,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
 
   const onSubmit = async (data: CheckoutFormData) => {
     if (timeLeft <= 0) {
-      alert('Đã hết thời gian giữ bàn. Vui lòng thực hiện lại.');
+      alert(PUBLIC_TEXTS.branchDetail.checkout.timer.timeoutAlert);
       onCancel();
       return;
     }
@@ -151,13 +151,13 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
     return (
       <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-12 text-center animate-in fade-in slide-in-from-bottom-4">
         <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">Đặt bàn thành công!</h3>
-        <p className="text-gray-600 mb-6">Cảm ơn bạn. Thông tin đặt bàn và món ăn đã được ghi nhận.</p>
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">{PUBLIC_TEXTS.branchDetail.checkout.success.title}</h3>
+        <p className="text-gray-600 mb-6">{PUBLIC_TEXTS.branchDetail.checkout.success.desc}</p>
         <button 
           onClick={onCancel}
           className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors"
         >
-          Trở về Trang chủ chi nhánh
+          {PUBLIC_TEXTS.branchDetail.checkout.success.backBtn}
         </button>
       </div>
     );
@@ -170,7 +170,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
         <div className="flex items-center gap-3">
           <Clock className="w-6 h-6 text-[#ea580c] animate-pulse" />
           <div>
-            <p className="text-sm text-gray-600 font-medium">Thời gian giữ bàn còn lại</p>
+            <p className="text-sm text-gray-600 font-medium">{PUBLIC_TEXTS.branchDetail.checkout.timer.label}</p>
             <p className="text-2xl font-bold text-[#ea580c] font-mono">{formatTime(timeLeft)}</p>
           </div>
         </div>
@@ -178,20 +178,20 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
           onClick={onCancel}
           className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
         >
-          Hủy đặt bàn
+          {PUBLIC_TEXTS.branchDetail.checkout.timer.cancelBtn}
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Menu */}
         <div className="lg:col-span-2">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Chọn món trước (Không bắt buộc)</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-6">{PUBLIC_TEXTS.branchDetail.checkout.menu.title}</h3>
           
           <div className="space-y-8">
             {categories.map((cat: any, idx: number) => (
               <div key={cat._id || idx} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
                 <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-amber-500 inline-block">
-                  {cat.name || 'Danh mục món'}
+                  {cat.name || PUBLIC_TEXTS.branchDetail.checkout.menu.noCategoryName}
                 </h4>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -204,7 +204,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
                         
                         {isOutOfStock && (
                           <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm z-10 uppercase">
-                            Đã Hết
+                            {PUBLIC_TEXTS.branchDetail.checkout.menu.outOfStock}
                           </div>
                         )}
 
@@ -220,8 +220,8 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
                         
                         <div className="flex-1 flex flex-col justify-between">
                           <div>
-                            <h5 className="font-bold text-gray-900 text-sm line-clamp-1">{item.name || 'Tên món'}</h5>
-                            <span className="font-bold text-[#ea580c] text-sm">{item.price ? `${item.price.toLocaleString()}đ` : 'Liên hệ'}</span>
+                            <h5 className="font-bold text-gray-900 text-sm line-clamp-1">{item.name || PUBLIC_TEXTS.branchDetail.checkout.menu.noItemName}</h5>
+                            <span className="font-bold text-[#ea580c] text-sm">{item.price ? `${item.price.toLocaleString()}đ` : PUBLIC_TEXTS.branchDetail.checkout.menu.priceContact}</span>
                           </div>
                           
                           {!isOutOfStock && (
@@ -237,7 +237,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
                                   onClick={() => addToCart(item)}
                                   className="w-full py-1.5 bg-gray-100 hover:bg-[#ea580c] hover:text-white text-gray-700 text-xs font-bold rounded-lg transition-colors"
                                 >
-                                  Thêm món
+                                  {PUBLIC_TEXTS.branchDetail.checkout.menu.addBtn}
                                 </button>
                               )}
                             </div>
@@ -251,7 +251,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
             ))}
             
             {categories.length === 0 && (
-              <p className="text-gray-500 italic p-6 bg-gray-50 rounded-xl">Đang tải thực đơn hoặc chi nhánh chưa có thực đơn...</p>
+              <p className="text-gray-500 italic p-6 bg-gray-50 rounded-xl">{PUBLIC_TEXTS.branchDetail.checkout.menu.loading}</p>
             )}
           </div>
         </div>
@@ -262,13 +262,13 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
             <div className="bg-gray-50 border-b border-gray-200 p-4">
               <h3 className="font-bold text-gray-900 flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5 text-[#ea580c]" /> 
-                Giỏ hàng của bạn
+                {PUBLIC_TEXTS.branchDetail.checkout.cart.title}
               </h3>
             </div>
             
             <div className="p-4 max-h-[300px] overflow-y-auto">
               {cartItems.length === 0 ? (
-                <p className="text-sm text-gray-500 italic text-center py-4">Bạn chưa chọn món nào.</p>
+                <p className="text-sm text-gray-500 italic text-center py-4">{PUBLIC_TEXTS.branchDetail.checkout.cart.empty}</p>
               ) : (
                 <div className="space-y-3">
                   {cartItems.map(({ item, quantity }) => (
@@ -291,43 +291,43 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
 
             {cartItems.length > 0 && (
               <div className="p-4 bg-orange-50 border-t border-orange-100 flex justify-between items-center">
-                <span className="font-medium text-orange-900">Tổng tiền món:</span>
+                <span className="font-medium text-orange-900">{PUBLIC_TEXTS.branchDetail.checkout.cart.total}</span>
                 <span className="text-xl font-bold text-[#ea580c]">{cartTotal.toLocaleString()}đ</span>
               </div>
             )}
 
             <form onSubmit={handleSubmit(onSubmit)} className="p-4 border-t border-gray-200 bg-gray-50 space-y-4">
-              <h4 className="font-bold text-gray-900 mb-2">Thông tin liên hệ</h4>
+              <h4 className="font-bold text-gray-900 mb-2">{PUBLIC_TEXTS.branchDetail.checkout.form.title}</h4>
               
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Họ tên người đặt <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">{PUBLIC_TEXTS.branchDetail.checkout.form.nameLabel} <span className="text-red-500">*</span></label>
                 <input 
                   {...register('walk_in_name')}
                   type="text" 
                   className={`w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] ${errors.walk_in_name ? 'border-red-500' : ''}`}
-                  placeholder="Nhập tên của bạn"
+                  placeholder={PUBLIC_TEXTS.branchDetail.checkout.form.namePlaceholder}
                 />
                 {errors.walk_in_name && <p className="text-red-500 text-xs mt-1">{errors.walk_in_name.message}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Số điện thoại <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">{PUBLIC_TEXTS.branchDetail.checkout.form.phoneLabel} <span className="text-red-500">*</span></label>
                 <input 
                   {...register('walk_in_phone')}
                   type="tel" 
                   className={`w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] ${errors.walk_in_phone ? 'border-red-500' : ''}`}
-                  placeholder="Ví dụ: 0912345678"
+                  placeholder={PUBLIC_TEXTS.branchDetail.checkout.form.phonePlaceholder}
                 />
                 {errors.walk_in_phone && <p className="text-red-500 text-xs mt-1">{errors.walk_in_phone.message}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Ghi chú (Tùy chọn)</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">{PUBLIC_TEXTS.branchDetail.checkout.form.noteLabel}</label>
                 <textarea 
                   {...register('note')}
                   rows={2}
                   className={`w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] ${errors.note ? 'border-red-500' : ''}`}
-                  placeholder="Ghi chú thêm..."
+                  placeholder={PUBLIC_TEXTS.branchDetail.checkout.form.notePlaceholder}
                 />
                 {errors.note && <p className="text-red-500 text-xs mt-1">{errors.note.message}</p>}
               </div>
@@ -344,7 +344,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
                 disabled={isSubmitting}
                 className="w-full py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2"
               >
-                {isSubmitting ? 'Đang xử lý...' : 'Hoàn Tất Đặt Bàn'}
+                {isSubmitting ? PUBLIC_TEXTS.branchDetail.checkout.form.submittingBtn : PUBLIC_TEXTS.branchDetail.checkout.form.submitBtn}
               </button>
             </form>
           </div>

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { BookingRules } from './system-settings.types';
 import { systemSettingsService } from './system-settings.service';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 export function BookingRulesFeature() {
   const [rules, setRules] = useState<BookingRules>({
@@ -35,7 +36,7 @@ export function BookingRulesFeature() {
       setRules(data);
     } catch (err) {
       console.error('Failed to load booking rules:', err);
-      showError('Không thể tải chính sách đặt bàn.');
+      showError(ADMIN_TEXTS.settings.errLoadRules);
     } finally {
       setIsLoading(false);
     }
@@ -44,11 +45,11 @@ export function BookingRulesFeature() {
   // Step 1: Validate và mở Modal xác nhận
   const handleSave = () => {
     if (rules.deposit_percent < 0 || rules.deposit_percent > 100) {
-      showError('Tỷ lệ cọc phải từ 0-100%.');
+      showError(ADMIN_TEXTS.settings.errDepositRange);
       return;
     }
     if (rules.min_advance_hours < 0 || rules.max_advance_days <= 0 || rules.max_party_size <= 0) {
-      showError('Vui lòng nhập các giá trị hợp lệ lớn hơn 0.');
+      showError(ADMIN_TEXTS.settings.errInvalidValues);
       return;
     }
     // BR: Two-Step Confirmation — Mở modal xác nhận trước khi lưu
@@ -62,10 +63,10 @@ export function BookingRulesFeature() {
     try {
       const updatedData = await systemSettingsService.updateBookingRules(rules);
       setRules(updatedData);
-      success('Lưu chính sách đặt bàn thành công!');
+      success(ADMIN_TEXTS.settings.successSaveRules);
     } catch (err) {
       console.error('Failed to save booking rules:', err);
-      showError('Lưu thất bại. Vui lòng thử lại.');
+      showError(ADMIN_TEXTS.settings.errSaveRules);
     } finally {
       setIsSaving(false);
     }
@@ -82,15 +83,15 @@ export function BookingRulesFeature() {
   };
 
   if (isLoading) {
-    return <div className="p-8 text-center text-gray-500 animate-pulse">Đang tải cấu hình...</div>;
+    return <div className="p-8 text-center text-gray-500 animate-pulse">{ADMIN_TEXTS.settings.loadingConfig}</div>;
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
+    <div className="max-w-6xl mx-auto py-8 flex flex-col gap-6 px-4 xl:px-0">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Cài đặt Hệ thống</h1>
-          <p className="text-sm md:text-base text-gray-500 mt-1">Quản lý cấu hình chung cho toàn bộ nền tảng SpotOn.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{ADMIN_TEXTS.settings.title}</h1>
+          <p className="text-sm md:text-base text-gray-500 mt-1">{ADMIN_TEXTS.settings.subtitle}</p>
         </div>
       </div>
 
@@ -98,8 +99,8 @@ export function BookingRulesFeature() {
         <div className="p-6 sm:p-8">
           <div className="flex items-start justify-between mb-8">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-1">Chính sách Đặt bàn Toàn cầu</h2>
-              <p className="text-sm text-gray-500">Những quy định này áp dụng cho tất cả chi nhánh theo mặc định.</p>
+              <h2 className="text-xl font-bold text-gray-900 mb-1">{ADMIN_TEXTS.settings.globalPolicyTitle}</h2>
+              <p className="text-sm text-gray-500">{ADMIN_TEXTS.settings.globalPolicyDesc}</p>
             </div>
           </div>
 
@@ -107,8 +108,8 @@ export function BookingRulesFeature() {
             {/* Deposit Percent */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start pb-6 border-b border-gray-100">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Tỷ lệ cọc</label>
-                <p className="text-xs text-gray-500">Số tiền cọc yêu cầu để giữ chỗ (đơn vị %).</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">{ADMIN_TEXTS.settings.lblDeposit}</label>
+                <p className="text-xs text-gray-500">{ADMIN_TEXTS.settings.descDeposit}</p>
               </div>
               <div className="sm:col-span-2">
                 <div className="relative max-w-xs">
@@ -130,8 +131,8 @@ export function BookingRulesFeature() {
             {/* Min Advance Hours */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start pb-6 border-b border-gray-100">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Đặt trước tối thiểu</label>
-                <p className="text-xs text-gray-500">Số giờ tối thiểu khách cần đặt trước.</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">{ADMIN_TEXTS.settings.lblMinAdvance}</label>
+                <p className="text-xs text-gray-500">{ADMIN_TEXTS.settings.descMinAdvance}</p>
               </div>
               <div className="sm:col-span-2">
                 <div className="relative max-w-xs">
@@ -151,8 +152,8 @@ export function BookingRulesFeature() {
             {/* Max Advance Days */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start pb-6 border-b border-gray-100">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Đặt trước tối đa</label>
-                <p className="text-xs text-gray-500">Số ngày tối đa cho phép khách đặt trước.</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">{ADMIN_TEXTS.settings.lblMaxAdvance}</label>
+                <p className="text-xs text-gray-500">{ADMIN_TEXTS.settings.descMaxAdvance}</p>
               </div>
               <div className="sm:col-span-2">
                 <div className="relative max-w-xs">
@@ -172,8 +173,8 @@ export function BookingRulesFeature() {
             {/* Max Party Size */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Số khách tối đa</label>
-                <p className="text-xs text-gray-500">Số khách lớn nhất cho phép trong một lần đặt bàn.</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">{ADMIN_TEXTS.settings.lblMaxParty}</label>
+                <p className="text-xs text-gray-500">{ADMIN_TEXTS.settings.descMaxParty}</p>
               </div>
               <div className="sm:col-span-2">
                 <div className="relative max-w-xs">
@@ -200,7 +201,7 @@ export function BookingRulesFeature() {
             disabled={isSaving}
           >
             <Save className="w-4 h-4 mr-2" />
-            {isSaving ? 'Đang lưu...' : 'Lưu chính sách'}
+            {isSaving ? ADMIN_TEXTS.settings.btnSaving : ADMIN_TEXTS.settings.btnSavePolicy}
           </Button>
         </div>
       </div>
@@ -214,11 +215,8 @@ export function BookingRulesFeature() {
                 <AlertCircle className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">Xác nhận thay đổi cấu hình</h3>
-                <p className="text-sm text-gray-500">
-                  Bạn sắp thay đổi chính sách đặt bàn áp dụng cho <strong>toàn bộ chuỗi</strong>. 
-                  Thay đổi này sẽ có hiệu lực ngay lập tức trên tất cả chi nhánh.
-                </p>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">{ADMIN_TEXTS.settings.confirmModalTitle}</h3>
+                <p className="text-sm text-gray-500" dangerouslySetInnerHTML={{ __html: ADMIN_TEXTS.settings.confirmModalDesc }} />
               </div>
             </div>
 
@@ -234,13 +232,13 @@ export function BookingRulesFeature() {
                 onClick={() => setShowConfirmModal(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Hủy bỏ
+                {ADMIN_TEXTS.settings.confirmBtnCancel}
               </button>
               <button
                 onClick={handleConfirmSave}
                 className="px-4 py-2 text-sm font-bold text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
               >
-                Xác nhận lưu
+                {ADMIN_TEXTS.settings.confirmBtnSave}
               </button>
             </div>
           </div>

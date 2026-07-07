@@ -9,8 +9,8 @@ import { AddMenuBasics } from './components/AddMenuBasics';
 import { AddMenuMedia } from './components/AddMenuMedia';
 import { AddMenuPricing } from './components/AddMenuPricing';
 import { menuService } from './menu.service';
-import { http } from '@/lib/http';
 import { MenuItem } from './menu.types';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 interface EditMenuFeatureProps {
   menuId: string;
@@ -86,7 +86,7 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
               setImagePreview(item.image_url);
             }
           } else {
-            console.error('Item not found for menuId:', menuId, 'itemId:', itemId);
+            console.error(ADMIN_TEXTS.menu.editNotFoundLog, menuId, 'itemId:', itemId);
           }
         }
       } catch (err) {
@@ -104,9 +104,9 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
   const isPriceRangeValid = min <= base && base <= max && min <= max;
 
   const STEPS = [
-    { id: 1, label: 'Basic Details' },
-    { id: 2, label: 'Pricing & Branches' },
-    { id: 3, label: 'Media & Review' },
+    { id: 1, label: ADMIN_TEXTS.menu.addStep1 },
+    { id: 2, label: ADMIN_TEXTS.menu.addStep2 },
+    { id: 3, label: ADMIN_TEXTS.menu.addStep3 },
   ];
 
   const handleSave = async () => {
@@ -129,7 +129,7 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
         });
         if (!uploadRes.ok) {
           const err = await uploadRes.json();
-          throw new Error(err.message || 'Upload ảnh thất bại.');
+          throw new Error(err.message || ADMIN_TEXTS.menu.editUploadError);
         }
         const uploadData = await uploadRes.json();
         // Cloudinary returns an absolute URL
@@ -159,7 +159,7 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
 
       router.push('/admin/menu');
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Lỗi khi cập nhật món ăn. Vui lòng thử lại.';
+      const errorMessage = err instanceof Error ? err.message : ADMIN_TEXTS.menu.editUpdateError;
       setSubmitError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -181,7 +181,7 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
     return (
       <div className="flex flex-col h-full items-center justify-center bg-[#f8fafc]">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#e67e22]" />
-        <p className="mt-4 text-gray-500 font-medium">Đang tải thông tin món ăn...</p>
+        <p className="mt-4 text-gray-500 font-medium">{ADMIN_TEXTS.menu.editLoadingItem}</p>
       </div>
     );
   }
@@ -191,12 +191,12 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
       {/* Top Navigation / Breadcrumb */}
       <div className="px-8 py-4 flex items-center text-sm border-b border-gray-100 bg-white">
         <Link href="/admin/menu" className="text-gray-500 hover:text-gray-900 font-medium flex items-center gap-1.5 transition-colors">
-          Menu Management
+          {ADMIN_TEXTS.menu.editBreadcrumbParent}
         </Link>
         <ChevronRight className="w-4 h-4 text-gray-400 mx-2" strokeWidth={2} />
         <span className="text-gray-500">{itemName}</span>
         <ChevronRight className="w-4 h-4 text-gray-400 mx-2" strokeWidth={2} />
-        <span className="text-[#e67e22] font-bold">Edit Item</span>
+        <span className="text-[#e67e22] font-bold">{ADMIN_TEXTS.menu.editBreadcrumbChild}</span>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
@@ -205,18 +205,18 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
           <div className="flex justify-between items-start mb-10">
             <div>
               <h1 className="text-[28px] font-bold text-[#0f172a] tracking-tight">
-                {currentStep === 3 ? 'Step 3: Media & Review' : 'Edit Menu Item'}
+                {currentStep === 3 ? ADMIN_TEXTS.menu.editStep3Title : ADMIN_TEXTS.menu.editTitle}
               </h1>
               <p className="text-[15px] text-[#64748b] mt-1">
                 {currentStep === 3
-                  ? 'Update the image and finalize configurations before saving.'
-                  : `Chỉnh sửa thông tin cho "${itemName}".`}
+                  ? ADMIN_TEXTS.menu.editStep3Desc
+                  : `${ADMIN_TEXTS.menu.editDescPrefix}${itemName}${ADMIN_TEXTS.menu.editDescSuffix}`}
               </p>
             </div>
             <div className="flex items-center gap-3 mt-2">
               <Button className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
                 <Save className="w-4 h-4" />
-                Save Draft
+                {ADMIN_TEXTS.menu.editBtnSaveDraft}
               </Button>
             </div>
           </div>
@@ -291,23 +291,23 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
                       </div>
                     )}
                     <div className="bg-[#d97706] p-5">
-                      <p className="text-[10px] font-bold text-white/80 uppercase tracking-widest mb-1">Item Summary</p>
+                      <p className="text-[10px] font-bold text-white/80 uppercase tracking-widest mb-1">{ADMIN_TEXTS.menu.editItemSummary}</p>
                       <h3 className="text-[20px] font-bold text-white leading-tight">{itemName}</h3>
                     </div>
                     <div className="p-5 space-y-4 bg-white">
                       <div className="flex items-center justify-between">
-                        <span className="text-[13px] text-gray-500">Danh mục</span>
+                        <span className="text-[13px] text-gray-500">{ADMIN_TEXTS.menu.editCategory}</span>
                         <span className="text-[12px] font-bold bg-gray-100 text-gray-700 px-2 py-1 rounded">{category}</span>
                       </div>
                       <div className="h-px w-full bg-gray-100" />
                       <div className="flex items-center justify-between">
-                        <span className="text-[13px] text-gray-500">Base Price</span>
+                        <span className="text-[13px] text-gray-500">{ADMIN_TEXTS.menu.editBasePrice}</span>
                         <span className="text-[14px] font-bold text-[#d97706]">{parseInt(basePrice || '0').toLocaleString('vi-VN')} VND</span>
                       </div>
                       <div className="h-px w-full bg-gray-100" />
                       <div className="flex items-center justify-between">
-                        <span className="text-[13px] text-gray-500">Chi nhánh</span>
-                        <span className="text-[12px] font-bold text-[#d97706]">{selectedBranches.length} chi nhánh</span>
+                        <span className="text-[13px] text-gray-500">{ADMIN_TEXTS.menu.editBranches}</span>
+                        <span className="text-[12px] font-bold text-[#d97706]">{selectedBranches.length} {ADMIN_TEXTS.menu.editBranches.toLowerCase()}</span>
                       </div>
                     </div>
                   </div>
@@ -315,10 +315,10 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
                   <div className="bg-[#fffbeb] border border-[#fde68a] rounded-xl p-5">
                     <div className="flex items-center gap-3 mb-4">
                       <Lightbulb className="w-5 h-5 text-[#f59e0b]" strokeWidth={2.5} />
-                      <h3 className="text-[15px] font-bold text-[#92400e]">Lưu ý khi sửa ảnh</h3>
+                      <h3 className="text-[15px] font-bold text-[#92400e]">{ADMIN_TEXTS.menu.editTipPhotoTitle}</h3>
                     </div>
                     <p className="text-[12px] text-[#b45309] leading-relaxed">
-                      Nếu bạn không chọn ảnh mới, ảnh cũ sẽ được giữ nguyên. Chọn ảnh mới để thay thế toàn bộ ảnh hiện tại.
+                      {ADMIN_TEXTS.menu.editTipPhotoDesc}
                     </p>
                   </div>
                 </>
@@ -328,17 +328,17 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
                     <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm">
                       <Lightbulb className="w-4 h-4 text-[#f59e0b]" strokeWidth={2.5} />
                     </div>
-                    <h3 className="text-[15px] font-bold text-[#92400e]">Pro Tips</h3>
+                    <h3 className="text-[15px] font-bold text-[#92400e]">{ADMIN_TEXTS.menu.addProTips}</h3>
                   </div>
                   {currentStep === 1 ? (
                     <div className="text-[12px] text-[#b45309] leading-relaxed space-y-3">
-                      <p>Cập nhật tên món ăn sẽ được đồng bộ ngay ra trang menu công khai sau khi lưu.</p>
-                      <p>Thay đổi danh mục sẽ di chuyển món ăn sang nhóm danh mục mới.</p>
+                      <p>{ADMIN_TEXTS.menu.editTipStep1Desc1}</p>
+                      <p>{ADMIN_TEXTS.menu.editTipStep1Desc2}</p>
                     </div>
                   ) : (
                     <div className="text-[12px] text-[#b45309] leading-relaxed space-y-3">
-                      <p>Thay đổi giá sẽ áp dụng ngay lập tức tại tất cả các chi nhánh đã chọn.</p>
-                      <p>Hệ thống sẽ cảnh báo nếu có chi nhánh đang bán ngoài khoảng giá mới.</p>
+                      <p>{ADMIN_TEXTS.menu.editTipStep2Desc1}</p>
+                      <p>{ADMIN_TEXTS.menu.editTipStep2Desc2}</p>
                     </div>
                   )}
                 </div>
@@ -357,7 +357,7 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
           className="bg-gray-50 border-none text-gray-900 hover:bg-gray-100 px-6 py-2.5 rounded-lg font-bold transition-colors flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" strokeWidth={2.5} />
-          {currentStep > 1 ? `Back to Step ${currentStep - 1}` : 'Back'}
+          {currentStep > 1 ? `${ADMIN_TEXTS.menu.addBtnBackStep}${currentStep - 1}` : ADMIN_TEXTS.menu.addBtnBack}
         </Button>
 
         <div className="flex items-center gap-4">
@@ -376,16 +376,16 @@ export function EditMenuFeature({ menuId, itemId }: EditMenuFeatureProps) {
             {isSubmitting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Đang lưu...
+                {ADMIN_TEXTS.menu.editBtnSaving}
               </>
             ) : currentStep === 3 ? (
               <>
                 <Save className="w-4 h-4" strokeWidth={2.5} />
-                Lưu Thay Đổi
+                {ADMIN_TEXTS.menu.editBtnSave}
               </>
             ) : (
               <>
-                Next
+                {ADMIN_TEXTS.menu.editBtnNext}
                 <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
               </>
             )}

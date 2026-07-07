@@ -5,6 +5,7 @@ import { branchDetailService } from '../branch-detail.service';
 import { Calendar, Clock, Users, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { BookingCheckoutStep } from './BookingCheckoutStep';
 import { socket } from '@/lib/socket';
+import { PUBLIC_TEXTS } from '@/constants/texts/public';
 
 export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
   const searchParams = useSearchParams();
@@ -109,7 +110,7 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
       setSelectedTables(prev => prev.filter(t => t._id !== table._id));
     } else {
       if (selectedTables.length >= 4) {
-        alert('Chỉ được chọn tối đa 4 bàn. Nếu bạn đi nhóm đông, vui lòng gọi Hotline.');
+        alert(PUBLIC_TEXTS.branchDetail.bookingTab.limitAlert);
         return;
       }
       setSelectedTables(prev => [...prev, table]);
@@ -121,7 +122,10 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
   const handleHoldBooking = async () => {
     if (selectedTables.length === 0) return;
     if (totalCapacity < guestCount) {
-      const confirmProceed = window.confirm(`Cảnh báo: Bàn bạn chọn chỉ chứa được ${totalCapacity} người, nhưng bạn đi ${guestCount} người. Sẽ rất chật chội. Bạn có chắc chắn muốn tiếp tục?`);
+      const msg = PUBLIC_TEXTS.branchDetail.bookingTab.capacityAlert
+        .replace('{capacity}', String(totalCapacity))
+        .replace('{guests}', String(guestCount));
+      const confirmProceed = window.confirm(msg);
       if (!confirmProceed) return;
     }
 
@@ -175,12 +179,12 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
   return (
     <div>
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-2">1. Chọn thời gian & số người</h3>
-        <p className="text-gray-500 text-sm mb-4">Vui lòng chọn thông tin để hệ thống tìm bàn trống phù hợp.</p>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">{PUBLIC_TEXTS.branchDetail.bookingTab.step1}</h3>
+        <p className="text-gray-500 text-sm mb-4">{PUBLIC_TEXTS.branchDetail.bookingTab.step1Desc}</p>
         
         <div className="flex flex-col md:flex-row gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1"><Calendar className="w-4 h-4"/> Ngày đến</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1"><Calendar className="w-4 h-4"/> {PUBLIC_TEXTS.branchDetail.bookingTab.date}</label>
             <input 
               type="date" 
               value={date}
@@ -189,7 +193,7 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
             />
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1"><Clock className="w-4 h-4"/> Giờ đến</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1"><Clock className="w-4 h-4"/> {PUBLIC_TEXTS.branchDetail.bookingTab.time}</label>
             <input 
               type="time" 
               value={time}
@@ -198,7 +202,7 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
             />
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1"><Users className="w-4 h-4"/> Số khách</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1"><Users className="w-4 h-4"/> {PUBLIC_TEXTS.branchDetail.bookingTab.guests}</label>
             <input 
               type="number" 
               min="1"
@@ -214,7 +218,7 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
               disabled={isChecking}
               className="w-full md:w-auto px-6 py-2.5 bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {isChecking ? 'Đang kiểm tra...' : 'Tìm bàn trống'}
+              {isChecking ? PUBLIC_TEXTS.branchDetail.bookingTab.checkingBtn : PUBLIC_TEXTS.branchDetail.bookingTab.checkBtn}
             </button>
           </div>
         </div>
@@ -230,15 +234,15 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
       {hasChecked && (
         <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-gray-900">2. Chọn sơ đồ bàn</h3>
+            <h3 className="text-xl font-bold text-gray-900">{PUBLIC_TEXTS.branchDetail.bookingTab.step2}</h3>
             <div className="text-sm">
-              Đã chọn: <strong className="text-[#ea580c]">{selectedTables.length} bàn</strong> / Sức chứa: <strong className={totalCapacity < guestCount ? "text-red-500" : "text-emerald-600"}>{totalCapacity} người</strong>
+              {PUBLIC_TEXTS.branchDetail.bookingTab.selectedCount} <strong className="text-[#ea580c]">{selectedTables.length}</strong> / {PUBLIC_TEXTS.branchDetail.bookingTab.capacity} <strong className={totalCapacity < guestCount ? "text-red-500" : "text-emerald-600"}>{totalCapacity}</strong>
             </div>
           </div>
 
           {!branch.zones || branch.zones.length === 0 ? (
             <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-12 text-center">
-              <p className="text-gray-500 italic">Chi nhánh này chưa có sơ đồ bàn.</p>
+              <p className="text-gray-500 italic">{PUBLIC_TEXTS.branchDetail.bookingTab.noZone}</p>
             </div>
           ) : (
             <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
@@ -308,15 +312,15 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
                 <div className="flex gap-6 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-emerald-50 border border-emerald-200 rounded"></div>
-                    <span className="text-gray-600 font-medium">Trống</span>
+                    <span className="text-gray-600 font-medium">{PUBLIC_TEXTS.branchDetail.bookingTab.tableStatus.available}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-[#ea580c] border border-[#c2410c] rounded"></div>
-                    <span className="text-gray-600 font-medium">Đang chọn</span>
+                    <span className="text-gray-600 font-medium">{PUBLIC_TEXTS.branchDetail.bookingTab.tableStatus.selected}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-gray-200 border border-gray-300 rounded"></div>
-                    <span className="text-gray-600 font-medium">Đã bận</span>
+                    <span className="text-gray-600 font-medium">{PUBLIC_TEXTS.branchDetail.bookingTab.tableStatus.booked}</span>
                   </div>
                 </div>
 
@@ -325,7 +329,7 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
                   disabled={selectedTables.length === 0 || isHolding}
                   className="w-full md:w-auto px-8 py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                 >
-                  {isHolding ? 'Đang giữ bàn...' : 'Xác nhận & Tiếp tục'}
+                  {isHolding ? PUBLIC_TEXTS.branchDetail.bookingTab.holdingBtn : PUBLIC_TEXTS.branchDetail.bookingTab.holdBtn}
                 </button>
               </div>
             </div>

@@ -6,32 +6,33 @@ import Image from "next/image";
 import { uploadTableImageApi, updateTableTemplateApi } from "../map-editor.service";
 import type { TableTemplate } from "../map-editor.types";
 import { Button } from "@/components/ui/Button";
+import { ADMIN_TEXTS } from "@/constants/texts/admin";
 
 
 const DEFAULT_TEMPLATES: TableTemplate[] = [
   {
-    label: "Bàn 2 người",
+    label: ADMIN_TEXTS.mapEditor.tplLabel2Person,
     capacity: 2,
     width: 70,
     height: 70,
     shape: "RECTANGLE",
   },
   {
-    label: "Bàn 4 người",
+    label: ADMIN_TEXTS.mapEditor.tplLabel4Person,
     capacity: 4,
     width: 120,
     height: 80,
     shape: "RECTANGLE",
   },
   {
-    label: "Bàn 8 người (CN)",
+    label: ADMIN_TEXTS.mapEditor.tplLabel8Person,
     capacity: 8,
     width: 200,
     height: 100,
     shape: "RECTANGLE",
   },
   {
-    label: "Bàn 8 người (Tròn)",
+    label: ADMIN_TEXTS.mapEditor.tplLabel8PersonCircle,
     capacity: 8,
     width: 160,
     height: 160,
@@ -65,7 +66,7 @@ export function TableTemplatesSidebar({ branchId, templates, onTemplateUpdate }:
     if (!file || indexToUpload === null || !branchId) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Vui lòng chọn file hình ảnh hợp lệ.");
+      alert(ADMIN_TEXTS.mapEditor.tplErrorInvalidImage);
       return;
     }
 
@@ -78,11 +79,11 @@ export function TableTemplatesSidebar({ branchId, templates, onTemplateUpdate }:
         await updateTableTemplateApi(branchId, indexToUpload, { image_url: uploadRes.data.url });
         if (onTemplateUpdate) onTemplateUpdate();
       } else {
-        alert("Upload lỗi: " + uploadRes.message);
+        alert(ADMIN_TEXTS.mapEditor.tplErrorUpload + uploadRes.message);
       }
     } catch (error) {
       console.error(error);
-      alert("Lỗi khi cập nhật ảnh mẫu bàn.");
+      alert(ADMIN_TEXTS.mapEditor.tplErrorUpdate);
     } finally {
       setUploadingIndex(null);
       targetIndexRef.current = null;
@@ -105,7 +106,7 @@ export function TableTemplatesSidebar({ branchId, templates, onTemplateUpdate }:
         className="hidden" 
       />
       <div className="p-4 bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold text-sm tracking-widest text-center uppercase shadow-sm">
-        CHỌN THEO SỐ LƯỢNG KHÁCH
+        {ADMIN_TEXTS.mapEditor.tplTitle}
       </div>
       <div className="p-4 space-y-4 overflow-y-auto max-h-[700px]">
         {displayTemplates.map((tpl, idx) => (
@@ -115,7 +116,7 @@ export function TableTemplatesSidebar({ branchId, templates, onTemplateUpdate }:
             className="border border-gray-200/60 rounded-xl p-4 bg-white hover:bg-gradient-to-b hover:from-blue-50/50 hover:to-white hover:shadow-[0_4px_20px_rgb(59,130,246,0.15)] hover:border-blue-300 ring-2 ring-transparent focus-visible:ring-indigo-500 focus-visible:outline-none transition-all duration-300 ease-out cursor-grab active:cursor-grabbing flex flex-col items-center text-center group relative hover:-translate-y-0.5 scale-100 hover:scale-[1.02]"
             draggable
             onDragStart={(e) => handleDragStart(e, tpl)}
-            title="Kéo và thả vào mặt bằng"
+            title={ADMIN_TEXTS.mapEditor.tplDragHint}
           >
             {/* Overlay nút đổi ảnh */}
             <button
@@ -126,7 +127,7 @@ export function TableTemplatesSidebar({ branchId, templates, onTemplateUpdate }:
                 e.stopPropagation(); // Không drag khi click upload
                 handleTriggerUpload(idx);
               }}
-              title="Đổi ảnh mẫu bàn này"
+              title={ADMIN_TEXTS.mapEditor.tplChangeImgHint}
               disabled={uploadingIndex === idx}
             >
               {uploadingIndex === idx ? (
@@ -138,7 +139,7 @@ export function TableTemplatesSidebar({ branchId, templates, onTemplateUpdate }:
 
             <div className="flex items-center gap-2 text-blue-700 font-bold mb-3">
               <Users className="w-5 h-5" />
-              <span>{tpl.capacity} NGƯỜI</span>
+              <span>{tpl.capacity} {ADMIN_TEXTS.mapEditor.tplPersonUnit}</span>
             </div>
 
             {/* Visual representation of the table */}
@@ -207,7 +208,7 @@ export function TableTemplatesSidebar({ branchId, templates, onTemplateUpdate }:
                 {tpl.label}
               </div>
               <p className="text-xs text-gray-500">
-                Kích thước: {tpl.shape === "CIRCLE" ? `Ø ${tpl.width} px` : `${tpl.width} x ${tpl.height} px`}
+                {ADMIN_TEXTS.mapEditor.tplSizePrefix} {tpl.shape === "CIRCLE" ? `Ø ${tpl.width} px` : `${tpl.width} x ${tpl.height} px`}
               </p>
             </div>
           </div>

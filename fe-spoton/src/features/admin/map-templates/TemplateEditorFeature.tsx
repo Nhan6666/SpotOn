@@ -25,6 +25,7 @@ import {
 } from "./template-editor.service";
 
 import type { EditorZone, EditorTable, TableStatus } from "../map-editor/map-editor.types";
+import { ADMIN_TEXTS } from "@/constants/texts/admin";
 
 interface TemplateEditorFeatureProps {
   templateId: string;
@@ -87,7 +88,7 @@ export function TemplateEditorFeature({ templateId }: TemplateEditorFeatureProps
         });
       }
     } catch (err) {
-      showError("Không thể tải dữ liệu sơ đồ mẫu.");
+      showError(ADMIN_TEXTS.mapTemplates.editorLoadError);
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -112,7 +113,7 @@ export function TemplateEditorFeature({ templateId }: TemplateEditorFeatureProps
     if (!selectedZoneId) return;
     const res = await createTable(templateId, selectedZoneId, data);
     if (res.success) {
-      success(`Thêm bàn "${data.table_number}" thành công!`);
+      success(`${ADMIN_TEXTS.mapTemplates.editorTableAddSuccess}"${data.table_number}"${ADMIN_TEXTS.mapTemplates.editorTableAddSuccessSuffix}`);
       await loadZones();
     }
   };
@@ -121,7 +122,7 @@ export function TemplateEditorFeature({ templateId }: TemplateEditorFeatureProps
     if (!selectedZoneId || !tableModal.tableId) return;
     const res = await updateTableApi(templateId, selectedZoneId, tableModal.tableId, data as any);
     if (res.success) {
-      success("Cập nhật bàn thành công!");
+      success(ADMIN_TEXTS.mapTemplates.editorTableUpdateSuccess);
       await loadZones();
     }
   };
@@ -130,7 +131,7 @@ export function TemplateEditorFeature({ templateId }: TemplateEditorFeatureProps
     if (!deleteModal.parentId) return;
     const res = await deleteTableApi(templateId, deleteModal.parentId, deleteModal.id);
     if (res.success) {
-      success(`Xóa bàn "${deleteModal.name}" thành công!`);
+      success(`${ADMIN_TEXTS.mapTemplates.editorTableDeleteSuccess}"${deleteModal.name}"${ADMIN_TEXTS.mapTemplates.editorTableDeleteSuccessSuffix}`);
       await loadZones();
     }
   };
@@ -139,7 +140,7 @@ export function TemplateEditorFeature({ templateId }: TemplateEditorFeatureProps
     if (!selectedZoneId) return;
     const res = await bulkUpdateTablesLayout(templateId, selectedZoneId, tablesLayout);
     if (res.success) {
-      success("Lưu sơ đồ bàn thành công!");
+      success(ADMIN_TEXTS.mapTemplates.editorLayoutSaveSuccess);
       await loadZones();
     }
   };
@@ -170,10 +171,10 @@ export function TemplateEditorFeature({ templateId }: TemplateEditorFeatureProps
           href="/admin/map-templates"
           className="text-gray-500 hover:text-indigo-700 transition-colors"
         >
-          Map Templates
+          {ADMIN_TEXTS.mapTemplates.editorBreadcrumbParent}
         </Link>
         <span className="mx-2 text-gray-300">/</span>
-        <span className="font-medium text-gray-900">Template Editor</span>
+        <span className="font-medium text-gray-900">{ADMIN_TEXTS.mapTemplates.editorBreadcrumbChild}</span>
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
@@ -185,10 +186,10 @@ export function TemplateEditorFeature({ templateId }: TemplateEditorFeatureProps
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Sơ Đồ Mẫu
+              {ADMIN_TEXTS.mapTemplates.editorTitle}
             </h1>
             <p className="text-sm text-gray-500">
-              {templateName || "Đang tải..."}
+              {templateName || ADMIN_TEXTS.mapTemplates.editorLoading}
             </p>
           </div>
         </div>
@@ -201,7 +202,7 @@ export function TemplateEditorFeature({ templateId }: TemplateEditorFeatureProps
             disabled={isLoading}
           >
             <RefreshCcw className={`w-4 h-4 mr-1.5 ${isLoading ? "animate-spin" : ""}`} />
-            Làm mới
+            {ADMIN_TEXTS.mapTemplates.editorBtnRefresh}
           </Button>
         </div>
       </div>
@@ -285,11 +286,11 @@ export function TemplateEditorFeature({ templateId }: TemplateEditorFeatureProps
         isOpen={deleteModal.open}
         onClose={() => setDeleteModal({ open: false, type: "zone", id: "", name: "" })}
         onConfirm={deleteModal.type === "zone" ? handleDeleteZone : handleDeleteTable}
-        title={deleteModal.type === "zone" ? "Xóa khu vực?" : "Xóa bàn?"}
+        title={deleteModal.type === "zone" ? ADMIN_TEXTS.mapTemplates.editorDeleteZoneTitle : ADMIN_TEXTS.mapTemplates.editorDeleteTableTitle}
         description={
           deleteModal.type === "zone"
-            ? "Tất cả bàn trong khu vực này cũng sẽ bị xóa. Hành động này không thể hoàn tác."
-            : "Bàn sẽ bị xóa khỏi khu vực. Hành động này không thể hoàn tác."
+            ? ADMIN_TEXTS.mapTemplates.editorDeleteZoneDesc
+            : ADMIN_TEXTS.mapTemplates.editorDeleteTableDesc
         }
         itemName={deleteModal.name}
       />

@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useBranches } from "./useBranches";
 import { FALLBACK_IMAGES, STATUS_MAP } from "./branches.constants";
 import { PublicBranch } from "./branches.types";
+import { PUBLIC_TEXTS } from "@/constants/texts/public";
 
 export function BranchesFeature() {
   const searchParams = useSearchParams();
@@ -166,22 +167,21 @@ export function BranchesFeature() {
       {/* Header Section */}
       <div className="bg-white border-b border-gray-100 py-8">
         <div className="container mx-auto px-4 max-w-6xl">
-          {/* Breadcrumb */}
           <div className="flex items-center text-sm text-gray-500 mb-4">
             <Link href="/" className="hover:text-amber-600 transition-colors">
-              Trang chủ
+              {PUBLIC_TEXTS.branches.header.breadcrumbs.home}
             </Link>
             <span className="mx-2">›</span>
             <span className="text-gray-900 font-medium">
-              Chi nhánh tại Cần Thơ
+              {PUBLIC_TEXTS.branches.header.breadcrumbs.current}
             </span>
           </div>
 
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-            {isLoading ? "Đang tải..." : `${filteredBranches.length} Chi nhánh`}
+            {isLoading ? PUBLIC_TEXTS.branches.header.titleLoading : `${filteredBranches.length} ${PUBLIC_TEXTS.branches.header.title}`}
           </h1>
           <p className="text-gray-500">
-            Danh sách các chi nhánh SpotOn đang hoạt động.
+            {PUBLIC_TEXTS.branches.header.subtitle}
           </p>
         </div>
       </div>
@@ -206,7 +206,7 @@ export function BranchesFeature() {
                       d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
                     ></path>
                   </svg>
-                  Bộ lọc
+                  {PUBLIC_TEXTS.branches.filters.title}
                 </div>
                 <button
                   onClick={() => {
@@ -221,14 +221,14 @@ export function BranchesFeature() {
                   }}
                   className="text-sm text-[#ea580c] hover:underline font-medium"
                 >
-                  Xóa tất cả
+                  {PUBLIC_TEXTS.branches.filters.clearAll}
                 </button>
               </div>
 
               {/* Location */}
               <div className="mb-6">
                 <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Quận / Huyện
+                  {PUBLIC_TEXTS.branches.filters.district.label}
                 </label>
                 <div className="relative">
                   <select
@@ -258,7 +258,7 @@ export function BranchesFeature() {
               {/* Status Filter */}
               <div className="mb-6">
                 <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Trạng thái
+                  {PUBLIC_TEXTS.branches.filters.status.label}
                 </label>
                 <div className="relative">
                   <select
@@ -286,7 +286,7 @@ export function BranchesFeature() {
               {/* Event Size */}
               <div className="mb-6">
                 <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Số lượng khách
+                  {PUBLIC_TEXTS.branches.filters.guests.label}
                 </label>
                 <div className="flex items-center justify-between border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
                   <button
@@ -298,7 +298,7 @@ export function BranchesFeature() {
                     ─
                   </button>
                   <span className="font-semibold text-gray-800">
-                    {draftGuests === 0 ? "Bất kỳ" : `${draftGuests} Khách`}
+                    {draftGuests === 0 ? PUBLIC_TEXTS.branches.filters.guests.any : `${draftGuests} ${PUBLIC_TEXTS.branches.filters.guests.unit}`}
                   </span>
                   <button
                     onClick={() => setDraftGuests(draftGuests + 1)}
@@ -312,7 +312,7 @@ export function BranchesFeature() {
               {/* Area Preferences */}
               <div className="mb-6">
                 <label className="block text-sm font-bold text-gray-700 mb-3">
-                  Khu vực ưa thích
+                  {PUBLIC_TEXTS.branches.filters.amenities.label}
                 </label>
                 <div className="space-y-3">
                   {amenityList.length > 0 ? (
@@ -365,15 +365,15 @@ export function BranchesFeature() {
                           className="text-sm font-medium text-[#ea580c] hover:underline flex items-center mt-2"
                         >
                           {showAllAmenities ? (
-                            <>Ẩn bớt <span className="ml-1">↑</span></>
+                            <>{PUBLIC_TEXTS.branches.filters.amenities.showLess} <span className="ml-1">↑</span></>
                           ) : (
-                            <>Xem thêm {amenityList.length - 4} tiện ích <span className="ml-1">↓</span></>
+                            <>{PUBLIC_TEXTS.branches.filters.amenities.showMore} {amenityList.length - 4} {PUBLIC_TEXTS.branches.filters.amenities.moreUnit} <span className="ml-1">↓</span></>
                           )}
                         </button>
                       )}
                     </>
                   ) : (
-                    <p className="text-sm text-gray-400 italic">Chưa có dữ liệu tiện ích</p>
+                    <p className="text-sm text-gray-400 italic">{PUBLIC_TEXTS.branches.filters.amenities.empty}</p>
                   )}
                 </div>
               </div>
@@ -388,7 +388,7 @@ export function BranchesFeature() {
                 }}
                 className="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold py-3 rounded-lg transition-colors shadow-sm mt-4"
               >
-                Áp dụng bộ lọc
+                {PUBLIC_TEXTS.branches.filters.applyBtn}
               </button>
 
               <style>{`
@@ -410,7 +410,7 @@ export function BranchesFeature() {
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#ea580c] mb-4"></div>
                 <p className="text-gray-500 font-medium">
-                  Đang tải danh sách chi nhánh...
+                  {PUBLIC_TEXTS.branches.list.loading}
                 </p>
               </div>
             )}
@@ -452,10 +452,10 @@ export function BranchesFeature() {
                   ></path>
                 </svg>
                 <h3 className="text-lg font-bold text-gray-700 mb-1">
-                  Không tìm thấy chi nhánh
+                  {PUBLIC_TEXTS.branches.list.notFound.title}
                 </h3>
                 <p className="text-gray-500 text-sm">
-                  Vui lòng thử thay đổi điều kiện tìm kiếm.
+                  {PUBLIC_TEXTS.branches.list.notFound.desc}
                 </p>
               </div>
             )}
@@ -588,7 +588,7 @@ export function BranchesFeature() {
                               ></path>
                             </svg>
                             <span className="truncate">
-                              Sức chứa: {totalCapacity} khách
+                              {PUBLIC_TEXTS.branches.card.capacity} {totalCapacity} {PUBLIC_TEXTS.branches.card.priceUnit}
                             </span>
                           </div>
                         )}
@@ -610,7 +610,7 @@ export function BranchesFeature() {
                               ></path>
                             </svg>
                             <span className="truncate">
-                              {branch.zones.length} khu vực
+                              {branch.zones.length} {PUBLIC_TEXTS.branches.filters.amenities.label}
                             </span>
                           </div>
                         )}
@@ -633,7 +633,7 @@ export function BranchesFeature() {
                                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                               ></path>
                             </svg>
-                            Giờ phục vụ
+                            {PUBLIC_TEXTS.branches.card.openTime}
                           </div>
                           <div className="flex flex-wrap gap-x-6 gap-y-1">
                             {serviceHours.map((h, i) => (
@@ -658,7 +658,7 @@ export function BranchesFeature() {
                           </span>
                           {branch.current_capacity_percent > 0 && (
                             <span className="bg-gray-100 text-gray-600 text-[11px] font-medium px-2.5 py-1 rounded">
-                              Tải: {branch.current_capacity_percent}%
+                              {branch.current_capacity_percent}%
                             </span>
                           )}
                         </div>
@@ -668,17 +668,17 @@ export function BranchesFeature() {
                             href={`/branches/${branch._id}?date=${searchParams.get("date") || ""}&time=${searchParams.get("time") || ""}&guests=${searchParams.get("guests") || ""}`}
                             className="w-full sm:w-auto px-6 py-2.5 border-2 border-[#ea580c] text-[#ea580c] hover:bg-[#fff6f0] font-bold rounded-full text-sm transition-colors text-center shrink-0"
                           >
-                            Xem chi tiết
+                            {PUBLIC_TEXTS.branches.card.viewBtn}
                           </Link>
                         ) : (
                           <div className="flex flex-col items-end sm:items-center">
-                            <span className="text-[11px] text-red-500 font-bold mb-1.5 uppercase tracking-wider bg-red-50 px-2 py-0.5 rounded border border-red-100">Hết bàn trống phù hợp</span>
+                            <span className="text-[11px] text-red-500 font-bold mb-1.5 uppercase tracking-wider bg-red-50 px-2 py-0.5 rounded border border-red-100">{PUBLIC_TEXTS.branches.filters.status.full}</span>
                             <a
                               href={`tel:${branch.hotline || '19001234'}`}
                               className="w-full sm:w-auto px-6 py-2 bg-red-500 text-white hover:bg-red-600 font-bold rounded-full text-sm transition-colors text-center shrink-0 flex items-center justify-center gap-2 shadow-sm"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                              Gọi Hotline
+                              {PUBLIC_TEXTS.branchDetail.bookingWidget.supportLink}
                             </a>
                           </div>
                         )}

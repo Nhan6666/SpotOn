@@ -6,6 +6,7 @@ import { Loader2, ArrowLeft, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { VoucherItem, AdminVoucherCreateRequest, computeStatus } from '../vouchers.types';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -116,20 +117,20 @@ function validateForm(formData: VoucherFormState): Record<string, string> {
     const errors: Record<string, string> = {};
     const code = formData.code.trim();
 
-    if (!code) errors.code = 'Mã voucher là bắt buộc';
-    else if (!/^[A-Z0-9_-]{3,50}$/.test(code)) errors.code = 'Mã chỉ chứa chữ in hoa, số, gạch nối';
+    if (!code) errors.code = ADMIN_TEXTS.vouchers.form.errCodeReq;
+    else if (!/^[A-Z0-9_-]{3,50}$/.test(code)) errors.code = ADMIN_TEXTS.vouchers.form.errCodeFormat;
 
     const dp = Number(formData.discount_percentage);
-    if (isNaN(dp) || dp <= 0 || dp > 100) errors.discount_percentage = 'Mức giảm giá phải từ 1% đến 100%';
+    if (isNaN(dp) || dp <= 0 || dp > 100) errors.discount_percentage = ADMIN_TEXTS.vouchers.form.errDiscountValue;
 
-    if (!formData.startDate) errors.startDate = 'Ngày bắt đầu là bắt buộc';
-    if (!formData.endDate) errors.endDate = 'Ngày kết thúc là bắt buộc';
+    if (!formData.startDate) errors.startDate = ADMIN_TEXTS.vouchers.form.errStartReq;
+    if (!formData.endDate) errors.endDate = ADMIN_TEXTS.vouchers.form.errEndReq;
 
     if (formData.startDate && formData.endDate) {
         const start = new Date(`${formData.startDate}T${formData.startTime}:00.000Z`);
         const end = new Date(`${formData.endDate}T${formData.endTime}:00.000Z`);
         if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && end <= start)
-            errors.endDate = 'Thời gian kết thúc phải sau thời gian bắt đầu';
+            errors.endDate = ADMIN_TEXTS.vouchers.form.errEndBeforeStart;
     }
 
     return errors;
@@ -174,6 +175,8 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [, setTick] = useState(0);
+
+    const nowLocalStr = formatDatetimeLocal(new Date().toISOString());
 
     useEffect(() => {
         const timer = setInterval(() => setTick(t => t + 1), 10000);
@@ -221,12 +224,12 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
 
         const isNewOrChangedStart = !initialData || initialStart !== start.getTime();
         if (isNewOrChangedStart && !isNaN(start.getTime()) && start < nowMinus1Min) {
-            errors.startDate = 'Thời gian bắt đầu không được trong quá khứ';
+            errors.startDate = ADMIN_TEXTS.vouchers.form.errStartPast;
         }
 
         const isNewOrChangedEnd = !initialData || initialEnd !== end.getTime();
         if (isNewOrChangedEnd && !isNaN(end.getTime()) && end < nowMinus1Min) {
-            errors.endDate = 'Thời gian kết thúc không được trong quá khứ';
+            errors.endDate = ADMIN_TEXTS.vouchers.form.errEndPast;
         }
 
         if (Object.keys(errors).length > 0) {
@@ -240,36 +243,36 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
         try {
             await onSubmit(buildPayload(data));
         } catch (err: any) {
-            setError(err.message || 'Đã xảy ra lỗi');
+            setError(err.message || ADMIN_TEXTS.vouchers.form.errGeneric);
             setIsSubmitting(false); // Only set false if error, on success we navigate away
         }
     };
 
     const isRunning = initialData ? computeStatus(initialData) === 'active' : false;
     const isScheduled = initialData ? computeStatus(initialData) === 'scheduled' : false;
-    
-    const nowLocalStr = formatDatetimeLocal(new Date().toISOString());
-
     return (
         <div className="max-w-3xl mx-auto space-y-6">
-            <div className="flex items-center gap-4">
-                <Link href="/admin/vouchers" className="p-2 -ml-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
+            <div className="flex items-center gap-3">
+                <Link href="/admin/vouchers" className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
                     <ArrowLeft size={20} />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{initialData ? 'Sửa Khuyến mãi' : 'Tạo Khuyến mãi mới'}</h1>
-                    <p className="text-slate-500 text-sm mt-1">Thiết lập cấu hình chi tiết cho mã giảm giá</p>
+                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                        {initialData ? ADMIN_TEXTS.vouchers.form.titleEdit : ADMIN_TEXTS.vouchers.form.titleAdd}
+                    </h1>
+                    <p className="text-sm text-slate-500 mt-1">
+                        {initialData ? ADMIN_TEXTS.vouchers.form.descEdit : ADMIN_TEXTS.vouchers.form.descAdd}
+                    </p>
                 </div>
             </div>
-
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
                 <div className="px-6 py-6 space-y-6">
                     {isRunning && (
                         <div className="bg-amber-50 border border-amber-200 text-amber-700 p-4 rounded-lg text-sm flex gap-3 items-start">
                             <div className="mt-0.5">⚠️</div>
                             <div>
-                                <strong>Voucher đang chạy!</strong>
-                                <p className="mt-1 opacity-90">Bạn chỉ có thể sửa thời gian kết thúc hoặc thay đổi giới hạn lượt dùng. Các trường khác đã bị khóa để đảm bảo an toàn dữ liệu.</p>
+                                <strong>{ADMIN_TEXTS.vouchers.form.lblStatusActive}</strong>
+                                <p className="mt-1 opacity-90">{ADMIN_TEXTS.vouchers.form.descStatusActive}</p>
                             </div>
                         </div>
                     )}
@@ -277,8 +280,8 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
                         <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 rounded-lg text-sm flex gap-3 items-start">
                             <div className="mt-0.5">🗓️</div>
                             <div>
-                                <strong>Voucher đã được lên lịch.</strong>
-                                <p className="mt-1 opacity-90">Bạn có thể chỉnh sửa mọi thông tin một cách an toàn trước khi thời gian áp dụng bắt đầu.</p>
+                                <strong>{ADMIN_TEXTS.vouchers.form.lblStatusScheduled}</strong>
+                                <p className="mt-1 opacity-90">{ADMIN_TEXTS.vouchers.form.descStatusScheduled}</p>
                             </div>
                         </div>
                     )}
@@ -289,45 +292,45 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
                     )}
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Field label="Mã Voucher" required>
-                            <input disabled={isRunning} value={data.code} onChange={(e) => updateForm('code', e.target.value.toUpperCase())} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900" placeholder="VD: SUMMER20" />
+                        <Field label={ADMIN_TEXTS.vouchers.form.lblCode} required>
+                            <input disabled={isRunning} value={data.code} onChange={(e) => updateForm('code', e.target.value.toUpperCase())} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900" placeholder={ADMIN_TEXTS.vouchers.form.placeholderCode} />
                             {fieldErrors.code && <p className="text-red-500 text-xs mt-1">{fieldErrors.code}</p>}
                         </Field>
-                        <Field label="Chi nhánh áp dụng">
+                        <Field label={ADMIN_TEXTS.vouchers.form.lblBranch}>
                             <select disabled={isRunning} value={data.branch_id} onChange={(e) => updateForm('branch_id', e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900">
-                                <option value="">Toàn chuỗi</option>
+                                <option value="">{ADMIN_TEXTS.vouchers.form.valAllBranch}</option>
                                 <option value="6600a98f1234567890abcdef">Chi nhánh Quận 1 (Mock)</option>
                                 <option value="6600a98f1234567890abcded">Chi nhánh Quận 3 (Mock)</option>
                             </select>
                         </Field>
-                        <Field label="Giảm giá (%)" required>
+                        <Field label={ADMIN_TEXTS.vouchers.form.lblDiscount} required>
                             <input disabled={isRunning} type="number" min="1" max="100" value={data.discount_percentage} onChange={(e) => updateForm('discount_percentage', e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900" placeholder="VD: 20" />
                             {fieldErrors.discount_percentage && <p className="text-red-500 text-xs mt-1">{fieldErrors.discount_percentage}</p>}
                         </Field>
-                        <Field label="Giảm tối đa (VNĐ)">
-                            <input disabled={isRunning} type="text" inputMode="numeric" value={formatPriceInput(data.max_discount_amount)} onChange={(e) => updateForm('max_discount_amount', parsePriceInput(e.target.value))} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900" placeholder="Không giới hạn" />
+                        <Field label={ADMIN_TEXTS.vouchers.form.lblMaxDiscount}>
+                            <input disabled={isRunning} type="text" inputMode="numeric" value={formatPriceInput(data.max_discount_amount)} onChange={(e) => updateForm('max_discount_amount', parsePriceInput(e.target.value))} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900" placeholder={ADMIN_TEXTS.vouchers.form.placeholderMaxDiscount} />
                         </Field>
-                        <Field label="Đơn tối thiểu (VNĐ)">
+                        <Field label={ADMIN_TEXTS.vouchers.form.lblMinOrder}>
                             <input disabled={isRunning} type="text" inputMode="numeric" value={formatPriceInput(data.min_order_value)} onChange={(e) => updateForm('min_order_value', parsePriceInput(e.target.value))} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900" placeholder="Mặc định: 0đ" />
                         </Field>
-                        <Field label="Tổng lượt dùng">
-                            <input type="number" min="1" value={data.usage_limit} onChange={(e) => updateForm('usage_limit', e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900" placeholder="Không giới hạn" />
+                        <Field label={ADMIN_TEXTS.vouchers.form.lblUsageLimit}>
+                            <input type="number" min="1" value={data.usage_limit} onChange={(e) => updateForm('usage_limit', e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900" placeholder={ADMIN_TEXTS.vouchers.form.placeholderUsageLimit} />
                         </Field>
-                        <Field label="Bắt đầu từ" required>
+                        <Field label={ADMIN_TEXTS.vouchers.form.lblStart} required>
                             <div className={`flex items-center w-full border border-slate-200 rounded-lg focus-within:ring-2 focus-within:ring-slate-900 focus-within:border-slate-900 ${isRunning ? 'bg-slate-50' : 'bg-white'}`}>
                                 <input disabled={isRunning} type="date" min={nowLocalStr.split('T')[0]} value={data.startDate} onChange={(e) => updateForm('startDate', e.target.value)} className="w-full px-4 py-2 bg-transparent border-none focus:ring-0 text-sm disabled:text-slate-500 outline-none rounded-l-lg" />
                                 <CustomTimePicker disabled={isRunning} value={data.startTime} onChange={(val) => updateForm('startTime', val)} />
                             </div>
                             {fieldErrors.startDate && <p className="text-red-500 text-xs mt-1">{fieldErrors.startDate}</p>}
                         </Field>
-                        <Field label="Kết thúc vào" required>
+                        <Field label={ADMIN_TEXTS.vouchers.form.lblEnd} required>
                             <div className="flex items-center w-full bg-white border border-slate-200 rounded-lg focus-within:ring-2 focus-within:ring-slate-900 focus-within:border-slate-900">
                                 <input type="date" min={data.startDate || nowLocalStr.split('T')[0]} value={data.endDate} onChange={(e) => updateForm('endDate', e.target.value)} className="w-full px-4 py-2 bg-transparent border-none focus:ring-0 text-sm outline-none rounded-l-lg" />
                                 <CustomTimePicker value={data.endTime} onChange={(val) => updateForm('endTime', val)} />
                             </div>
                             {fieldErrors.endDate && <p className="text-red-500 text-xs mt-1">{fieldErrors.endDate}</p>}
                         </Field>
-                        <Field label="Trạng thái">
+                        <Field label={ADMIN_TEXTS.vouchers.form.lblActive}>
                             <select value={data.is_active ? 'true' : 'false'} onChange={(e) => updateForm('is_active', e.target.value === 'true')} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900">
                                 <option value="true">Bật (Active)</option>
                                 <option value="false">Tạm dừng / Bản nháp</option>
@@ -337,11 +340,11 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
                 </div>
                 <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
                     <Link href="/admin/vouchers" className="px-5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
-                        Hủy
+                        {ADMIN_TEXTS.vouchers.form.btnCancel}
                     </Link>
                     <button onClick={handleSubmitClick} disabled={isSubmitting} className="px-5 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-60 inline-flex items-center gap-2 shadow-sm">
                         {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                        Lưu Voucher
+                        {isSubmitting ? ADMIN_TEXTS.vouchers.form.submitting : (initialData ? ADMIN_TEXTS.vouchers.form.btnSave : ADMIN_TEXTS.vouchers.form.btnCreate)}
                     </button>
                 </div>
             </div>

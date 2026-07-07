@@ -25,7 +25,7 @@ export default function ManagerStatsPage() {
 
     const fetchStats = async () => {
       try {
-        const data = await http.get(`/stats/branch/${user.branch_id}/dashboard`);
+        const data = await http.get<{ success: boolean; data: DashboardStats }>(`/stats/branch/${user.branch_id}/dashboard`);
         if (data.success) {
           setStats(data.data);
         }

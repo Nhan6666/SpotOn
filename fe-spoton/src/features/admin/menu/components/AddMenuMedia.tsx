@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Camera, Check, Lock, Plus, Tag, Info, X, Upload } from 'lucide-react';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 interface AddMenuMediaProps {
   isCoreItem: boolean;
@@ -34,13 +35,13 @@ export function AddMenuMedia({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Vui lòng chọn file ảnh (JPEG, PNG, WebP).');
+      alert(ADMIN_TEXTS.menu.mediaUploadErrorType);
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('File ảnh quá lớn. Tối đa 5MB.');
+      alert(ADMIN_TEXTS.menu.mediaUploadErrorSize);
       return;
     }
 
@@ -70,13 +71,13 @@ export function AddMenuMedia({
           <div className="text-[#e67e22]">
             <Camera className="w-6 h-6" strokeWidth={2.5} />
           </div>
-          <h2 className="text-[17px] font-bold text-gray-900">Media Upload</h2>
+          <h2 className="text-[17px] font-bold text-gray-900">{ADMIN_TEXTS.menu.mediaUploadTitle}</h2>
         </div>
 
         <div className="flex gap-8">
           {/* Primary Image */}
           <div className="flex-1 max-w-[280px]">
-            <label className="block text-[13px] font-bold text-gray-700 mb-3">Primary Item Image</label>
+            <label className="block text-[13px] font-bold text-gray-700 mb-3">{ADMIN_TEXTS.menu.mediaPrimaryImage}</label>
             
             <input
               ref={fileInputRef}
@@ -100,14 +101,14 @@ export function AddMenuMedia({
                     <button
                       onClick={() => fileInputRef.current?.click()}
                       className="p-2.5 bg-white rounded-full shadow-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                      title="Đổi ảnh"
+                      title={ADMIN_TEXTS.menu.mediaBtnChangeImage}
                     >
                       <Upload className="w-4 h-4" />
                     </button>
                     <button
                       onClick={handleRemoveImage}
                       className="p-2.5 bg-white rounded-full shadow-lg text-red-500 hover:bg-red-50 transition-colors"
-                      title="Xóa ảnh"
+                      title={ADMIN_TEXTS.menu.mediaBtnRemoveImage}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -115,7 +116,7 @@ export function AddMenuMedia({
                 </div>
                 {/* File info badge */}
                 <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-1 rounded-md">
-                  {imageFile ? `${(imageFile.size / 1024).toFixed(0)} KB` : 'Uploaded'}
+                  {imageFile ? `${(imageFile.size / 1024).toFixed(0)} KB` : ADMIN_TEXTS.menu.mediaUploadStatus}
                 </div>
               </div>
             ) : (
@@ -127,8 +128,8 @@ export function AddMenuMedia({
                   <Camera className="w-7 h-7 text-[#d97706]" strokeWidth={2} />
                 </div>
                 <div className="text-center">
-                  <p className="text-[13px] font-bold text-gray-700">Click to upload</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">JPEG, PNG, WebP • Max 5MB</p>
+                  <p className="text-[13px] font-bold text-gray-700">{ADMIN_TEXTS.menu.mediaClickToUpload}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{ADMIN_TEXTS.menu.mediaFormatInfo}</p>
                 </div>
               </button>
             )}
@@ -136,7 +137,7 @@ export function AddMenuMedia({
           
           {/* Gallery */}
           <div className="flex-1">
-            <label className="block text-[13px] font-bold text-gray-700 mb-3">Lifestyle &amp; Preparation Gallery</label>
+            <label className="block text-[13px] font-bold text-gray-700 mb-3">{ADMIN_TEXTS.menu.mediaGalleryTitle}</label>
             <div className="flex gap-3 mb-4">
               {[1, 2, 3].map(i => (
                 <button key={i} className="w-24 h-24 rounded-xl bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:border-gray-300 transition-colors">
@@ -148,7 +149,7 @@ export function AddMenuMedia({
             <div className="bg-[#fffbeb] border border-[#fde68a] rounded-lg p-4 flex items-start gap-3 mt-6">
               <Info className="w-5 h-5 text-[#d97706] shrink-0 mt-0.5" strokeWidth={2.5} />
               <p className="text-[12px] text-[#b45309] leading-relaxed">
-                Add up to 5 additional photos showing the preparation process or the dish in a lifestyle setting to increase conversion by 24%.
+                {ADMIN_TEXTS.menu.mediaGalleryInfo}
               </p>
             </div>
           </div>
@@ -161,7 +162,7 @@ export function AddMenuMedia({
           <div className="text-[#e67e22]">
             <Tag className="w-6 h-6" strokeWidth={2.5} />
           </div>
-          <h2 className="text-[17px] font-bold text-gray-900">Dietary &amp; Attributes</h2>
+          <h2 className="text-[17px] font-bold text-gray-900">{ADMIN_TEXTS.menu.mediaDietaryTitle}</h2>
         </div>
         
         <div className="flex flex-wrap gap-3">
@@ -184,7 +185,7 @@ export function AddMenuMedia({
           })}
           <button className="px-4 py-2 rounded-full text-[13px] font-bold text-gray-500 border border-dashed border-gray-300 flex items-center gap-2 hover:bg-gray-50">
             <Plus className="w-4 h-4" />
-            Add Tag
+            {ADMIN_TEXTS.menu.mediaBtnAddTag}
           </button>
         </div>
       </div>
@@ -196,16 +197,16 @@ export function AddMenuMedia({
             <Lock className="w-5 h-5" strokeWidth={2.5} />
           </div>
           <div>
-            <h2 className="text-[16px] font-bold text-gray-900">Review &amp; Visibility</h2>
+            <h2 className="text-[16px] font-bold text-gray-900">{ADMIN_TEXTS.menu.mediaReviewTitle}</h2>
             <p className="text-[13px] text-gray-500 mt-1 max-w-[450px] leading-relaxed">
-              If enabled, branch managers cannot delete this item from their local menus. This ensures consistent brand offerings across all locations.
+              {ADMIN_TEXTS.menu.mediaReviewDesc}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <span className="text-[11px] font-bold text-[#e65100] tracking-widest text-right">
-            CORE<br/>ITEM
+          <span className="text-[11px] font-bold text-[#e65100] tracking-widest text-right whitespace-pre-line">
+            {ADMIN_TEXTS.menu.mediaCoreItem}
           </span>
           <button 
             onClick={() => setIsCoreItem(!isCoreItem)}

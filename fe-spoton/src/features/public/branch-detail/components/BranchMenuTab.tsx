@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import Image from 'next/image';
 import { PUBLIC_TEXTS } from '@/constants/texts/public';
 
 export function BranchMenuTab({ menu }: { menu: any }) {
-  // Safe extraction of menu data, assuming it might be structured in categories
   const categories = menu?.categories || menu || [];
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   
   if (!categories || categories.length === 0) {
     return (
@@ -20,8 +21,39 @@ export function BranchMenuTab({ menu }: { menu: any }) {
         <p className="text-gray-500 text-sm">{PUBLIC_TEXTS.branchDetail.menuTab.subtitle}</p>
       </div>
 
+      <div className="mb-6 flex overflow-x-auto gap-2 pb-2 [&::-webkit-scrollbar]:hidden">
+        <button
+          onClick={() => setActiveCategory('all')}
+          className={`px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap transition-colors cursor-pointer ${
+            activeCategory === 'all'
+              ? 'bg-[#ea580c] text-white shadow-md'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          Tất Cả
+        </button>
+        {Array.isArray(categories) && categories.map((cat: any, idx: number) => {
+          const catId = cat._id || idx.toString();
+          return (
+            <button
+              key={catId}
+              onClick={() => setActiveCategory(catId)}
+              className={`px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap transition-colors cursor-pointer ${
+                activeCategory === catId
+                  ? 'bg-[#ea580c] text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {cat.name || PUBLIC_TEXTS.branchDetail.menuTab.noCategoryName}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="space-y-12">
-        {Array.isArray(categories) && categories.map((cat: any, idx: number) => (
+        {Array.isArray(categories) && categories
+          .filter((cat: any, idx: number) => activeCategory === 'all' || activeCategory === (cat._id || idx.toString()))
+          .map((cat: any, idx: number) => (
           <div key={cat._id || idx}>
             <h4 className="text-xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-amber-500 inline-block">
               {cat.name || PUBLIC_TEXTS.branchDetail.menuTab.noCategoryName}

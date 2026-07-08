@@ -91,7 +91,7 @@ export function PublicMenuFeature() {
               placeholder="Tìm kiếm món ăn..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 rounded-full border-none shadow-xl focus:ring-2 focus:ring-[#e67e22] text-gray-800 placeholder-gray-400 font-medium"
+              className="w-full pl-12 pr-4 py-3.5 rounded-full border-none shadow-xl bg-white focus:ring-2 focus:ring-[#e67e22] text-gray-800 placeholder-gray-400 font-medium"
             />
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           </div>
@@ -104,7 +104,7 @@ export function PublicMenuFeature() {
           <div className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] items-center lg:justify-center">
             <button
               onClick={() => scrollToCategory('all')}
-              className={`flex-shrink-0 whitespace-nowrap px-5 py-4 font-bold text-[15px] transition-all uppercase border-b-4 ${
+              className={`flex-shrink-0 whitespace-nowrap px-5 py-4 font-bold text-[15px] transition-all uppercase border-b-4 cursor-pointer ${
                 activeTab === 'all'
                   ? 'border-[#1a3826] text-[#1a3826]'
                   : 'border-transparent text-[#1a3826]/80 hover:text-[#1a3826]'
@@ -116,7 +116,7 @@ export function PublicMenuFeature() {
               <button
                 key={cat._id}
                 onClick={() => scrollToCategory(cat._id)}
-                className={`flex-shrink-0 whitespace-nowrap px-5 py-4 font-bold text-[15px] transition-all uppercase border-b-4 ${
+                className={`flex-shrink-0 whitespace-nowrap px-5 py-4 font-bold text-[15px] transition-all uppercase border-b-4 cursor-pointer ${
                   activeTab === cat._id
                     ? 'border-[#1a3826] text-[#1a3826]'
                     : 'border-transparent text-[#1a3826]/80 hover:text-[#1a3826]'
@@ -158,7 +158,7 @@ export function PublicMenuFeature() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {cat.items.map((item) => (
-                    <div key={item._id} className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-gray-50 flex flex-col group hover:shadow-xl transition-shadow duration-300">
+                    <div key={item._id} className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-gray-50 flex flex-col group hover:shadow-xl transition-shadow duration-300 cursor-pointer">
                       <div className="aspect-[4/3] w-full overflow-hidden relative">
                         {item.image_url ? (
                           <img
@@ -200,7 +200,7 @@ export function PublicMenuFeature() {
                           <p className="text-[#e67e22] font-black text-lg">
                             {(item.base_price || item.price || 0).toLocaleString('vi-VN')} <span className="text-sm font-bold opacity-70">đ</span>
                           </p>
-                          <button className="flex items-center justify-center w-9 h-9 rounded-full bg-amber-50 text-[#e67e22] hover:bg-[#e67e22] hover:text-white transition-colors group/btn">
+                          <button className="flex items-center justify-center w-9 h-9 rounded-full bg-amber-50 text-[#e67e22] hover:bg-[#e67e22] hover:text-white transition-colors group/btn cursor-pointer">
                             <Plus className="w-5 h-5 transition-transform group-hover/btn:rotate-90" />
                           </button>
                         </div>

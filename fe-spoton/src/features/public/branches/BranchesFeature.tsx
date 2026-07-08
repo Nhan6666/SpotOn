@@ -492,7 +492,7 @@ export function BranchesFeature() {
                 return (
                   <div
                     key={branch._id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow group"
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow group cursor-pointer"
                   >
                     {/* Image Section */}
                     <div className="w-full md:w-5/12 h-56 md:h-auto relative overflow-hidden flex-shrink-0">

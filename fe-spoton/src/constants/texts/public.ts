@@ -88,7 +88,6 @@ export const PUBLIC_TEXTS = {
       lunch: "Trưa",
       dinner: "Tối"
     },
-    },
     bookingTab: {
       step1: "1. Chọn thời gian & số người",
       step1Desc: "Vui lòng chọn thông tin để hệ thống tìm bàn trống phù hợp.",
@@ -211,4 +210,5 @@ export const PUBLIC_TEXTS = {
         8: { label: "8 NGƯỜI", details: "200×100 cm / Ø 160 cm" }
       }
     }
+  }
 };

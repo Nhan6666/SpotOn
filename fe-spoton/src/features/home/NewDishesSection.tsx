@@ -79,7 +79,7 @@ export function NewDishesSection() {
           {/* Grid: 2 rows of 4 cards on desktop */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 min-h-[600px]">
             {currentItems.map((item) => (
-              <div key={item._id} className="bg-white rounded-xl overflow-hidden shadow-lg flex flex-col group h-[340px]">
+              <div key={item._id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow group h-full flex flex-col cursor-pointer">
                 <div className="h-[180px] w-full overflow-hidden relative shrink-0">
                   {item.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -105,7 +105,7 @@ export function NewDishesSection() {
                     </p>
                   </div>
                   <div className="mt-4 flex justify-end">
-                    <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-gray-200 hover:border-[#e67e22] hover:text-[#e67e22] hover:bg-amber-50 transition-colors text-sm font-semibold text-gray-700">
+                    <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-gray-200 hover:border-[#e67e22] hover:text-[#e67e22] hover:bg-amber-50 transition-colors text-sm font-semibold text-gray-700 cursor-pointer">
                       <Plus className="w-4 h-4" />
                       {HOME_TEXTS.newDishes.orderBtn}
                     </button>
@@ -139,7 +139,7 @@ export function NewDishesSection() {
               <button
                 key={idx}
                 onClick={() => setCurrentPage(idx)}
-                className={`w-2.5 h-2.5 rounded-full transition-colors ${idx === currentPage ? 'bg-[#e67e22]' : 'bg-black/20 hover:bg-black/40'}`}
+                className={`w-2.5 h-2.5 rounded-full transition-colors cursor-pointer ${idx === currentPage ? 'bg-[#e67e22]' : 'bg-black/20 hover:bg-black/40'}`}
                 aria-label={`Go to page ${idx + 1}`}
               ></button>
             ))}

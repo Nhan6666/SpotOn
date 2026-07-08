@@ -182,42 +182,52 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
         <h3 className="text-xl font-bold text-gray-900 mb-2">{PUBLIC_TEXTS.branchDetail.bookingTab.step1}</h3>
         <p className="text-gray-500 text-sm mb-4">{PUBLIC_TEXTS.branchDetail.bookingTab.step1Desc}</p>
         
-        <div className="flex flex-col md:flex-row gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1"><Calendar className="w-4 h-4"/> {PUBLIC_TEXTS.branchDetail.bookingTab.date}</label>
-            <input 
-              type="date" 
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c]"
-            />
+        <div className="bg-white rounded-2xl md:rounded-full shadow-sm p-2 flex flex-col md:flex-row items-center divide-y md:divide-y-0 md:divide-x divide-gray-100 border border-gray-200">
+          <div className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer">
+            <Calendar className="w-5 h-5 md:w-6 md:h-6 text-[#ea580c] flex-shrink-0" />
+            <div className="ml-3 flex flex-col flex-1 overflow-hidden">
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">{PUBLIC_TEXTS.branchDetail.bookingTab.date}</span>
+              <input 
+                type="date" 
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                className="w-full bg-transparent border-none p-0 outline-none text-gray-600 font-medium text-sm md:text-base focus:ring-0 mt-0.5 cursor-pointer"
+              />
+            </div>
           </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1"><Clock className="w-4 h-4"/> {PUBLIC_TEXTS.branchDetail.bookingTab.time}</label>
-            <input 
-              type="time" 
-              value={time}
-              onChange={e => setTime(e.target.value)}
-              className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c]"
-            />
+          <div className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer">
+            <Clock className="w-5 h-5 md:w-6 md:h-6 text-[#ea580c] flex-shrink-0" />
+            <div className="ml-3 flex flex-col flex-1 overflow-hidden">
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">{PUBLIC_TEXTS.branchDetail.bookingTab.time}</span>
+              <input 
+                type="time" 
+                value={time}
+                onChange={e => setTime(e.target.value)}
+                className="w-full bg-transparent border-none p-0 outline-none text-gray-600 font-medium text-sm md:text-base focus:ring-0 mt-0.5 cursor-pointer"
+              />
+            </div>
           </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1"><Users className="w-4 h-4"/> {PUBLIC_TEXTS.branchDetail.bookingTab.guests}</label>
-            <input 
-              type="number" 
-              min="1"
-              max="20"
-              value={guestCount}
-              onChange={e => setGuestCount(Number(e.target.value))}
-              className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c]"
-            />
+          <div className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer">
+            <Users className="w-5 h-5 md:w-6 md:h-6 text-[#ea580c] flex-shrink-0" />
+            <div className="ml-3 flex flex-col flex-1 overflow-hidden">
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">{PUBLIC_TEXTS.branchDetail.bookingTab.guests}</span>
+              <input 
+                type="number" 
+                min="1"
+                max="20"
+                value={guestCount}
+                onChange={e => setGuestCount(Number(e.target.value))}
+                className="w-full bg-transparent border-none p-0 outline-none text-gray-600 font-medium text-sm md:text-base focus:ring-0 mt-0.5 cursor-pointer"
+              />
+            </div>
           </div>
-          <div className="flex items-end">
+          <div className="p-1.5 w-full md:w-auto mt-2 md:mt-0 flex-shrink-0">
             <button 
               onClick={handleCheckAvailability}
               disabled={isChecking}
-              className="w-full md:w-auto px-6 py-2.5 bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full md:w-auto px-8 py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold rounded-full transition-colors flex items-center justify-center shadow-md disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
             >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               {isChecking ? PUBLIC_TEXTS.branchDetail.bookingTab.checkingBtn : PUBLIC_TEXTS.branchDetail.bookingTab.checkBtn}
             </button>
           </div>

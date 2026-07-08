@@ -7,6 +7,7 @@ import { AppError } from '@/lib/errors';
 import { Edit2, Trash2, Plus, Power, Package } from 'lucide-react';
 import Image from 'next/image';
 import { MANAGER_TEXTS } from '@/constants/texts/manager';
+import { useToast } from '@/components/ui/Toast';
 
 interface MenuItem {
   _id: string;
@@ -32,6 +33,7 @@ export function BranchMenuManagementFeature() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { success: toastSuccess, error: toastError } = useToast();
 
   // For Override Master Item Modal
   const [overrideModal, setOverrideModal] = useState<{
@@ -85,9 +87,10 @@ export function BranchMenuManagementFeature() {
         }
       );
       setOverrideModal({ ...overrideModal, isOpen: false });
+      toastSuccess('Cập nhật trạng thái món ăn thành công!');
       fetchBranchMenu();
     } catch (err) {
-      alert(err instanceof AppError ? err.message : MANAGER_TEXTS.menus.errorUpdate);
+      toastError(err instanceof AppError ? err.message : MANAGER_TEXTS.menus.errorUpdate);
     }
   };
 
@@ -100,9 +103,10 @@ export function BranchMenuManagementFeature() {
       const payload = { ...editLocalItemModal.item };
       await http.put(`/manager/menus/local/${payload._id}`, payload);
       setEditLocalItemModal({ isOpen: false, item: null });
+      toastSuccess('Cập nhật món ăn thành công!');
       fetchBranchMenu();
     } catch (err) {
-      alert(err instanceof AppError ? err.message : MANAGER_TEXTS.menus.errorSaveLocal);
+      toastError(err instanceof AppError ? err.message : MANAGER_TEXTS.menus.errorSaveLocal);
     }
   };
 
@@ -110,9 +114,10 @@ export function BranchMenuManagementFeature() {
     if (!confirm(MANAGER_TEXTS.menus.confirmDelete)) return;
     try {
       await http.delete(`/manager/menus/local/${itemId}`);
+      toastSuccess('Đã xóa món ăn thành công!');
       fetchBranchMenu();
     } catch (err) {
-      alert(err instanceof AppError ? err.message : MANAGER_TEXTS.menus.errorDeleteLocal);
+      toastError(err instanceof AppError ? err.message : MANAGER_TEXTS.menus.errorDeleteLocal);
     }
   };
 

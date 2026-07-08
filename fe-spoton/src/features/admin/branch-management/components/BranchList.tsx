@@ -11,9 +11,11 @@ import { DeactivateBranchModal } from './DeactivateBranchModal';
 import { ViewBranchDetailsModal } from './ViewBranchDetailsModal';
 import Link from 'next/link';
 import { ADMIN_TEXTS } from '@/constants/texts/admin';
+import { useToast } from '@/components/ui/Toast';
 
 export function BranchList() {
   const { branches, isLoading, updateBranch } = useBranchContext();
+  const { success: toastSuccess, error: toastError } = useToast();
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<{ id: string; name: string } | null>(null);
@@ -82,9 +84,10 @@ export function BranchList() {
     try {
       const newStatus = branch.status === 'OPEN' || branch.status === 'FULL' ? 'CLOSED' : 'OPEN';
       await updateBranch(branch._id, { status: newStatus });
+      toastSuccess(newStatus === 'OPEN' ? 'Chi nhánh đã được mở!' : 'Chi nhánh đã được đóng!');
     } catch (error) {
       console.error('Failed to toggle status:', error);
-      alert(ADMIN_TEXTS.branchList.errorUpdateStatus);
+      toastError(ADMIN_TEXTS.branchList.errorUpdateStatus);
     }
   };
 

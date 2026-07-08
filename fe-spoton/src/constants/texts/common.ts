@@ -47,5 +47,9 @@ export const COMMON_TEXTS = {
     },
     copyright: "SpotOn. Đã đăng ký bản quyền.",
     designBy: "Thiết kế bởi SpotOn Team"
-  }
+  },
+  btnCancel: "Hủy",
+  btnConfirm: "Lưu",
+  btnSaving: "Đang lưu...",
+  loading: "Đang tải dữ liệu..."
 };

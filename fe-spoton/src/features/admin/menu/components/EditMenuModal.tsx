@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MenuItem } from '../menu.types';
 import { menuService } from '../menu.service';
 import { ADMIN_TEXTS } from '@/constants/texts/admin';
+import { useToast } from '@/components/ui/Toast';
 
 interface EditMenuModalProps {
   item: MenuItem;
@@ -17,6 +18,7 @@ export function EditMenuModal({ item, onClose, onSaved }: EditMenuModalProps) {
   const [maxPrice, setMaxPrice] = useState(String(item.max_price));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { success: toastSuccess } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +32,7 @@ export function EditMenuModal({ item, onClose, onSaved }: EditMenuModalProps) {
         min_price: parseFloat(minPrice),
         max_price: parseFloat(maxPrice),
       });
-      alert(ADMIN_TEXTS.menu.modalUpdateSuccess);
+      toastSuccess(ADMIN_TEXTS.menu.modalUpdateSuccess);
       onSaved();
     } catch (err: any) {
       setError(err.message || ADMIN_TEXTS.menu.modalUpdateError);

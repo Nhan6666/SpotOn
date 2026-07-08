@@ -5,6 +5,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { http } from '@/lib/http';
 import { Ticket, Search, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
+import { useToast } from '@/components/ui/Toast';
 
 export default function ManagerVouchersPage() {
   const { user } = useAuth();
@@ -12,6 +13,7 @@ export default function ManagerVouchersPage() {
   const [branch, setBranch] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isToggling, setIsToggling] = useState<string | null>(null);
+  const { success: toastSuccess, error: toastError } = useToast();
 
   useEffect(() => {
     if (user?.branch_id) {
@@ -63,9 +65,10 @@ export default function ManagerVouchersPage() {
       
       // Update local state
       setBranch({ ...branch, disabled_vouchers: newDisabledVouchers });
+      toastSuccess(isCurrentlyDisabled ? 'Đã bật mã khuyến mãi tại chi nhánh!' : 'Đã tắt mã khuyến mãi tại chi nhánh!');
     } catch (error) {
       console.error("Failed to toggle voucher", error);
-      alert("Lỗi khi thay đổi trạng thái áp dụng mã.");
+      toastError("Lỗi khi thay đổi trạng thái áp dụng mã.");
     } finally {
       setIsToggling(null);
     }

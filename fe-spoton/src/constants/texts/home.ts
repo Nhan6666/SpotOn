@@ -51,7 +51,9 @@ export const HOME_TEXTS = {
     bookingBtn: "Đặt Bàn",
     status: {
       open: "Đang hoạt động",
-      closed: "Đóng cửa"
+      closed: "Đóng cửa",
+      full: "Hết chỗ",
+      maintenance: "Bảo trì"
     },
     tablesAvailable: "bàn trống",
     priceRange: "Khoảng giá",

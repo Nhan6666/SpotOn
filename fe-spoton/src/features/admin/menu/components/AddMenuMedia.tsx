@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Camera, Check, Lock, Plus, Tag, Info, X, Upload } from 'lucide-react';
 import { ADMIN_TEXTS } from '@/constants/texts/admin';
+import { useToast } from '@/components/ui/Toast';
 
 interface AddMenuMediaProps {
   isCoreItem: boolean;
@@ -20,6 +21,7 @@ export function AddMenuMedia({
   imagePreview, setImagePreview,
 }: AddMenuMediaProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { error: toastError } = useToast();
 
   const tags = [
     { id: 'chef', label: "Chef's Choice", icon: <Check className="w-3.5 h-3.5" /> },
@@ -35,13 +37,13 @@ export function AddMenuMedia({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert(ADMIN_TEXTS.menu.mediaUploadErrorType);
+      toastError(ADMIN_TEXTS.menu.mediaUploadErrorType);
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert(ADMIN_TEXTS.menu.mediaUploadErrorSize);
+      toastError(ADMIN_TEXTS.menu.mediaUploadErrorSize);
       return;
     }
 

@@ -44,6 +44,38 @@ exports.getVoucherById = async (req, res) => {
   }
 };
 
+// @desc    Get public vouchers by branch
+// @route   GET /api/v1/vouchers/public/branch/:branchId
+// @access  Public
+exports.getPublicVouchersByBranch = async (req, res) => {
+  try {
+    const Branch = require('../models/Branch');
+    const branch = await Branch.findById(req.params.branchId);
+    
+    let query = {
+      is_active: true,
+      $or: [{ branch_id: null }, { branch_id: req.params.branchId }]
+    };
+
+    if (branch && branch.disabled_vouchers && branch.disabled_vouchers.length > 0) {
+      query._id = { $nin: branch.disabled_vouchers };
+    }
+
+    const vouchers = await Voucher.find(query).sort({ created_at: -1 });
+    
+    // Filter only running vouchers
+    const runningVouchers = vouchers.filter(isVoucherRunning);
+
+    res.status(200).json({
+      success: true,
+      data: runningVouchers,
+    });
+  } catch (error) {
+    console.error('Error in getPublicVouchersByBranch:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi lấy voucher public' });
+  }
+};
+
 // @desc    Create new voucher
 // @route   POST /api/v1/vouchers
 // @access  Private/Admin,Manager

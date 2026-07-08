@@ -66,7 +66,77 @@ const updateProfile = async (req, res) => {
 };
 
 
+// @desc   Lấy danh sách tất cả users (Admin)
+// @route  GET /api/v1/users/admin/list
+// @access Private/Admin
+const getAllUsers = async (req, res) => {
+  try {
+    // Populate branch_id để lấy tên chi nhánh
+    const users = await User.find({})
+      .select('-password_hash')
+      .populate('branch_id', 'name address')
+      .sort({ created_at: -1 });
+      
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    console.error('Lỗi getAllUsers:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server.' });
+  }
+};
+
+// @desc   Cập nhật Role và Branch cho User
+// @route  PUT /api/v1/users/admin/:id/role
+// @access Private/Admin
+const updateUserRole = async (req, res) => {
+  try {
+    const { role, branch_id } = req.body;
+    
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Người dùng không tồn tại.' });
+    }
+
+    // Không cho phép tự đổi quyền của chính mình (đề phòng Admin tự giáng cấp)
+    if (String(user._id) === String(req.user._id)) {
+      return res.status(400).json({ success: false, message: 'Bạn không thể tự thay đổi quyền của chính mình.' });
+    }
+
+    if (role) {
+      user.role = role;
+    }
+    
+    // Xử lý branch_id
+    if (role === 'ADMIN' || role === 'CUSTOMER') {
+      user.branch_id = null; // Admin và Customer không thuộc chi nhánh cụ thể
+    } else if (branch_id) {
+      user.branch_id = branch_id;
+    }
+
+    await user.save();
+    
+    // Populate lại để trả về
+    const updatedUser = await User.findById(user._id)
+      .select('-password_hash')
+      .populate('branch_id', 'name address');
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật phân quyền thành công.',
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error('Lỗi updateUserRole:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server.' });
+  }
+};
+
+
 module.exports = {
   getProfile,
   updateProfile,
+  getAllUsers,
+  updateUserRole,
 };

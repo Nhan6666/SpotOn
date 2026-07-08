@@ -3,18 +3,19 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Store, UtensilsCrossed, TicketPercent, BarChart3, Settings, Tags, LayoutGrid, Map } from 'lucide-react';
+import { LayoutDashboard, Store, UtensilsCrossed, TicketPercent, BarChart3, Settings, Tags, LayoutGrid, Map, Users } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 const MENU_ITEMS = [
-  { href: '/admin', label: ADMIN_TEXTS.layout.sidebar.overview, icon: LayoutDashboard },
-  { href: '/admin/branches', label: ADMIN_TEXTS.layout.sidebar.branches, icon: Store, matchPrefix: true },
-  { href: '/admin/map-templates', label: ADMIN_TEXTS.layout.sidebar.mapTemplates, icon: LayoutGrid, matchPrefix: true },
-  { href: '/admin/menu', label: ADMIN_TEXTS.layout.sidebar.menu, icon: UtensilsCrossed, matchPrefix: true },
-  { href: '/admin/categories', label: ADMIN_TEXTS.layout.sidebar.categories, icon: Tags, matchPrefix: true },
-  { href: '/admin/vouchers', label: ADMIN_TEXTS.layout.sidebar.vouchers, icon: TicketPercent, matchPrefix: true },
-  { href: '/admin/analytics', label: ADMIN_TEXTS.layout.sidebar.analytics, icon: BarChart3, matchPrefix: true },
+  { href: '/admin', label: ADMIN_TEXTS.layout?.sidebar?.overview || 'Tổng quan', icon: LayoutDashboard },
+  { href: '/admin/accounts', label: 'Tài khoản', icon: Users, matchPrefix: true },
+  { href: '/admin/branches', label: ADMIN_TEXTS.layout?.sidebar?.branches || 'Chi nhánh', icon: Store, matchPrefix: true },
+  { href: '/admin/map-templates', label: ADMIN_TEXTS.layout?.sidebar?.mapTemplates || 'Mẫu sơ đồ', icon: LayoutGrid, matchPrefix: true },
+  { href: '/admin/menu', label: ADMIN_TEXTS.layout?.sidebar?.menu || 'Thực đơn', icon: UtensilsCrossed, matchPrefix: true },
+  { href: '/admin/categories', label: ADMIN_TEXTS.layout?.sidebar?.categories || 'Danh mục', icon: Tags, matchPrefix: true },
+  { href: '/admin/vouchers', label: ADMIN_TEXTS.layout?.sidebar?.vouchers || 'Khuyến mãi', icon: TicketPercent, matchPrefix: true },
+  { href: '/admin/analytics', label: ADMIN_TEXTS.layout?.sidebar?.analytics || 'Thống kê', icon: BarChart3, matchPrefix: true },
 ];
 
 const SYSTEM_CONFIGS = [

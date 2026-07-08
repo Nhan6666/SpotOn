@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/providers/AuthProvider';
 import { http } from '@/lib/http';
-import { Users, DollarSign, Receipt, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Users, DollarSign, Receipt, AlertTriangle, TrendingUp, AlertCircle } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
 
 interface DashboardStats {
   revenueToday: number;
@@ -19,23 +20,66 @@ export default function ManagerStatsPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isHandling, setIsHandling] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showReopenModal, setShowReopenModal] = useState(false);
+
+  const fetchStats = async () => {
+    if (!user?.branch_id) return;
+    try {
+      const data = await http.get<{ success: boolean; data: DashboardStats }>(`/stats/branch/${user.branch_id}/dashboard`);
+      if (data.success) {
+        setStats(data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch dashboard stats", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOverloadClick = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleOverload = async () => {
+    if (!user?.branch_id) return;
+    setIsHandling(true);
+    try {
+      await http.put(`/branches/${user.branch_id}`, { status: 'FULL' });
+      // Force refresh stats after handle
+      await fetchStats();
+      setShowConfirmModal(false);
+    } catch (error) {
+      console.error(error);
+      alert("Có lỗi xảy ra khi cập nhật trạng thái chi nhánh.");
+    } finally {
+      setIsHandling(false);
+    }
+  };
+
+  const handleReopenClick = () => {
+    setShowReopenModal(true);
+  };
+
+  const handleReopen = async () => {
+    if (!user?.branch_id) return;
+    setIsHandling(true);
+    try {
+      await http.put(`/branches/${user.branch_id}`, { status: 'ACTIVE' });
+      // Force refresh stats after handle
+      await fetchStats();
+      setShowReopenModal(false);
+    } catch (error) {
+      console.error(error);
+      alert("Có lỗi xảy ra khi cập nhật trạng thái chi nhánh.");
+    } finally {
+      setIsHandling(false);
+    }
+  };
 
   useEffect(() => {
     if (!user?.branch_id) return;
-
-    const fetchStats = async () => {
-      try {
-        const data = await http.get<{ success: boolean; data: DashboardStats }>(`/stats/branch/${user.branch_id}/dashboard`);
-        if (data.success) {
-          setStats(data.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard stats", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchStats();
     // Tự động refresh mỗi phút
     const interval = setInterval(fetchStats, 60000);
@@ -111,6 +155,31 @@ export default function ManagerStatsPage() {
               <h3 className={`text-2xl font-bold ${stats?.isOverloaded ? 'text-red-600' : 'text-gray-900'}`}>
                 {stats?.currentCapacityPercent?.toFixed(1) || 0}%
               </h3>
+              {stats?.isOverloaded && stats?.branchStatus !== 'FULL' && (
+                <button 
+                  onClick={handleOverloadClick}
+                  disabled={isHandling}
+                  className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  Xử lý quá tải (Set FULL)
+                </button>
+              )}
+              {stats?.branchStatus === 'FULL' && (
+                <div className="mt-3 flex flex-col items-start gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 text-sm font-medium rounded-md border border-red-200">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                    Đã chuyển trạng thái FULL
+                  </span>
+                  <button 
+                    onClick={handleReopenClick}
+                    disabled={isHandling}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                  >
+                    {isHandling ? 'Đang xử lý...' : 'Mở nhận khách lại'}
+                  </button>
+                </div>
+              )}
             </div>
             <div className={`p-3 rounded-xl ${stats?.isOverloaded ? 'bg-red-50' : 'bg-purple-50'}`}>
               <TrendingUp className={`w-6 h-6 ${stats?.isOverloaded ? 'text-red-600' : 'text-purple-600'}`} />
@@ -126,6 +195,62 @@ export default function ManagerStatsPage() {
           <p className="text-xs text-gray-400 mt-2">Ngưỡng quá tải: {stats?.overloadThreshold}%</p>
         </div>
       </div>
+
+      <Modal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} maxWidth="sm">
+        <div className="p-6">
+          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4 mx-auto">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900 text-center mb-2">Xác nhận Đóng cửa?</h3>
+          <p className="text-sm text-gray-500 text-center mb-6">
+            Chi nhánh của bạn sẽ được chuyển sang trạng thái <b>FULL</b> (Hết chỗ). Mọi kênh đặt bàn mới sẽ bị vô hiệu hóa tạm thời.
+          </p>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setShowConfirmModal(false)}
+              className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium rounded-lg transition-colors text-sm"
+              disabled={isHandling}
+            >
+              Hủy
+            </button>
+            <button 
+              onClick={handleOverload}
+              disabled={isHandling}
+              className="flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 font-medium rounded-lg transition-colors text-sm flex items-center justify-center"
+            >
+              {isHandling ? 'Đang xử lý...' : 'Đồng ý chuyển'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showReopenModal} onClose={() => setShowReopenModal(false)} maxWidth="sm">
+        <div className="p-6">
+          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-4 mx-auto">
+            <AlertCircle className="w-6 h-6 text-green-600" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900 text-center mb-2">Xác nhận Mở lại?</h3>
+          <p className="text-sm text-gray-500 text-center mb-6">
+            Chi nhánh sẽ được chuyển về trạng thái <b>Hoạt động (ACTIVE)</b> và bắt đầu nhận khách trở lại.
+          </p>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setShowReopenModal(false)}
+              className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium rounded-lg transition-colors text-sm"
+              disabled={isHandling}
+            >
+              Hủy
+            </button>
+            <button 
+              onClick={handleReopen}
+              disabled={isHandling}
+              className="flex-1 px-4 py-2 bg-green-600 text-white hover:bg-green-700 font-medium rounded-lg transition-colors text-sm flex items-center justify-center"
+            >
+              {isHandling ? 'Đang xử lý...' : 'Mở cửa lại'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

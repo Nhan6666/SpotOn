@@ -54,6 +54,7 @@ const BranchSchema = new mongoose.Schema(
     status: { type: String, enum: ['OPEN', 'FULL', 'CLOSED'], default: 'OPEN' },
     overload_threshold: { type: Number, default: 85 }, // % công suất tối đa
     amenities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Amenity' }], // Các tiện ích của chi nhánh
+    disabled_vouchers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Voucher' }], // Các voucher chung không được áp dụng
     zones: [ZoneSchema], // Nhúng mảng Zones vào Branch
     table_templates: {
       type: [{

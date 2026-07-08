@@ -104,7 +104,7 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
             <Link href="/branches" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
               {navbar.branches}
             </Link>
-            <Link href="/menus" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
+            <Link href="/menu" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
               {navbar.menus}
             </Link>
             <Link href="/promotions" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
@@ -116,13 +116,7 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
         {/* === Right Actions === */}
         <div className="flex items-center gap-4 sm:gap-6">
 
-          {/* Thanh tìm kiếm */}
-          {!isAdmin && (
-            <div className="hidden lg:flex items-center bg-gray-50 rounded-full px-4 py-2 border border-gray-100">
-              <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-              <input type="text" placeholder={navbar.searchPlaceholder} className="bg-transparent border-none outline-none text-sm w-32" />
-            </div>
-          )}
+
 
 
           {/* Logic Phân Quyền: Nếu đã đăng nhập thì hiện Avatar Menu, chưa thì hiện Nút Đăng Nhập */}

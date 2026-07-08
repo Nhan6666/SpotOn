@@ -44,6 +44,32 @@ exports.getVoucherById = async (req, res) => {
   }
 };
 
+// @desc    Get all active global vouchers
+// @route   GET /api/v1/vouchers/public/global
+// @access  Public
+exports.getPublicGlobalVouchers = async (req, res) => {
+  try {
+    const now = new Date();
+    const query = {
+      is_active: true,
+      branch_id: null,
+      valid_from: { $lte: now },
+      valid_until: { $gte: now },
+    };
+
+    const vouchers = await Voucher.find(query).sort({ valid_until: 1 });
+
+    res.status(200).json({
+      success: true,
+      message: 'Lấy danh sách ưu đãi toàn hệ thống thành công',
+      data: vouchers,
+    });
+  } catch (error) {
+    console.error('Error in getPublicGlobalVouchers:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi lấy ưu đãi' });
+  }
+};
+
 // @desc    Get public vouchers by branch
 // @route   GET /api/v1/vouchers/public/branch/:branchId
 // @access  Public

@@ -133,12 +133,12 @@ export function HeroSection() {
             {HOME_TEXTS.hero.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-8 py-3 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-full transition-colors shadow-md">
+            <Link href="/branches" className="px-8 py-3 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-full transition-colors shadow-md cursor-pointer block">
               {HOME_TEXTS.hero.bookingBtn}
-            </button>
-            <button className="px-8 py-3 bg-white hover:bg-gray-50 text-amber-500 font-medium rounded-full transition-colors shadow-sm border border-amber-500">
+            </Link>
+            <Link href="/menu" className="px-8 py-3 bg-white hover:bg-gray-50 text-amber-500 font-medium rounded-full transition-colors shadow-sm border border-amber-500 cursor-pointer block">
               {HOME_TEXTS.hero.menuBtn}
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -215,15 +215,15 @@ export function HeroSection() {
           {/* TIME */}
           <div ref={timeRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <div className="ml-3 flex flex-col flex-1 overflow-hidden" onClick={() => setShowTimeDropdown(true)}>
-              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">{HOME_TEXTS.hero.time.label}</span>
+            <div className="ml-3 flex flex-col flex-1 overflow-hidden cursor-pointer" onClick={() => setShowTimeDropdown(true)}>
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide cursor-pointer">{HOME_TEXTS.hero.time.label}</span>
               <input 
                 type="text" 
                 placeholder={HOME_TEXTS.hero.time.placeholder}
                 value={time}
                 onChange={handleTimeChange}
                 onBlur={handleTimeBlur}
-                className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-text" 
+                className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-pointer" 
               />
             </div>
 
@@ -254,8 +254,8 @@ export function HeroSection() {
           {/* GUESTS */}
           <div ref={guestsRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            <div className="ml-3 flex flex-col flex-1 overflow-hidden" onClick={() => setShowGuestsDropdown(!showGuestsDropdown)}>
-              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">{HOME_TEXTS.hero.guests.label}</span>
+            <div className="ml-3 flex flex-col flex-1 overflow-hidden cursor-pointer" onClick={() => setShowGuestsDropdown(!showGuestsDropdown)}>
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide cursor-pointer">{HOME_TEXTS.hero.guests.label}</span>
               <input 
                 type="text" 
                 readOnly
@@ -301,7 +301,7 @@ export function HeroSection() {
                 const dateString = date ? date.toLocaleDateString('en-CA') : ''; // yyyy-mm-dd
                 window.location.href = `/branches?district=${encodeURIComponent(districtParam)}&date=${dateString}&time=${time}&guests=${guestCount || ''}`;
               }}
-              className="w-full md:w-auto px-8 py-3.5 bg-[#ef5914] hover:bg-[#d44e11] text-white font-bold rounded-full transition-colors flex items-center justify-center shadow-md"
+              className="w-full md:w-auto px-8 py-3.5 bg-[#ef5914] hover:bg-[#d44e11] text-white font-bold rounded-full transition-colors flex items-center justify-center shadow-md cursor-pointer"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               {HOME_TEXTS.hero.searchBtn}

@@ -11,6 +11,18 @@ router.route('/profile')
   .get(protect, userController.getProfile)
   .put(protect, userController.updateProfile);
 
+const { authorize } = require('../middlewares/authMiddleware');
+
+// @desc   Lấy danh sách tất cả users (dành cho Admin phân quyền)
+// @route  GET /api/v1/users/admin/list
+// @access Private/Admin
+router.get('/admin/list', protect, authorize('ADMIN'), userController.getAllUsers);
+
+// @desc   Cập nhật Role và Branch cho User
+// @route  PUT /api/v1/users/admin/:id/role
+// @access Private/Admin
+router.put('/admin/:id/role', protect, authorize('ADMIN'), userController.updateUserRole);
+
 
 // @desc   Lấy danh sách managers chưa quản lý chi nhánh nào
 // @route  GET /api/v1/users/managers?currentBranchId=xxx

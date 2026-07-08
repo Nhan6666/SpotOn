@@ -139,7 +139,21 @@ export function LoginFeature() {
       {/* Cột phải - Form Đăng nhập */}
       <div className="flex w-full flex-col justify-center px-8 md:w-1/2 md:px-16 lg:px-24 xl:px-32 relative">
         <div className="mx-auto w-full max-w-md">
-          <h1 className="mb-2 text-4xl font-bold text-gray-900">
+          {/* Logo */}
+          <div className="mb-8 flex items-center gap-2">
+            <div className="flex items-center justify-center text-amber-700">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 2C12 2 12 7.5 9 10.5C6 13.5 2 12 2 12M12 2C12 2 12 7.5 15 10.5C18 13.5 22 12 22 12M12 2V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M7 2L7 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M17 2L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <span className="text-3xl font-bold tracking-tight text-gray-900">
+              SpotOn
+            </span>
+          </div>
+
+          <h1 className="mb-2 text-3xl font-bold text-gray-900">
             {login.title}
           </h1>
           <p className="mb-8 text-gray-500">
@@ -163,7 +177,7 @@ export function LoginFeature() {
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
             {/* Email */}
             <div className="space-y-1.5">
-              <label htmlFor="email" className="text-xs font-semibold tracking-wide text-gray-700">
+              <label htmlFor="email" className="text-xs font-bold tracking-widest text-gray-800 uppercase">
                 {login.emailLabel}
               </label>
               <input
@@ -178,7 +192,7 @@ export function LoginFeature() {
 
             {/* Password */}
             <div className="space-y-1.5 relative">
-              <label htmlFor="password" className="text-xs font-semibold tracking-wide text-gray-700">
+              <label htmlFor="password" className="text-xs font-bold tracking-widest text-gray-800 uppercase">
                 {login.passwordLabel}
               </label>
               <div className="relative">
@@ -231,8 +245,8 @@ export function LoginFeature() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isSubmitting || isGoogleLoading}
-              className="mt-6 w-full rounded-md bg-[#8a5a19] px-4 cursor-pointer py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#724a15] transition-colors focus:outline-none focus:ring-2 focus:ring-[#8a5a19] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
+              className="w-full rounded-md bg-[#8C5D2A] px-4 py-3 text-sm font-bold text-white transition-all hover:bg-[#6c4820] disabled:cursor-not-allowed disabled:opacity-70 mt-6 shadow-sm hover:shadow-md"
             >
               {isSubmitting ? login.submittingBtn : login.submitBtn}
             </button>

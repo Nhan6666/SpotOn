@@ -5,6 +5,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { http } from '@/lib/http';
 import { Users, DollarSign, Receipt, AlertTriangle, TrendingUp, AlertCircle } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toast';
 
 interface DashboardStats {
   revenueToday: number;
@@ -23,6 +24,7 @@ export default function ManagerStatsPage() {
   const [isHandling, setIsHandling] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showReopenModal, setShowReopenModal] = useState(false);
+  const { success: toastSuccess, error: toastError } = useToast();
 
   const fetchStats = async () => {
     if (!user?.branch_id) return;
@@ -50,9 +52,10 @@ export default function ManagerStatsPage() {
       // Force refresh stats after handle
       await fetchStats();
       setShowConfirmModal(false);
+      toastSuccess('Chi nhánh đã chuyển sang trạng thái ĐẦY!');
     } catch (error) {
       console.error(error);
-      alert("Có lỗi xảy ra khi cập nhật trạng thái chi nhánh.");
+      toastError("Có lỗi xảy ra khi cập nhật trạng thái chi nhánh.");
     } finally {
       setIsHandling(false);
     }
@@ -70,9 +73,10 @@ export default function ManagerStatsPage() {
       // Force refresh stats after handle
       await fetchStats();
       setShowReopenModal(false);
+      toastSuccess('Chi nhánh đã mở lại thành công!');
     } catch (error) {
       console.error(error);
-      alert("Có lỗi xảy ra khi cập nhật trạng thái chi nhánh.");
+      toastError("Có lỗi xảy ra khi cập nhật trạng thái chi nhánh.");
     } finally {
       setIsHandling(false);
     }

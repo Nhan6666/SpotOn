@@ -9,6 +9,7 @@ import { Dropdown, DropdownItem } from '@/components/ui/Dropdown';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/providers/AuthProvider';
+import { useToast } from '@/components/ui/Toast';
 import Image from 'next/image';
 
 interface Branch {
@@ -31,6 +32,7 @@ interface UserAccount {
 
 export function AccountsFeature() {
   const { user: currentUser } = useAuth();
+  const { success: toastSuccess, error: toastError } = useToast();
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,7 +88,7 @@ export function AccountsFeature() {
       const payload: any = { role: editRole };
       if (editRole === 'MANAGER' || editRole === 'WAITER') {
         if (!editBranchId) {
-          alert('Vui lòng chọn chi nhánh phân công cho nhân viên này.');
+          toastError('Vui lòng chọn chi nhánh phân công cho nhân viên này.');
           setIsUpdating(false);
           return;
         }
@@ -95,11 +97,12 @@ export function AccountsFeature() {
 
       await http.put(`/users/admin/${selectedUser._id}/role`, payload);
       
+      toastSuccess('Cập nhật quyền tài khoản thành công!');
       setIsEditModalOpen(false);
       fetchData(); // Refresh list
     } catch (error: any) {
       console.error("Lỗi cấp quyền:", error);
-      alert(error.response?.data?.message || 'Có lỗi xảy ra khi cấp quyền.');
+      toastError(error.response?.data?.message || 'Có lỗi xảy ra khi cấp quyền.');
     } finally {
       setIsUpdating(false);
     }

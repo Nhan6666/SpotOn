@@ -6,6 +6,7 @@ import { AppError } from '@/lib/errors';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { ADMIN_TEXTS } from '@/constants/texts/admin';
 import { COMMON_TEXTS } from '@/constants/texts/common';
+import { useToast } from '@/components/ui/Toast';
 
 interface MenuCategory {
   _id: string;
@@ -21,7 +22,8 @@ export function CategoryManagementFeature() {
   // Form states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteCategory, setDeleteCategory] = useState<MenuCategory | null>(null);
+  const { success, error: toastError } = useToast();
   const [categoryName, setCategoryName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -77,16 +79,18 @@ export function CategoryManagementFeature() {
     try {
       if (editingId) {
         await http.put(`/categories/${editingId}`, { category_name: categoryName });
+        success('Cập nhật danh mục thành công!');
       } else {
         await http.post('/categories', { category_name: categoryName });
+        success('Thêm danh mục mới thành công!');
       }
       handleCloseForm();
       fetchCategories();
     } catch (err) {
       if (err instanceof AppError) {
-        setError(err.message);
+        toastError(err.message);
       } else {
-        setError('Có lỗi xảy ra');
+        toastError('Có lỗi xảy ra');
       }
     } finally {
       setIsSubmitting(false);
@@ -97,13 +101,14 @@ export function CategoryManagementFeature() {
     try {
       setError(null);
       await http.delete(`/categories/${id}`);
-      setDeleteConfirmId(null);
+      setDeleteCategory(null);
+      success('Đã xóa danh mục thành công!');
       fetchCategories();
     } catch (err) {
       if (err instanceof AppError) {
-        setError(err.message);
+        toastError(err.message);
       } else {
-        setError('Có lỗi xảy ra');
+        toastError('Có lỗi xảy ra khi xóa');
       }
     }
   };
@@ -131,41 +136,67 @@ export function CategoryManagementFeature() {
       )}
 
       {isFormOpen && (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h2 className="text-lg font-bold mb-4">
-            {editingId ? ADMIN_TEXTS.categories.editCategory : ADMIN_TEXTS.categories.addCategory}
-          </h2>
-          <form onSubmit={handleSubmit} className="flex gap-4 items-end">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {ADMIN_TEXTS.categories.categoryName} <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={categoryName}
-                onChange={(e) => setCategoryName(e.target.value)}
-                placeholder={ADMIN_TEXTS.categories.categoryNamePlaceholder}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                required
-              />
-            </div>
-            <div className="flex gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold mb-6 text-gray-900 border-b border-gray-100 pb-3">
+              {editingId ? ADMIN_TEXTS.categories.editCategory : ADMIN_TEXTS.categories.addCategory}
+            </h2>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              <div>
+                <label className="block text-xs font-bold text-gray-800 mb-1.5 uppercase tracking-widest">
+                  {ADMIN_TEXTS.categories.categoryName} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={categoryName}
+                  onChange={(e) => setCategoryName(e.target.value)}
+                  placeholder={ADMIN_TEXTS.categories.categoryNamePlaceholder}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-shadow"
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={handleCloseForm}
+                  className="px-5 py-2.5 rounded-lg font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  {COMMON_TEXTS.btnCancel || 'Hủy'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  {isSubmitting ? (COMMON_TEXTS.btnSaving || 'Đang lưu...') : (COMMON_TEXTS.btnConfirm || 'Lưu')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {deleteCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-sm animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="text-lg font-bold mb-2 text-gray-900">Xác nhận xóa danh mục?</h2>
+            <p className="text-gray-600 text-sm mb-6">Bạn có chắc chắn muốn xóa danh mục <span className="font-bold text-gray-900">"{deleteCategory.category_name}"</span> không? Hành động này không thể hoàn tác.</p>
+            <div className="flex justify-end gap-3">
               <button
-                type="button"
-                onClick={handleCloseForm}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                onClick={() => setDeleteCategory(null)}
+                className="px-4 py-2 rounded-lg font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
               >
-                {COMMON_TEXTS.btnCancel}
+                Hủy
               </button>
               <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium disabled:opacity-50"
+                onClick={() => confirmDelete(deleteCategory._id)}
+                className="px-4 py-2 rounded-lg font-bold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
               >
-                {isSubmitting ? COMMON_TEXTS.btnSaving : COMMON_TEXTS.btnConfirm}
+                Xóa Danh Mục
               </button>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
@@ -193,27 +224,10 @@ export function CategoryManagementFeature() {
                     {category.items?.length || 0}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    {deleteConfirmId === category._id ? (
-                      <div className="flex items-center justify-end gap-3">
-                        <span className="text-sm text-red-600 font-medium">{ADMIN_TEXTS.categories.confirmDelete}</span>
-                        <button
-                          onClick={() => confirmDelete(category._id)}
-                          className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 transition-colors"
-                        >
-                          {ADMIN_TEXTS.categories.btnYes}
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirmId(null)}
-                          className="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-bold rounded hover:bg-gray-300 transition-colors"
-                        >
-                          {ADMIN_TEXTS.categories.btnNo}
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <button
+                    <>
+                      <button
                           onClick={() => handleOpenForm(category)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mr-2 inline-flex"
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mr-2 inline-flex cursor-pointer"
                           title={ADMIN_TEXTS.categories.editCategory}
                         >
                           <Edit2 className="w-4 h-4" />
@@ -221,18 +235,17 @@ export function CategoryManagementFeature() {
                         <button
                           onClick={() => {
                             if ((category.items?.length || 0) > 0) {
-                              setError(ADMIN_TEXTS.categories.errorNotEmpty);
+                              toastError(ADMIN_TEXTS.categories.errorNotEmpty);
                               return;
                             }
-                            setDeleteConfirmId(category._id);
+                            setDeleteCategory(category);
                           }}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex cursor-pointer"
                           title={ADMIN_TEXTS.categories.deleteCategory}
                         >
                           <Trash2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
+                      </button>
+                    </>
                   </td>
                 </tr>
               ))}

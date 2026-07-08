@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/providers/AuthProvider';
 import { http } from '@/lib/http';
-import { Store, TrendingUp, Users, AlertCircle, RefreshCw } from 'lucide-react';
+import { Store, TrendingUp, Users, AlertCircle, RefreshCw, BarChart3, LineChart } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 
 interface ChainStats {
   revenueToday: number;
@@ -12,6 +13,23 @@ interface ChainStats {
   overloadedBranches: number;
   totalBranches: number;
 }
+
+const mockRevenueData = [
+  { name: 'T2', Doanh_thu: 12500000 },
+  { name: 'T3', Doanh_thu: 15200000 },
+  { name: 'T4', Doanh_thu: 14800000 },
+  { name: 'T5', Doanh_thu: 18500000 },
+  { name: 'T6', Doanh_thu: 24000000 },
+  { name: 'T7', Doanh_thu: 32500000 },
+  { name: 'CN', Doanh_thu: 28000000 },
+];
+
+const mockOrderData = [
+  { name: 'Sáng', Đơn_hàng: 45 },
+  { name: 'Trưa', Đơn_hàng: 120 },
+  { name: 'Chiều', Đơn_hàng: 60 },
+  { name: 'Tối', Đơn_hàng: 155 },
+];
 
 export default function AdminPage() {
   const { user } = useAuth();
@@ -144,6 +162,78 @@ export default function AdminPage() {
                   Cần chú ý
                 </span>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Biểu đồ */}
+      {stats && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Chart 1: Doanh thu 7 ngày qua (Mock data) */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                <LineChart className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">Doanh thu 7 ngày qua</h3>
+                <p className="text-xs text-gray-500">Dữ liệu tham khảo (Mock Data)</p>
+              </div>
+            </div>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={mockRevenueData}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} tickFormatter={(value) => `${value / 1000000}M`} />
+                  <RechartsTooltip 
+                    formatter={(value: number) => [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value), 'Doanh thu']}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Area type="monotone" dataKey="Doanh_thu" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Chart 2: Phân bổ đơn hàng trong ngày (Mock data) */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">Đơn hàng theo khung giờ</h3>
+                <p className="text-xs text-gray-500">Dữ liệu tham khảo (Mock Data)</p>
+              </div>
+            </div>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={mockOrderData}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  barSize={40}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
+                  <RechartsTooltip 
+                    cursor={{ fill: '#f3f4f6' }}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Bar dataKey="Đơn_hàng" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>

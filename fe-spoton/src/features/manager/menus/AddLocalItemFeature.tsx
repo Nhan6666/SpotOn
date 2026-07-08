@@ -6,6 +6,7 @@ import { http } from '@/lib/http';
 import { AppError } from '@/lib/errors';
 import { UploadCloud, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { MANAGER_TEXTS } from '@/constants/texts/manager';
+import { useToast } from '@/components/ui/Toast';
 
 interface MenuCategory {
   category_name: string;
@@ -17,6 +18,7 @@ interface UserContext {
 
 export function AddLocalItemFeature() {
   const router = useRouter();
+  const { success: toastSuccess, error: toastError } = useToast();
   const [step, setStep] = useState(1);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [createdItemId, setCreatedItemId] = useState<string | null>(null);
@@ -55,11 +57,11 @@ export function AddLocalItemFeature() {
     e.preventDefault();
     try {
       if (formData.quantity < 0) {
-        alert(MANAGER_TEXTS.menus.addLocalItem.errorNegativeStock);
+        toastError(MANAGER_TEXTS.menus.addLocalItem.errorNegativeStock);
         return;
       }
       if (!formData.category_name) {
-        alert(MANAGER_TEXTS.menus.addLocalItem.errorNoCategory);
+        toastError(MANAGER_TEXTS.menus.addLocalItem.errorNoCategory);
         return;
       }
 
@@ -70,7 +72,7 @@ export function AddLocalItemFeature() {
       // Chuyển sang bước 2
       setStep(2);
     } catch (error) {
-      alert(error instanceof AppError ? error.message : MANAGER_TEXTS.menus.addLocalItem.errorCreateItem);
+      toastError(error instanceof AppError ? error.message : MANAGER_TEXTS.menus.addLocalItem.errorCreateItem);
     }
   };
 
@@ -101,10 +103,10 @@ export function AddLocalItemFeature() {
       // 3. Update lại món ăn với image_url (PUT request)
       await http.put(`/manager/menus/local/${createdItemId}`, { image_url: imageUrl });
 
-      alert(MANAGER_TEXTS.menus.addLocalItem.successAlert);
+      toastSuccess(MANAGER_TEXTS.menus.addLocalItem.successAlert);
       router.push('/manager/menus'); // Quay lại trang quản lý menu
     } catch (error) {
-      alert(error instanceof AppError ? error.message : MANAGER_TEXTS.menus.addLocalItem.errorUpload);
+      toastError(error instanceof AppError ? error.message : MANAGER_TEXTS.menus.addLocalItem.errorUpload);
     } finally {
       setIsUploading(false);
     }
@@ -240,7 +242,7 @@ export function AddLocalItemFeature() {
               <button
                 type="button"
                 onClick={() => {
-                  alert(MANAGER_TEXTS.menus.addLocalItem.skipUploadAlert);
+                  toastSuccess(MANAGER_TEXTS.menus.addLocalItem.skipUploadAlert);
                   router.push('/manager/menus');
                 }}
                 className="text-gray-500 hover:text-gray-700 font-medium px-4 py-2"

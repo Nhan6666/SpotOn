@@ -9,9 +9,11 @@ import { MenuTable } from './components/MenuTable';
 import { MenuCategoryFilter } from './menu.types';
 import { menuService } from './menu.service';
 import { ADMIN_TEXTS } from '@/constants/texts/admin';
+import { useToast } from '@/components/ui/Toast';
 
 export function MenuFeature() {
   const { items, categories, pagination, isLoading, fetchMasterMenu } = useMenuContext();
+  const { success: toastSuccess, error: toastError } = useToast();
   const [activeTab, setActiveTab] = useState<MenuCategoryFilter | 'Tất cả món'>(ADMIN_TEXTS.menu.tabAll as 'Tất cả món');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,9 +57,10 @@ export function MenuFeature() {
   const handleDelete = async (menuId: string, itemId: string) => {
     try {
       await menuService.deleteItem(menuId, itemId);
+      toastSuccess('Xóa món ăn thành công!');
       loadData();
     } catch (err: any) {
-      alert(err.message || ADMIN_TEXTS.menu.deleteError);
+      toastError(err.message || ADMIN_TEXTS.menu.deleteError);
     }
   };
 

@@ -158,7 +158,7 @@ const deleteBranch = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
+
 // @desc   Cập nhật trạng thái bàn trong chi nhánh
 // @route  PATCH /api/v1/branches/:branchId/tables/:tableId/status
 // @access Private (MANAGER, WAITER)

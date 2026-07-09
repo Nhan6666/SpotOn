@@ -4,11 +4,8 @@
 // ============================================================
 const Booking = require('../models/Booking');
 const Branch = require('../models/Branch');
-<<<<<<< HEAD
 const Notification = require('../models/Notification');
-=======
 const mongoose = require('mongoose');
->>>>>>> b60c22aebd993d07131dd1943172b0c08ecc29bb
 const asyncHandler = require('../utils/asyncHandler');
 
 // Helper function

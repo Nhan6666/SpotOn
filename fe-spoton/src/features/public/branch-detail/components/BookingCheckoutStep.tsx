@@ -452,11 +452,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
                 disabled={isSubmitting}
                 className="w-full py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2"
               >
-<<<<<<< HEAD
                 {isSubmitting ? PUBLIC_TEXTS.branchDetail.checkout.form.submittingBtn : PUBLIC_TEXTS.branchDetail.checkout.form.submitBtn}
-=======
-                {isSubmitting ? 'Đang lưu...' : 'Tiếp tục thanh toán'}
->>>>>>> b60c22aebd993d07131dd1943172b0c08ecc29bb
               </button>
             </form>
           </div>

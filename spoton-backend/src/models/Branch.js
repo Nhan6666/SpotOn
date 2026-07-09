@@ -54,6 +54,10 @@ const BranchSchema = new mongoose.Schema(
     status: { type: String, enum: ['OPEN', 'FULL', 'CLOSED'], default: 'OPEN' },
     overload_threshold: { type: Number, default: 85 }, // % công suất tối đa
     amenities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Amenity' }], // Các tiện ích của chi nhánh
+    
+    // TÍNH NĂNG IPAD TẠI BÀN
+    ipad_pin: { type: String, default: '1234' }, // Mật khẩu dùng nội bộ do manager set để mở khóa iPad
+    
     zones: [ZoneSchema], // Nhúng mảng Zones vào Branch
     table_templates: {
       type: [{

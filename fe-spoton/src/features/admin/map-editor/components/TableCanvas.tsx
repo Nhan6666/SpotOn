@@ -8,6 +8,7 @@ import { TABLE_STATUS_CONFIG } from "../map-editor.types";
 
 interface TableCanvasProps {
   zone: EditorZone | null;
+  bookings?: any[];
   onAddTable: () => void;
   onEditTable: (table: EditorTable) => void;
   onSaveLayout: (
@@ -24,6 +25,7 @@ interface TableCanvasProps {
 
 export function TableCanvas({
   zone,
+  bookings,
   onAddTable,
   onEditTable,
   onSaveLayout,
@@ -392,6 +394,22 @@ export function TableCanvas({
                 const statusConfig = TABLE_STATUS_CONFIG[table.status];
                 const isCircle = table.shape === "CIRCLE";
 
+                // Tính toán ca đã được đặt cho bàn này
+                const tableBookings = bookings?.filter((b) => b.table_ids.includes(table._id)) || [];
+                const lunchBooking = tableBookings.find(b => b.shift === 'LUNCH');
+                const dinnerBooking = tableBookings.find(b => b.shift === 'DINNER');
+
+                const getShiftConfig = (booking: any) => {
+                  if (!booking) return TABLE_STATUS_CONFIG['EMPTY'];
+                  if (booking.status === 'CONFIRMED') return TABLE_STATUS_CONFIG['RESERVED'];
+                  if (booking.status === 'PENDING_PAYMENT' || booking.status === 'PENDING_DEPOSIT') return TABLE_STATUS_CONFIG['LOCKED'];
+                  if (booking.status === 'HOLDING') return TABLE_STATUS_CONFIG['HOLDING'];
+                  return TABLE_STATUS_CONFIG['EMPTY'];
+                };
+
+                const lunchConfig = getShiftConfig(lunchBooking);
+                const dinnerConfig = getShiftConfig(dinnerBooking);
+
                 // Map shape to CSS
                 const shapeClasses = isCircle ? "rounded-full" : "rounded-lg";
 
@@ -470,10 +488,23 @@ export function TableCanvas({
                     </div>
 
                     {/* Status Label underneath the table */}
-                    <div
-                      className={`absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] px-2.5 py-0.5 rounded-full border shadow-[0_2px_10px_rgba(0,0,0,0.06)] pointer-events-none z-10 ${statusConfig.bg} ${statusConfig.border} ${statusConfig.color} font-bold uppercase tracking-wider`}
-                    >
-                      {statusConfig.label}
+                    <div className="absolute -bottom-11 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 pointer-events-none z-10 w-max">
+                      {table.status !== 'EMPTY' && table.status !== 'OCCUPIED' && (
+                        <div className={`mb-0.5 whitespace-nowrap text-[9px] px-2 py-0.5 rounded-full border shadow-sm ${statusConfig.bg} ${statusConfig.border} ${statusConfig.color} font-bold uppercase tracking-wider`}>
+                          Trạng thái gốc: {statusConfig.label}
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-1">
+                        <div className={`flex flex-col items-center justify-center px-1.5 py-0.5 rounded border shadow-sm ${lunchConfig.bg} ${lunchConfig.border}`}>
+                          <span className="text-[7px] text-gray-500 font-semibold uppercase leading-none mb-0.5">Ca Trưa</span>
+                          <span className={`text-[8px] font-bold uppercase leading-none ${lunchConfig.color}`}>{lunchConfig.label}</span>
+                        </div>
+                        <div className={`flex flex-col items-center justify-center px-1.5 py-0.5 rounded border shadow-sm ${dinnerConfig.bg} ${dinnerConfig.border}`}>
+                          <span className="text-[7px] text-gray-500 font-semibold uppercase leading-none mb-0.5">Ca Tối</span>
+                          <span className={`text-[8px] font-bold uppercase leading-none ${dinnerConfig.color}`}>{dinnerConfig.label}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );

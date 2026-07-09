@@ -6,6 +6,7 @@ import { ArrowLeft, RefreshCcw, PanelLeftClose, PanelLeft, Download, AlertTriang
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/providers/AuthProvider";
+import { http } from "@/lib/http";
 
 import { ZoneSidebar } from "./components/ZoneSidebar";
 import { TableTemplatesSidebar } from "./components/TableTemplatesSidebar";
@@ -45,6 +46,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
+  const [bookings, setBookings] = useState<any[]>([]);
 
   // Modal state
   const [zoneModal, setZoneModal] = useState<{
@@ -83,10 +85,22 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
     try {
       setIsLoading(true);
       const res = await fetchZones(branchId);
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let activeBookings: any[] = [];
+      try {
+        const bookingsRes = await http.get<{ success: boolean; data: any[] }>(`/bookings?branch_id=${branchId}&start_date=${today.toISOString()}`);
+        if (bookingsRes.success) {
+          activeBookings = bookingsRes.data.filter(b => !['COMPLETED', 'CANCELLED', 'CANCELLED_TIMEOUT', 'NO_SHOW'].includes(b.status));
+        }
+      } catch (e) {}
+
       if (res.success) {
         setBranchName(res.data.branch_name);
         setZones(res.data.zones);
         setTemplates(res.data.table_templates || []);
+        setBookings(activeBookings);
         // Auto-select first zone if none selected
         setSelectedZoneId((prev) => {
           if (!prev && res.data.zones.length > 0) {
@@ -162,6 +176,15 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
 
   const handleDeleteTable = async () => {
     if (!deleteModal.parentId) return;
+    
+    // Ngăn xóa nếu bàn đang có đơn đặt
+    const tableBookings = bookings.filter(b => b.table_ids.includes(deleteModal.id));
+    if (tableBookings.length > 0) {
+      showError(`Không thể xóa bàn "${deleteModal.name}" vì đang có ${tableBookings.length} đơn đặt lịch hoạt động trong tương lai.`);
+      setDeleteModal({ open: false, type: "zone", id: "", name: "" });
+      return;
+    }
+
     const res = await deleteTableApi(branchId, deleteModal.parentId, deleteModal.id);
     if (res.success) {
       success(`Xóa bàn "${deleteModal.name}" thành công!`);
@@ -319,6 +342,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
         {/* Table Canvas (Drag & Drop) */}
         <TableCanvas
           zone={selectedZone}
+          bookings={bookings}
           onAddTable={() => setTableModal({ open: true, mode: "create" })}
           onSaveLayout={handleSaveLayout}
           onDropTemplate={handleDropTemplate}
@@ -377,6 +401,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
         initialData={tableModal.data}
         mode={tableModal.mode}
         zoneName={selectedZone?.name || ""}
+        tableId={tableModal.tableId}
       />
 
       {/* Delete Confirm Modal */}

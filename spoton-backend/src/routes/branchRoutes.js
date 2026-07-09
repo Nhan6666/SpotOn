@@ -6,18 +6,10 @@ const {
   createBranch,
   updateBranch,
   deleteBranch,
-  updateTableStatus,
-  getZonesByBranch,
-  addZone,
-  updateZone,
-  deleteZone,
-  addTable,
-  updateTable,
-  deleteTable,
-  bulkUpdateTablesLayout,
-  updateTableTemplate,
-  applyTemplate,
 } = require('../controllers/branchController');
+
+// Import controllers cho các route ở mức Branch nhưng thuộc về Table/Template
+const { updateTableStatus, updateTableTemplate } = require('../controllers/tableController');
 
 // Import bảo mật vào route
 const { protect, authorize } = require('../middlewares/authMiddleware');
@@ -48,47 +40,6 @@ router.patch(
   updateTableStatus
 );
 
-// =============================================
-// ZONE CRUD (Embedded in Branch)
-// =============================================
-
-// GET  /api/v1/branches/:branchId/zones     -> Danh sách zones của branch
-// POST /api/v1/branches/:branchId/zones     -> Thêm zone mới
-router.route('/:branchId/zones')
-  .get(protect, authorize('ADMIN', 'MANAGER'), getZonesByBranch)
-  .post(protect, authorize('ADMIN', 'MANAGER'), addZone);
-
-// PUT    /api/v1/branches/:branchId/zones/:zoneId -> Cập nhật zone
-// DELETE /api/v1/branches/:branchId/zones/:zoneId -> Xóa zone
-router.route('/:branchId/zones/:zoneId')
-  .put(protect, authorize('ADMIN', 'MANAGER'), updateZone)
-  .delete(protect, authorize('ADMIN', 'MANAGER'), deleteZone);
-
-// =============================================
-// TABLE CRUD (Embedded in Zone)
-// =============================================
-
-// PUT /api/v1/branches/:branchId/zones/:zoneId/tables/layout -> Cập nhật layout bàn hàng loạt
-router.put(
-  '/:branchId/zones/:zoneId/tables/layout',
-  protect,
-  authorize('ADMIN', 'MANAGER'),
-  bulkUpdateTablesLayout
-);
-
-// POST /api/v1/branches/:branchId/zones/:zoneId/tables -> Thêm bàn mới
-router.route('/:branchId/zones/:zoneId/tables')
-  .post(protect, authorize('ADMIN', 'MANAGER'), addTable);
-
-// PUT    /api/v1/branches/:branchId/zones/:zoneId/tables/:tableId -> Cập nhật bàn
-// DELETE /api/v1/branches/:branchId/zones/:zoneId/tables/:tableId -> Xóa bàn
-router.route('/:branchId/zones/:zoneId/tables/:tableId')
-  .put(protect, authorize('ADMIN', 'MANAGER'), updateTable)
-  .delete(protect, authorize('ADMIN', 'MANAGER'), deleteTable);
-
-// =============================================
-// TABLE TEMPLATE CRUD
-// =============================================
 // PUT /api/v1/branches/:branchId/templates/:templateIndex
 router.put(
   '/:branchId/templates/:templateIndex',
@@ -98,13 +49,9 @@ router.put(
 );
 
 // =============================================
-// IMPORT TEMPLATE
+// ZONE & TABLE CRUD (Router Nesting)
 // =============================================
-router.post(
-  '/:branchId/zones/:zoneId/apply-template',
-  protect,
-  authorize('ADMIN', 'MANAGER'),
-  applyTemplate
-);
+const zoneRoutes = require('./zoneRoutes');
+router.use('/:branchId/zones', zoneRoutes);
 
 module.exports = router;

@@ -7,15 +7,26 @@ const {
   deleteMenuItem,
   toggleCoreItem,
   toggleItemVisibility,
-  getPublicBranchMenu
-} = require('../controllers/menuController');
+} = require('../controllers/masterMenuController');
+
+const {
+  getPublicBranchMenu,
+  getPublicCategories,
+  getPublicMenuItems
+} = require('../controllers/publicMenuController');
 
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 // ============================================================
 // PUBLIC ROUTES
 // ============================================================
-// GET /api/v1/menus/public/branch/:branchId -> Lấy Menu cho khách hàng xem chi tiết chi nhánh
+// GET /api/v1/menus/public/:branchId/categories -> Lấy danh sách category cho tab menu
+router.get('/public/:branchId/categories', getPublicCategories);
+
+// GET /api/v1/menus/public/:branchId/items -> Lấy món ăn theo category (có phân trang)
+router.get('/public/:branchId/items', getPublicMenuItems);
+
+// GET /api/v1/menus/public/branch/:branchId -> Lấy Menu cho khách hàng xem chi tiết chi nhánh (Legacy/Full)
 router.get('/public/branch/:branchId', getPublicBranchMenu);
 
 // ============================================================

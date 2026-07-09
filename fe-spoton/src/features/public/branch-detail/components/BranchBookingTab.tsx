@@ -51,6 +51,21 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
 
   const handleCheckAvailability = useCallback(async (keepError = false) => {
     if (!keepError) setErrorMsg('');
+
+    // Bắt lỗi không cho đặt bàn trong quá khứ
+    const now = new Date();
+    // Tạo object Date local từ chuỗi date (YYYY-MM-DD)
+    const [year, month, day] = date.split('-').map(Number);
+    const selectedDateObj = new Date(year, month - 1, day);
+    const [hours, minutes] = time.split(':').map(Number);
+    selectedDateObj.setHours(hours, minutes, 0, 0);
+
+    if (selectedDateObj < now) {
+      if (!keepError) setErrorMsg('Không thể đặt bàn vào thời điểm trong quá khứ. Vui lòng chọn ngày giờ hợp lệ.');
+      setHasChecked(false);
+      return;
+    }
+
     setIsChecking(true);
     setSelectedTables([]); // Reset selection when checking again
     try {
@@ -162,7 +177,10 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
         branch={branch}
         bookingId={holdData.id}
         expiresAt={holdData.expiresAt}
-        onCancel={() => { 
+        onCancel={async () => { 
+          if (holdData?.id) {
+            await branchDetailService.releaseBooking(holdData.id);
+          }
           setHoldData(null); 
           setHasChecked(false); 
           setSelectedTables([]);
@@ -184,6 +202,7 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
             <input 
               type="date" 
               value={date}
+              min={new Date().toLocaleDateString('en-CA')} // Format YYYY-MM-DD local time
               onChange={e => setDate(e.target.value)}
               className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c]"
             />

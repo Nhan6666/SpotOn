@@ -158,6 +158,7 @@ const deleteBranch = async (req, res) => {
   }
 };
 
+<<<<<<< HEAD
 // @desc   Cập nhật trạng thái bàn trong chi nhánh
 // @route  PATCH /api/v1/branches/:branchId/tables/:tableId/status
 // @access Private (MANAGER, WAITER)
@@ -615,21 +616,12 @@ const applyTemplate = async (req, res) => {
   }
 };
 
+=======
+>>>>>>> b60c22aebd993d07131dd1943172b0c08ecc29bb
 module.exports = {
   getAllBranches,
   getBranchById,
   createBranch,
   updateBranch,
-  deleteBranch,
-  updateTableStatus,
-  getZonesByBranch,
-  addZone,
-  updateZone,
-  deleteZone,
-  addTable,
-  updateTable,
-  deleteTable,
-  bulkUpdateTablesLayout,
-  updateTableTemplate,
-  applyTemplate,
+  deleteBranch
 };

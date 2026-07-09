@@ -49,7 +49,7 @@ export interface SingleResponse<T> {
 
 export const TABLE_STATUS_CONFIG: Record<TableStatus, { label: string; color: string; bg: string; border: string; extraClass?: string }> = {
   EMPTY:       { label: 'Trống',      color: 'text-emerald-700', bg: 'bg-emerald-100', border: 'border-emerald-400' }, // Xanh lá
-  HOLDING:     { label: 'Giữ chỗ',    color: 'text-gray-700',    bg: 'bg-gray-200',    border: 'border-gray-400' }, // Xám
+  HOLDING:     { label: 'Giữ chỗ',    color: 'text-orange-700',  bg: 'bg-orange-100',  border: 'border-orange-400' }, // Cam
   LOCKED:      { label: 'Chờ cọc',    color: 'text-gray-700',    bg: 'bg-gray-200',    border: 'border-gray-400' }, // Xám
   RESERVED:    { label: 'Đã đặt',     color: 'text-blue-700',    bg: 'bg-blue-100',    border: 'border-blue-400' }, // Xanh nước biển
   OCCUPIED:    { label: 'Đang dùng',  color: 'text-red-700',     bg: 'bg-red-100',     border: 'border-red-400' }, // Đỏ

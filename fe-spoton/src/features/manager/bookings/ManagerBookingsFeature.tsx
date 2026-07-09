@@ -1,197 +1,40 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { useAuth } from '@/providers/AuthProvider';
-import { http } from '@/lib/http';
-import { socket } from '@/lib/socket';
+import React from 'react';
 import { RefreshCw } from 'lucide-react';
 import { TABLE_STATUS_CONFIG, TableStatus } from '@/features/admin/map-editor/map-editor.types';
 import { MANAGER_TEXTS } from '@/constants/texts/manager';
-
-interface Table {
-  _id: string;
-  table_number: string;
-  capacity: number;
-  shape: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  status: string;
-  image_url?: string | null;
-}
-
-interface Zone {
-  _id: string;
-  name: string;
-  tables: Table[];
-}
-
-interface BranchData {
-  _id: string;
-  name: string;
-  zones: Zone[];
-}
-
-interface Booking {
-  _id: string;
-  table_ids: string[];
-  status: string;
-  customer_id?: { _id: string; full_name: string; phone: string; };
-  walk_in_name?: string;
-  walk_in_phone?: string;
-  guest_count: number;
-  reservation_date: string;
-  arrival_time: string;
-  shift: string;
-}
-
-const BOOKING_STATUS_CONFIG: Record<string, { label: string, color: string, bg: string }> = {
-  HOLDING: { label: MANAGER_TEXTS.bookings.status.HOLDING, color: 'text-gray-700', bg: 'bg-gray-100' },
-  PENDING_PAYMENT: { label: MANAGER_TEXTS.bookings.status.PENDING_PAYMENT, color: 'text-amber-700', bg: 'bg-amber-100' },
-  PENDING_DEPOSIT: { label: MANAGER_TEXTS.bookings.status.PENDING_DEPOSIT, color: 'text-amber-700', bg: 'bg-amber-100' },
-  CONFIRMED: { label: MANAGER_TEXTS.bookings.status.CONFIRMED, color: 'text-blue-700', bg: 'bg-blue-100' },
-  OCCUPIED: { label: MANAGER_TEXTS.bookings.status.OCCUPIED, color: 'text-green-700', bg: 'bg-green-100' },
-  COMPLETED: { label: MANAGER_TEXTS.bookings.status.COMPLETED, color: 'text-emerald-700', bg: 'bg-emerald-100' },
-  CANCELLED: { label: MANAGER_TEXTS.bookings.status.CANCELLED, color: 'text-red-700', bg: 'bg-red-100' },
-  NO_SHOW: { label: MANAGER_TEXTS.bookings.status.NO_SHOW, color: 'text-red-700', bg: 'bg-red-100' },
-};
+import { useManagerBookings } from './useManagerBookings';
+import { BOOKING_STATUS_CONFIG } from './bookings.constants';
 
 export function ManagerBookingsFeature() {
-  const { user } = useAuth();
-  const [branch, setBranch] = useState<BranchData | null>(null);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [selectedZone, setSelectedZone] = useState<string | null>(null);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [shift, setShift] = useState('LUNCH');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isPanning, setIsPanning] = useState(false);
-  const [panStart, setPanStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
-
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Stop panning if mouse leaves window
-  useEffect(() => {
-    const handleGlobalMouseUp = () => setIsPanning(false);
-    window.addEventListener("mouseup", handleGlobalMouseUp);
-    return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
-  }, []);
-
-  const handleCanvasMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    // Only pan if clicking directly on canvas background
-    if (e.target !== canvasRef.current && !(e.target as HTMLElement).classList.contains('pointer-events-none')) return;
-    setIsPanning(true);
-    setPanStart({
-      x: e.clientX,
-      y: e.clientY,
-      scrollLeft: containerRef.current?.scrollLeft || 0,
-      scrollTop: containerRef.current?.scrollTop || 0,
-    });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isPanning && containerRef.current) {
-      const dx = e.clientX - panStart.x;
-      const dy = e.clientY - panStart.y;
-      containerRef.current.scrollLeft = panStart.scrollLeft - dx;
-      containerRef.current.scrollTop = panStart.scrollTop - dy;
-    }
-  };
-
-  const handleMouseUp = () => setIsPanning(false);
-
-  const fetchBranchData = useCallback(async () => {
-    if (!user?.branch_id) return;
-    try {
-      // Assuming GET /api/v1/branches/:id returns branch details
-      const res = await http.get<{ success: boolean; data: BranchData }>(`/branches/${user.branch_id}`);
-      if (res.success) {
-        setBranch(res.data);
-        if (res.data.zones?.length > 0) {
-          setSelectedZone(res.data.zones[0]._id);
-        }
-      }
-    } catch (err) {
-      console.error('Lỗi lấy chi nhánh:', err);
-    }
-  }, [user?.branch_id]);
-
-  const fetchBookings = useCallback(async () => {
-    if (!user?.branch_id) return;
-    setIsLoading(true);
-    try {
-      // Create date filters
-      const targetDate = new Date(date);
-      targetDate.setHours(0, 0, 0, 0);
-      const nextDate = new Date(targetDate);
-      nextDate.setDate(nextDate.getDate() + 1);
-
-      // GET bookings for branch
-      const res = await http.get<{ success: boolean; data: Booking[] }>(
-        `/bookings?branch_id=${user.branch_id}&start_date=${targetDate.toISOString()}&end_date=${nextDate.toISOString()}`
-      );
-      if (res.success) {
-        let list = res.data;
-        if (shift) {
-            list = list.filter(b => b.shift === shift);
-        }
-        setBookings(list.filter(b => b.status !== 'COMPLETED' && b.status !== 'CANCELLED' && b.status !== 'NO_SHOW'));
-      }
-    } catch (err) {
-      console.error('Lỗi lấy bookings:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.branch_id, date, shift]);
-
-  useEffect(() => {
-    fetchBranchData();
-  }, [fetchBranchData]);
-
-  useEffect(() => {
-    fetchBookings();
-  }, [fetchBookings]);
-
-  // Real-time Sync
-  useEffect(() => {
-    if (!user?.branch_id) return;
-
-    socket.connect();
-    socket.emit('join_branch_room', user.branch_id);
-
-    const onTableStatusChanged = (data: any) => {
-      console.log('Manager Real-time event:', data);
-      fetchBookings(); // Tải lại bookings khi có thay đổi
-      fetchBranchData(); // Tải lại dữ liệu chi nhánh để cập nhật table.status
-    };
-
-    socket.on('table_status_changed', onTableStatusChanged);
-
-    return () => {
-      socket.off('table_status_changed', onTableStatusChanged);
-      socket.disconnect();
-    };
-  }, [user?.branch_id, fetchBookings]);
+  const {
+    branch,
+    bookings,
+    selectedZone,
+    setSelectedZone,
+    date,
+    setDate,
+    shift,
+    setShift,
+    isLoading,
+    isPanning,
+    selectedTable,
+    setSelectedTable,
+    canvasRef,
+    containerRef,
+    handleCanvasMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    fetchBookings,
+    getTableStatus
+  } = useManagerBookings();
 
   if (!branch) {
     return <div className="p-8 text-center text-gray-500">{MANAGER_TEXTS.bookings.loading}</div>;
   }
 
   const currentZone = branch.zones.find(z => z._id === selectedZone);
-
-  // Helper function to determine table status based on bookings
-  const getTableStatus = (table: Table) => {
-    const tableBookings = bookings.filter(b => b.table_ids.includes(table._id));
-    if (tableBookings.length > 0) {
-      if (tableBookings.some(b => b.status === 'OCCUPIED')) return 'OCCUPIED';
-      if (tableBookings.some(b => b.status === 'CLEANING')) return 'CLEANING';
-      if (tableBookings.some(b => b.status === 'CONFIRMED' || b.status === 'PENDING_PAYMENT' || b.status === 'PENDING_DEPOSIT')) return 'RESERVED';
-      if (tableBookings.some(b => b.status === 'HOLDING')) return 'HOLDING';
-    }
-    return table.status || 'EMPTY';
-  };
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
@@ -202,7 +45,7 @@ export function ManagerBookingsFeature() {
             {MANAGER_TEXTS.bookings.subtitle}
           </p>
         </div>
-        <button 
+        <button
           onClick={fetchBookings}
           className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50"
         >
@@ -217,7 +60,7 @@ export function ManagerBookingsFeature() {
           <label className="block text-xs font-medium text-gray-700 mb-1">{MANAGER_TEXTS.bookings.filterDateLabel}</label>
           <input 
             type="date" 
-            value={date} 
+            value={date}
             onChange={(e) => setDate(e.target.value)}
             className="border-gray-300 rounded-md text-sm"
           />
@@ -225,7 +68,7 @@ export function ManagerBookingsFeature() {
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">{MANAGER_TEXTS.bookings.filterShiftLabel}</label>
           <select 
-            value={shift} 
+            value={shift}
             onChange={(e) => setShift(e.target.value)}
             className="border-gray-300 rounded-md text-sm py-2"
           >
@@ -250,13 +93,13 @@ export function ManagerBookingsFeature() {
                 const customerName = booking.customer_id?.full_name || booking.walk_in_name || MANAGER_TEXTS.bookings.guestWalkIn;
                 const customerPhone = booking.customer_id?.phone || booking.walk_in_phone || MANAGER_TEXTS.bookings.phoneNa;
                 const bStatus = BOOKING_STATUS_CONFIG[booking.status] || BOOKING_STATUS_CONFIG.HOLDING;
-                
+
                 return (
                   <div key={booking._id} className="p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <p className="font-semibold text-gray-900 text-sm">{customerName}</p>
-                        <p className="text-xs text-gray-500">{customerPhone}</p>
+                        <p className="text-xs text-gray-500">SĐT: {customerPhone}</p>
                       </div>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${bStatus.bg} ${bStatus.color}`}>
                         {bStatus.label}
@@ -270,6 +113,18 @@ export function ManagerBookingsFeature() {
                       <div className="bg-white p-1.5 rounded border border-gray-100">
                         <span className="text-gray-500 block mb-0.5">{MANAGER_TEXTS.bookings.guestCountLabel}</span>
                         <span className="font-medium">{booking.guest_count || 1} {MANAGER_TEXTS.bookings.guestCountUnit}</span>
+                      </div>
+                      <div className="bg-white p-1.5 rounded border border-gray-100 col-span-2">
+                        <span className="text-gray-500 block mb-0.5">Bàn phục vụ</span>
+                        <span className="font-medium">
+                          {booking.table_ids?.map((tId: string) => {
+                            for (const z of branch.zones) {
+                              const t = z.tables.find((tbl: any) => tbl._id === tId || (tbl._id && tbl._id.toString() === tId.toString()));
+                              if (t) return t.table_number;
+                            }
+                            return null;
+                          }).filter(Boolean).join(', ') || 'Chưa xếp'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -306,7 +161,7 @@ export function ManagerBookingsFeature() {
             </div>
           </div>
 
-          <div 
+          <div
             ref={containerRef}
             className="flex-1 relative w-full overflow-auto rounded-xl border-2 border-dashed border-gray-200 bg-gray-50"
           >
@@ -344,8 +199,14 @@ export function ManagerBookingsFeature() {
                       top: `${table.y}px`,
                       width: `${table.width}px`,
                       height: `${isCircle ? table.width : table.height}px`,
+                      pointerEvents: 'auto',
+                      cursor: 'pointer'
                     }}
                     title={`${MANAGER_TEXTS.bookings.tablePrefix} ${table.table_number} - ${MANAGER_TEXTS.bookings.statusPrefix} ${statusConfig.label}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedTable(table);
+                    }}
                   >
                     {table.image_url ? (
                       <>
@@ -366,7 +227,7 @@ export function ManagerBookingsFeature() {
                         )}
                       </>
                     )}
-                    
+
                     {/* Status Label underneath */}
                     <div className={`absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] px-2.5 py-0.5 rounded-full border shadow-[0_2px_10px_rgba(0,0,0,0.06)] z-10 ${statusConfig.bg} ${statusConfig.border} ${statusConfig.color} font-bold uppercase tracking-wider pointer-events-none`}>
                       {statusConfig.label}
@@ -378,6 +239,43 @@ export function ManagerBookingsFeature() {
           </div>
         </div>
       </div>
+
+      {selectedTable && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedTable(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95">
+            <h3 className="text-xl font-bold text-gray-900 mb-1">Bàn {selectedTable.table_number}</h3>
+            <p className="text-sm text-gray-500 mb-4">Giao diện gọi món (Self-Ordering)</p>
+            
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col items-center gap-3">
+              <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                {/* Dynamically import QRCodeSVG since this is a client component */}
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/ipad/table/' + selectedTable._id)}`} 
+                  alt="QR Code" 
+                  className="w-[140px] h-[140px]"
+                />
+              </div>
+
+              <div className="text-center w-full mt-2">
+                <p className="text-sm text-slate-500 mb-1">Dùng mã PIN nội bộ để mở khóa</p>
+                <div className="bg-slate-200/50 rounded-lg py-2 px-4 flex items-center justify-center gap-3">
+                  <span className="text-sm font-bold text-slate-800">
+                    (Nhân viên cung cấp PIN)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              className="mt-6 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-lg font-bold"
+              onClick={() => setSelectedTable(null)}
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

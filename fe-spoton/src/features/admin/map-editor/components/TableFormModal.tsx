@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { X, Upload, Trash2, Image as ImageIcon, RefreshCcw } from "lucide-react";
+import { X, Upload, Trash2, Image as ImageIcon, RefreshCcw, AlertTriangle, ScanLine, Copy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { uploadTableImageApi } from "../map-editor.service";
 import Image from "next/image";
+import { QRCodeSVG } from 'qrcode.react';
 import type { TableStatus } from "../map-editor.types";
 import { TABLE_STATUS_CONFIG } from "../map-editor.types";
 import { ADMIN_TEXTS } from "@/constants/texts/admin";
@@ -19,11 +20,13 @@ interface TableFormModalProps {
   mode: "create" | "edit";
   zoneName: string;
   isTemplate?: boolean;
+  hasActiveBookings?: boolean;
+  tableId?: string;
 }
 
 const ALL_STATUSES: TableStatus[] = ["EMPTY", "HOLDING", "LOCKED", "RESERVED", "OCCUPIED", "CLEANING"];
 
-export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialData, mode, zoneName, isTemplate = false }: TableFormModalProps) {
+export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialData, mode, zoneName, isTemplate = false, hasActiveBookings = false, tableId }: TableFormModalProps) {
   const [tableNumber, setTableNumber] = useState("");
   const [capacity, setCapacity] = useState(2);
   const [status, setStatus] = useState<TableStatus>("EMPTY");
@@ -288,15 +291,47 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
             </div>
           )}
 
+          {/* QR Code Section for iPad Self-Ordering */}
+          {mode === 'edit' && tableId && (
+            <div className="pt-4 mt-2 border-t border-gray-100 flex flex-col items-center">
+              <div className="flex items-center gap-2 text-slate-700 font-bold mb-3 text-sm">
+                <ScanLine className="w-4 h-4 text-blue-600" />
+                Mã QR Self-Ordering (In đặt tại bàn)
+              </div>
+              
+              <div className="bg-slate-50 p-3 rounded-xl shadow-sm border border-slate-100 mb-3">
+                <QRCodeSVG 
+                  value={`${window.location.origin}/ipad/table/${tableId}`} 
+                  size={110}
+                  level="H"
+                  includeMargin={true}
+                />
+              </div>
+              <p className="text-xs text-gray-500 text-center px-4">
+                Sử dụng mã QR này in ra dán tại bàn để khách hàng quét gọi món.
+              </p>
+            </div>
+          )}
+
+          {hasActiveBookings && mode === "edit" && (
+            <div className="bg-red-50 border border-red-100 p-3 rounded-lg text-sm text-red-700 flex items-start gap-2 mt-2">
+              <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-xs uppercase tracking-wider text-red-800">Cảnh báo hệ thống</p>
+                <p className="text-xs mt-0.5">Không thể xóa bàn này vì đang có đơn đặt trong Ca Trưa hoặc Ca Tối.</p>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-2">
             {mode === "edit" && onDelete && (
               <Button
                 type="button"
                 variant="outline"
-                className={`text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 ${status !== 'EMPTY' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 ${(status !== 'EMPTY' || hasActiveBookings) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={onDelete}
-                disabled={isSubmitting || status !== 'EMPTY'}
-                title={status !== 'EMPTY' ? ADMIN_TEXTS.mapEditor.modalTableBtnDeleteDisabledHint : ADMIN_TEXTS.mapEditor.modalTableBtnDelete}
+                disabled={isSubmitting || status !== 'EMPTY' || hasActiveBookings}
+                title={hasActiveBookings ? "Bàn đang có đơn đặt" : status !== 'EMPTY' ? "Không thể xóa bàn đang có khách hoặc đã đặt" : "Xóa bàn"}
               >
                 <Trash2 className="w-4 h-4 mr-1.5" />
                 {ADMIN_TEXTS.mapEditor.modalTableBtnDelete}

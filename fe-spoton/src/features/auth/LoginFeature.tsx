@@ -12,24 +12,31 @@ import { loginSchema } from './auth.schema';
 import { authService } from './auth.service';
 import { AppError } from '@/lib/errors';
 import type { LoginFormValues, LoginPayload } from './auth.types';
+import { useAuth } from '@/providers/AuthProvider';
 
 // IMPORT HOOK XỬ LÝ GOOGLE AUTH VÀO ĐÂY
 import { useGoogleAuth } from './useGoogleAuth';
 
 export function LoginFeature() {
   const router = useRouter();
+  const { login } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const { 
-    loginWithGoogle, 
-    isLoading: isGoogleLoading, 
-    error: googleError 
-  } = useGoogleAuth({
-    onSuccess: () => {
+  const { loginWithGoogle, isLoading: isGoogleLoading, error: googleError } = useGoogleAuth({
+    onSuccess: (token, user) => {
+      login(token, user);
       setSuccessMessage('Đăng nhập Google thành công! Đang chuyển hướng...');
-      setTimeout(() => router.push('/'), 1000);
+      setTimeout(() => {
+        if (user?.role === 'ADMIN') {
+          router.push('/admin');
+        } else if (user?.role === 'MANAGER') {
+          router.push('/manager/branch');
+        } else {
+          router.push('/');
+        }
+      }, 1000);
     }
   });
 
@@ -72,20 +79,25 @@ export function LoginFeature() {
     try {
       const result = await authService.login(payload);
       
-      // Lưu token
+      // Lưu token vào Context API (tự động update Navbar)
+      login(result.data.token, result.data.user);
+      
       if (values.rememberMe) {
-        localStorage.setItem('spoton_token', result.data.token); 
         localStorage.setItem('spoton_saved_email', values.email);
-        document.cookie = `spoton_token=${result.data.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`; 
       } else {
-        sessionStorage.setItem('spoton_token', result.data.token);
         localStorage.removeItem('spoton_saved_email'); 
-        document.cookie = `spoton_token=${result.data.token}; path=/; max-age=${60 * 60 * 24}; SameSite=Lax`; 
       }
 
       setSuccessMessage('Đăng nhập thành công! Đang chuyển hướng...');
       setTimeout(() => {
-        router.push('/');
+        const userRole = result.data.user.role;
+        if (userRole === 'ADMIN') {
+          router.push('/admin');
+        } else if (userRole === 'MANAGER') {
+          router.push('/manager/branch');
+        } else {
+          router.push('/');
+        }
       }, 1000);
     } catch (error) {
       if (error instanceof AppError) {
@@ -104,6 +116,7 @@ export function LoginFeature() {
           src={bgLogin}
           alt="SpotOn Restaurant Concept"
           fill
+          sizes="50vw"
           className="object-cover"
           priority
         />

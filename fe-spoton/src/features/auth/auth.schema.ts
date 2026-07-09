@@ -38,3 +38,36 @@ export const loginSchema = z.object({
 
 export type RegisterSchema = z.infer<typeof registerSchema>;
 export type LoginSchema = z.infer<typeof loginSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Vui lòng nhập email')
+    .email('Email không đúng định dạng'),
+});
+
+export const forgotPasswordOtpSchema = z.object({
+  otp: z
+    .string()
+    .min(1, 'Vui lòng nhập mã OTP')
+    .length(6, 'Mã OTP phải bao gồm 6 chữ số')
+    .regex(/^\d+$/, 'Mã OTP chỉ bao gồm các chữ số'),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(1, 'Vui lòng nhập mật khẩu mới')
+      .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Mật khẩu phải chứa chữ hoa, chữ thường và số'),
+    confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu mới'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+  });
+
+export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
+export type ForgotPasswordOtpSchema = z.infer<typeof forgotPasswordOtpSchema>;
+export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;

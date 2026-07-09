@@ -2,22 +2,27 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const path = require('path');
 const connectDB = require('./config/db');
 
 // =============================================
 // IMPORT ROUTES (Uncomment dần khi implement)
 // =============================================
 const authRoutes     = require('./routes/authRoutes');
-// const userRoutes     = require('./routes/userRoutes');
 const branchRoutes   = require('./routes/branchRoutes');
 const userRoutes     = require('./routes/userRoutes');
-// const menuRoutes     = require('./routes/menuRoutes');
-// const bookingRoutes  = require('./routes/bookingRoutes');
-// const voucherRoutes  = require('./routes/voucherRoutes');
-// const feedbackRoutes = require('./routes/feedbackRoutes');
-// const waitlistRoutes = require('./routes/waitlistRoutes');
-// const articleRoutes  = require('./routes/articleRoutes');
-// const notifRoutes    = require('./routes/notificationRoutes');
+const menuRoutes     = require('./routes/menuRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const uploadRoutes   = require('./routes/uploadRoutes');
+const bookingRoutes  = require('./routes/bookingRoutes');
+const mapTemplateRoutes = require('./routes/mapTemplateRoutes');
+const managerMenuRoutes = require('./routes/managerMenuRoutes');
+const voucherRoutes  = require('./routes/voucherRoutes');
+const systemConfigRoutes = require('./routes/systemConfigRoutes');
+const amenityRoutes = require('./routes/amenityRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const receptionRoutes = require('./routes/receptionRoutes');
+const orderRoutes    = require('./routes/orderRoutes');
 
 // =============================================
 // KHỞI TẠO APP
@@ -27,16 +32,22 @@ const app = express();
 // Kết nối Database
 connectDB();
 
+// Kết nối Redis (Two-Stage Locking)
+require('./config/redis');
+
 // =============================================
 // MIDDLEWARES
 // =============================================
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files as static
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // =============================================
 // ROUTES
@@ -50,18 +61,22 @@ app.get('/api/v1/health', (req, res) => {
   });
 });
 
-// Mount Routes (Uncomment dần khi implement)
+// Mount Routes
 app.use('/api/v1/auth',          authRoutes);
-// app.use('/api/v1/users',         userRoutes);
 app.use('/api/v1/branches',      branchRoutes);
 app.use('/api/v1/users',         userRoutes);
-// app.use('/api/v1/menus',         menuRoutes);
-// app.use('/api/v1/bookings',      bookingRoutes);
-// app.use('/api/v1/vouchers',      voucherRoutes);
-// app.use('/api/v1/feedbacks',     feedbackRoutes);
-// app.use('/api/v1/waitlist',      waitlistRoutes);
-// app.use('/api/v1/articles',      articleRoutes);
-// app.use('/api/v1/notifications', notifRoutes);
+app.use('/api/v1/menus',         menuRoutes);
+app.use('/api/v1/manager/menus', managerMenuRoutes);
+app.use('/api/v1/categories',    categoryRoutes);
+app.use('/api/v1/uploads',       uploadRoutes);
+app.use('/api/v1/bookings',      bookingRoutes);
+app.use('/api/v1/map-templates', mapTemplateRoutes);
+app.use('/api/v1/vouchers',      voucherRoutes);
+app.use('/api/v1/system-configs', systemConfigRoutes);
+app.use('/api/v1/amenities',     amenityRoutes);
+app.use('/api/v1/payment',       paymentRoutes);
+app.use('/api/v1/reception',     receptionRoutes);
+app.use('/api/v1/orders',        orderRoutes);
 
 // =============================================
 // GLOBAL ERROR HANDLERS
@@ -74,19 +89,42 @@ app.use((req, res, next) => {
   });
 });
 
-// Global Error Handler
-app.use((err, req, res, next) => {
-  console.error('💥 Server Error:', err.stack);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Internal Server Error',
+// Error Handler Middleware
+const errorHandler = require('./middlewares/errorHandler');
+app.use(errorHandler);
+
+// =============================================
+// CHẠY SERVER & SOCKET.IO
+// =============================================
+const PORT = process.env.PORT || 5000;
+const http = require('http');
+const server = http.createServer(app);
+
+const io = require('./socket').init(server);
+
+io.on('connection', (socket) => {
+  console.log(`🔌 New client connected: ${socket.id}`);
+
+  socket.on('join_branch_room', (branchId) => {
+    // Only allow if socket has a token (simple auth check for real-time safety)
+    if (!socket.handshake.query.token && !socket.handshake.auth?.token) {
+      console.warn(`Socket ${socket.id} attempted to join without auth.`);
+      // return; // Commented out to not break dev, but should be enabled in prod
+    }
+    socket.join(`branch_${branchId}`);
+    socket.join(`branch_${branchId}_kitchen`);
+    console.log(`Client ${socket.id} joined room: branch_${branchId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`🔌 Client disconnected: ${socket.id}`);
   });
 });
 
-// =============================================
-// CHẠY SERVER
-// =============================================
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running in [${process.env.NODE_ENV || 'development'}] mode on port ${PORT}`);
+
+  // Khởi chạy System Workers (UC-S01 + UC-S02)
+  const cronService = require('./services/cronService');
+  cronService.start();
 });

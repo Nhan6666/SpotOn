@@ -1,0 +1,41 @@
+export interface BranchTable {
+  table_number: string;
+  capacity: number;
+  status: 'EMPTY' | 'HOLDING' | 'LOCKED' | 'RESERVED' | 'OCCUPIED' | 'CLEANING';
+}
+
+export interface BranchZone {
+  _id: string;
+  name: string;
+  capacity: number;
+  tables: BranchTable[];
+}
+
+export interface Branch {
+  _id: string;
+  name: string;
+  address: {
+    full: string;
+    city: string;
+    district: string;
+    ward: string;
+    street: string;
+  } | string;
+  location?: {
+    type: string;
+    coordinates: number[];
+  };
+  hotline: string;
+  service_periods: {
+    lunch: { start: string; end: string; last_booking: string; last_order: string; };
+    dinner: { start: string; end: string; last_booking: string; last_order: string; };
+  };
+  status: 'OPEN' | 'FULL' | 'CLOSED' | 'SETUP';
+  overload_threshold: number;
+  manager_id?: string | { _id: string; full_name: string; email: string };
+  current_capacity_percent: number;
+  amenities?: string[] | any[];
+  images?: string[];
+  description?: string;
+  zones?: BranchZone[];
+}

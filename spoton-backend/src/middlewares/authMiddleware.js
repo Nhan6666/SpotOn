@@ -23,8 +23,19 @@ const protect = async (req, res, next) => {
     // Giải mã token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    // Xử lý riêng cho Token của IPAD (In-Dining Self-Ordering)
+    if (decoded.role === 'IPAD') {
+      req.user = {
+        _id: decoded._id, // Booking ID
+        role: 'IPAD',
+        branch_id: decoded.branch_id,
+        table_ids: decoded.table_ids
+      };
+      return next();
+    }
+
     // Gán user vào request để các controller có thể dùng
-    req.user = await User.findById(decoded.userId).select('-password_hash');
+    req.user = await User.findById(decoded.userId || decoded.id).select('-password_hash');
 
     if (!req.user) {
       return res.status(401).json({ success: false, message: 'Người dùng không tồn tại.' });

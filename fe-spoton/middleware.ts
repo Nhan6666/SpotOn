@@ -11,6 +11,9 @@ const IS_AUTH_ENABLED = true; // ← Đổi thành FALSE khi cần tắt tạm
 const PROTECTED_ROUTES: { path: string; roles: string[] }[] = [
   { path: '/admin', roles: ['ADMIN'] },
   { path: '/manager', roles: ['MANAGER', 'ADMIN'] },
+  { path: '/waiter', roles: ['WAITER', 'MANAGER', 'ADMIN'] },
+  { path: '/profile', roles: ['CUSTOMER', 'WAITER', 'MANAGER', 'ADMIN'] },
+  { path: '/my-bookings', roles: ['CUSTOMER', 'WAITER', 'MANAGER', 'ADMIN'] },
 ];
 
 // Route chỉ dành cho người chưa đăng nhập
@@ -48,8 +51,13 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Đã có token nhưng không đủ quyền → redirect về trang 403
-    if (userRole && !protectedRoute.roles.includes(userRole)) {
+    // Đã có token nhưng không đủ quyền
+    if (userRole && !protectedRoute.roles.includes(userRole.toUpperCase())) {
+      // Nếu MANAGER truy cập /admin → chuyển sang /manager tương ứng
+      if (pathname.startsWith('/admin') && userRole.toUpperCase() === 'MANAGER') {
+        const newPath = pathname.replace('/admin', '/manager');
+        return NextResponse.redirect(new URL(newPath, request.url));
+      }
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
   }
@@ -60,13 +68,12 @@ export function middleware(request: NextRequest) {
 // Cấu hình: Middleware chỉ chạy trên các route này (bỏ qua static files, api proxy...)
 export const config = {
   matcher: [
-    /*
-     * Match tất cả route NGOẠI TRỪ:
-     * - _next/static (static files)
-     * - _next/image  (image optimization)
-     * - favicon.ico
-     * - api (proxy routes)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|api/).*)',
+    '/admin/:path*',
+    '/manager/:path*',
+    '/waiter/:path*',
+    '/profile/:path*',
+    '/my-bookings/:path*',
+    '/login',
+    '/register',
   ],
 };

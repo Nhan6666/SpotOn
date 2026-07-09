@@ -172,49 +172,40 @@ async function seed() {
   // ============================================================
   // 3. MENUS
   // ============================================================
-  const menus = await Menu.insertMany([
-    // --- Khai vị (Toàn chuỗi) ---
-    {
-      branch_id: null,
-      category_name: 'Khai Vị',
-      items: [
-        { name: 'Gỏi cuốn tôm thịt', description: 'Gỏi cuốn tươi với tôm, thịt heo, rau thơm', price: 65000, dietary_tags: [], is_available: true, image_url: 'https://picsum.photos/seed/goicuon/300/200' },
-        { name: 'Chả giò rế', description: 'Chả giò giòn tan, nhân thịt heo và nấm', price: 75000, dietary_tags: [], is_available: true, image_url: 'https://picsum.photos/seed/chagioroe/300/200' },
-        { name: 'Súp bào ngư', description: 'Súp bào ngư thượng hạng, thanh đạm', price: 120000, dietary_tags: [], is_available: true, image_url: 'https://picsum.photos/seed/supbaongu/300/200' },
-      ],
-    },
-    // --- Món chính (Chi nhánh Q1) ---
-    {
-      branch_id: branches[0]._id,
-      category_name: 'Món Chính',
-      items: [
-        { name: 'Bò nướng lá lốt', description: 'Bò nướng thơm ngon cuốn lá lốt', price: 195000, dietary_tags: [], is_available: true, image_url: 'https://picsum.photos/seed/bonuong/300/200' },
-        { name: 'Cá lóc nướng trui', description: 'Cá lóc nướng đặc trưng Nam Bộ', price: 280000, dietary_tags: [], is_available: true, image_url: 'https://picsum.photos/seed/caloc/300/200' },
-        { name: 'Lẩu thái hải sản', description: 'Lẩu thái chua cay với hải sản tươi', price: 450000, dietary_tags: [], is_available: true, image_url: 'https://picsum.photos/seed/lauthaihaisan/300/200' },
-        { name: 'Mực xào cần tỏi', description: 'Mực tươi xào giòn với cần tây và tỏi', price: 175000, dietary_tags: [], is_available: false, image_url: 'https://picsum.photos/seed/muxao/300/200' },
-      ],
-    },
-    // --- Đồ uống (Toàn chuỗi) ---
-    {
-      branch_id: null,
-      category_name: 'Đồ Uống',
-      items: [
-        { name: 'Sinh tố bơ', description: 'Sinh tố bơ béo ngậy, thêm sữa đặc', price: 55000, dietary_tags: ['vegetarian'], is_available: true, image_url: 'https://picsum.photos/seed/sinhtobuo/300/200' },
-        { name: 'Nước ép dứa', description: 'Nước ép dứa tươi mát tự nhiên', price: 45000, dietary_tags: ['vegan', 'gluten-free'], is_available: true, image_url: 'https://picsum.photos/seed/nuocepdua/300/200' },
-        { name: 'Trà đào cam sả', description: 'Trà đào thơm ngon pha cam sả', price: 49000, dietary_tags: [], is_available: true, image_url: 'https://picsum.photos/seed/tradao/300/200' },
-        { name: 'Bia Tiger', description: 'Bia Tiger lon 330ml lạnh', price: 35000, dietary_tags: [], is_available: true, image_url: 'https://picsum.photos/seed/biatiger/300/200' },
-      ],
-    },
-    // --- Tráng miệng (Toàn chuỗi) ---
-    {
-      branch_id: null,
-      category_name: 'Tráng Miệng',
-      items: [
-        { name: 'Chè khúc bạch', description: 'Chè khúc bạch mát lạnh với topping đa dạng', price: 65000, dietary_tags: ['vegetarian'], is_available: true, image_url: 'https://picsum.photos/seed/chekhucbach/300/200' },
-        { name: 'Kem dừa', description: 'Kem dừa tươi đặc sản Việt Nam', price: 45000, dietary_tags: ['vegetarian', 'gluten-free'], is_available: true, image_url: 'https://picsum.photos/seed/kemdua/300/200' },
-      ],
-    },
-  ]);
+  const rawData = require('fs').readFileSync(__dirname + '/seeders/menu_data.json', 'utf8');
+  const scrapedItems = JSON.parse(rawData);
+  const categoriesMap = {
+    'Combo (Phù Hợp Nhóm)': [],
+    'Hải Sản': [],
+    'Món Bò, Gà, Heo': [],
+    'Lẩu & Nướng': [],
+    'Khai Vị & Ăn Nhẹ': [],
+    'Đồ Uống & Khác': []
+  };
+  scrapedItems.forEach(item => {
+    const parts = item.text.split('\n');
+    if (parts.length >= 2) {
+      const name = parts[0].trim();
+      const price = parseInt(parts[1].replace(/\D/g, '')) || 0;
+      if (price > 0 && name.length > 0) {
+        const dbItem = { name, description: '', base_price: price, price, is_core_item: true, image_url: item.src };
+        const lower = name.toLowerCase();
+        if (lower.includes('combo')) categoriesMap['Combo (Phù Hợp Nhóm)'].push(dbItem);
+        else if (lower.includes('lẩu') || lower.includes('nướng')) categoriesMap['Lẩu & Nướng'].push(dbItem);
+        else if (lower.includes('mực') || lower.includes('tôm') || lower.includes('cá') || lower.includes('hàu') || lower.includes('ngao') || lower.includes('bạch tuộc') || lower.includes('ốc')) categoriesMap['Hải Sản'].push(dbItem);
+        else if (lower.includes('bò') || lower.includes('gà') || lower.includes('heo') || lower.includes('bê') || lower.includes('sụn') || lower.includes('dạ dày') || lower.includes('ếch')) categoriesMap['Món Bò, Gà, Heo'].push(dbItem);
+        else if (lower.includes('đậu') || lower.includes('khoai') || lower.includes('salad') || lower.includes('nộm') || lower.includes('rau') || lower.includes('ngô') || lower.includes('lạc') || lower.includes('dưa') || lower.includes('ngồng')) categoriesMap['Khai Vị & Ăn Nhẹ'].push(dbItem);
+        else categoriesMap['Đồ Uống & Khác'].push(dbItem);
+      }
+    }
+  });
+
+  const menuPayload = Object.keys(categoriesMap).filter(k => categoriesMap[k].length > 0).map(k => ({
+    branch_id: null,
+    category_name: k,
+    items: categoriesMap[k]
+  }));
+  const menus = await Menu.insertMany(menuPayload);
   console.log(`🍽️  Đã tạo ${menus.length} menu categories (${menus.reduce((s, m) => s + m.items.length, 0)} món ăn)`);
 
   // ============================================================
@@ -275,8 +266,8 @@ async function seed() {
       note: 'Cần bàn view đẹp, kỷ niệm ngày cưới',
       assigned_tables: [{ zone_name: 'Sân thượng - Ngoài trời', table_number: 'ST03' }],
       order_items: [
-        { name: 'Gỏi cuốn tôm thịt', quantity: 2, price_at_time: 65000, prep_status: 'PENDING', type: 'PRE_ORDER' },
-        { name: 'Bò nướng lá lốt', quantity: 1, price_at_time: 195000, prep_status: 'PENDING', type: 'PRE_ORDER' },
+        { name: 'Đậu Tẩm Hành', quantity: 2, price_at_time: 59000, prep_status: 'PENDING', type: 'PRE_ORDER' },
+        { name: 'COMBO 1', quantity: 1, price_at_time: 1104000, prep_status: 'PENDING', type: 'PRE_ORDER' },
       ],
       payment_info: {
         transaction_id: 'VNP20260605001',
@@ -339,7 +330,7 @@ async function seed() {
       branch_id: branches[0]._id,
       customer_id: users[3]._id,
       rating: 4,
-      comment: 'Không gian đẹp, view sân thượng tuyệt vời. Món bò nướng hơi mặn một chút.',
+      comment: 'Không gian đẹp, view sân thượng tuyệt vời. Combo 1 rất đầy đặn.',
       reply_comment: null,
       is_hidden: false,
     },

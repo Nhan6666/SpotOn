@@ -1,4 +1,4 @@
-import { AddBranchFeature } from '@/features/branch-management/AddBranchFeature';
+import { AddBranchFeature } from '@/features/admin/branch-management/AddBranchFeature';
 
 export const metadata = {
   title: 'Add New Branch | SpotOn Admin',

@@ -1,6 +1,112 @@
+"use client";
+
 import Image from 'next/image';
+import Link from 'next/link';
+import { useState, useRef, useEffect } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+
+const CAN_THO_LOCATIONS = [
+  "Quận Ninh Kiều, Cần Thơ",
+  "Quận Bình Thủy, Cần Thơ",
+  "Quận Cái Răng, Cần Thơ",
+  "Quận Ô Môn, Cần Thơ",
+  "Quận Thốt Nốt, Cần Thơ",
+  "Huyện Phong Điền, Cần Thơ",
+  "Huyện Cờ Đỏ, Cần Thơ",
+  "Huyện Thới Lai, Cần Thơ",
+  "Huyện Vĩnh Thạnh, Cần Thơ",
+];
 
 export function HeroSection() {
+  const [location, setLocation] = useState('');
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const locationRef = useRef<HTMLDivElement>(null);
+
+  const [date, setDate] = useState<Date | null>(null);
+  const [time, setTime] = useState('');
+  const [showTimeDropdown, setShowTimeDropdown] = useState(false);
+  const timeRef = useRef<HTMLDivElement>(null);
+  const [guestCount, setGuestCount] = useState<number | null>(null);
+  const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
+  const guestsRef = useRef<HTMLDivElement>(null);
+
+  const GUEST_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, '10+'];
+
+
+  
+  const TIME_OPTIONS = [
+    "09:00", "09:15", "09:30", "09:45", 
+    "10:00", "10:15", "10:30", "10:45",
+    "11:00", "11:15", "11:30", "11:45", 
+    "12:00", "12:15", "12:30", "12:45",
+    "13:00", "13:15", "13:30", "13:45", 
+    "14:00", "14:15", "14:30", "14:45",
+    "15:00", "15:15", "15:30", "15:45", 
+    "16:00", "16:15", "16:30", "16:45",
+    "17:00", "17:15", "17:30", "17:45", 
+    "18:00", "18:15", "18:30", "18:45",
+    "19:00", "19:15", "19:30", "19:45", 
+    "20:00", "20:15", "20:30", "20:45",
+    "21:00", "21:15", "21:30", "21:45", 
+    "22:00"
+  ];
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/[^0-9:]/g, ''); // Chỉ cho phép số và dấu :
+    
+    // Tự động thêm dấu : nếu nhập 3 hoặc 4 số (vd 103 -> 10:3, 1030 -> 10:30)
+    if (val.length === 3 && !val.includes(':')) {
+      val = val.substring(0, 2) + ':' + val.substring(2);
+    } else if (val.length === 4 && !val.includes(':')) {
+      val = val.substring(0, 2) + ':' + val.substring(2);
+    }
+    
+    if (val.length <= 5) setTime(val);
+  };
+
+  const handleTimeBlur = () => {
+    if (!time) return;
+    
+    // Validate đúng format HH:MM
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    
+    if (!timeRegex.test(time)) {
+      // Thử chuẩn hóa (VD: 9:30 -> 09:30, 8:00 -> 08:00)
+      const parts = time.split(':');
+      if (parts.length === 2) {
+        const h = parseInt(parts[0]);
+        const m = parseInt(parts[1]);
+        if (!isNaN(h) && !isNaN(m) && h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+          setTime(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+          return;
+        }
+      }
+      // Nếu nhập sai hoàn toàn thì xóa
+      setTime('');
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (locationRef.current && !locationRef.current.contains(event.target as Node)) {
+        setShowLocationDropdown(false);
+      }
+      if (timeRef.current && !timeRef.current.contains(event.target as Node)) {
+        setShowTimeDropdown(false);
+      }
+      if (guestsRef.current && !guestsRef.current.contains(event.target as Node)) {
+        setShowGuestsDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredLocations = CAN_THO_LOCATIONS.filter(loc => 
+    loc.toLowerCase().includes(location.toLowerCase())
+  );
+
   return (
     <section className="relative w-full h-[600px] mb-24">
       {/* Background Image */}
@@ -9,6 +115,7 @@ export function HeroSection() {
           src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1934&auto=format&fit=crop"
           alt="Restaurant interior"
           fill
+          sizes="100vw"
           className="object-cover brightness-50"
           priority
         />
@@ -37,44 +144,166 @@ export function HeroSection() {
       </div>
 
       {/* Search/Filter Bar */}
-      <div className="absolute left-0 right-0 z-20 container mx-auto px-4 -bottom-8">
-        <div 
-          className="bg-white rounded-xl shadow-lg p-4 flex flex-col md:flex-row items-center gap-4 border border-gray-100 animate-fadeInUp delay-100"
-        >
-          <div className="flex-1 w-full border-b md:border-b-0 md:border-r border-gray-200 pb-3 md:pb-0 md:pr-4">
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Khu vực</label>
-            <div className="flex items-center text-gray-700">
-              <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-              <select className="w-full bg-transparent outline-none cursor-pointer appearance-none">
-                <option>All Locations</option>
-                <option>District 1</option>
-                <option>District 3</option>
-              </select>
+      <div className="absolute left-0 right-0 z-20 flex justify-center -bottom-10 px-4">
+        <div className="bg-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-2 flex flex-col md:flex-row items-center divide-y md:divide-y-0 md:divide-x divide-gray-100 border border-gray-50 animate-fadeInUp delay-100 max-w-5xl w-full">
+          
+          {/* LOCATION */}
+          <div ref={locationRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
+            <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <div className="ml-3 flex flex-col flex-1 overflow-hidden">
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Location</span>
+              <input 
+                type="text" 
+                placeholder="Where are you going?" 
+                className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5"
+                value={location}
+                onChange={(e) => {
+                  setLocation(e.target.value);
+                  setShowLocationDropdown(true);
+                }}
+                onFocus={() => setShowLocationDropdown(true)}
+              />
             </div>
+
+            {/* Dropdown for Locations */}
+            {showLocationDropdown && (
+              <div className="absolute top-[110%] left-0 w-full md:w-[150%] bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 max-h-64 overflow-y-auto">
+                <div className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Cần Thơ
+                </div>
+                {filteredLocations.length > 0 ? (
+                  filteredLocations.map((loc, index) => (
+                    <div 
+                      key={index}
+                      className="px-4 py-2.5 hover:bg-amber-50 cursor-pointer flex items-center gap-3 transition-colors"
+                      onClick={() => {
+                        setLocation(loc);
+                        setShowLocationDropdown(false);
+                      }}
+                    >
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                      <span className="text-sm font-medium text-gray-700">{loc}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-sm text-gray-500">
+                    Không tìm thấy địa điểm
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
-          <div className="flex-1 w-full border-b md:border-b-0 md:border-r border-gray-200 pb-3 md:pb-0 md:pr-4">
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Loại hình</label>
-            <div className="flex items-center text-gray-700">
-              <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z"></path></svg>
-              <select className="w-full bg-transparent outline-none cursor-pointer appearance-none">
-                <option>Dine-in</option>
-                <option>Catering</option>
-              </select>
+          {/* DATE */}
+          <div className="flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
+            <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <div className="ml-3 flex flex-col flex-1 overflow-hidden">
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Date</span>
+              <DatePicker
+                selected={date}
+                onChange={(d: Date | null) => setDate(d)}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Chọn ngày"
+                minDate={new Date()}
+                className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-pointer custom-datepicker-input"
+                wrapperClassName="w-full"
+                popperClassName="spoton-datepicker-popper"
+              />
             </div>
           </div>
 
-          <div className="flex-[1.5] w-full pb-3 md:pb-0 md:pr-4">
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Thời gian</label>
-            <div className="flex items-center text-gray-700">
-              <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-              <input type="datetime-local" className="w-full bg-transparent outline-none text-gray-600" />
+          {/* TIME */}
+          <div ref={timeRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
+            <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div className="ml-3 flex flex-col flex-1 overflow-hidden" onClick={() => setShowTimeDropdown(true)}>
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Time</span>
+              <input 
+                type="text" 
+                placeholder="VD: 10:15"
+                value={time}
+                onChange={handleTimeChange}
+                onBlur={handleTimeBlur}
+                className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-text" 
+              />
             </div>
+
+            {/* Dropdown for Time */}
+            {showTimeDropdown && (
+              <div className="absolute top-[110%] left-0 w-full md:w-[150%] bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 max-h-64 overflow-y-auto">
+                <div className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Chọn giờ đến
+                </div>
+                <div className="grid grid-cols-3 gap-1 px-2">
+                  {TIME_OPTIONS.map((t, index) => (
+                    <div 
+                      key={index}
+                      className="px-2 py-2 text-center hover:bg-amber-50 cursor-pointer rounded-lg transition-colors text-sm font-medium text-gray-700 hover:text-[#ef5914]"
+                      onClick={() => {
+                        setTime(t);
+                        setShowTimeDropdown(false);
+                      }}
+                    >
+                      {t}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="w-full md:w-auto">
-            <button className="w-full md:w-auto px-8 py-3 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          {/* GUESTS */}
+          <div ref={guestsRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
+            <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <div className="ml-3 flex flex-col flex-1 overflow-hidden" onClick={() => setShowGuestsDropdown(!showGuestsDropdown)}>
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Guests</span>
+              <input 
+                type="text" 
+                readOnly
+                placeholder="Số lượng"
+                value={guestCount ? `${guestCount} Khách` : ''} 
+                className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-pointer" 
+              />
+            </div>
+
+            {/* Dropdown for Guests */}
+            {showGuestsDropdown && (
+              <div className="absolute top-[110%] right-0 w-full md:w-[150%] bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 max-h-64 overflow-y-auto">
+                <div className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Số lượng khách
+                </div>
+                {GUEST_OPTIONS.map((num, index) => (
+                  <div 
+                    key={index}
+                    className="px-4 py-2.5 hover:bg-amber-50 cursor-pointer flex items-center gap-3 transition-colors"
+                    onClick={() => {
+                      setGuestCount(num === '10+' ? 10 : (num as number));
+                      setShowGuestsDropdown(false);
+                    }}
+                  >
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <span className="text-sm font-medium text-gray-700">{num} Khách</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* SEARCH BUTTON */}
+          <div className="p-1.5 w-full md:w-auto mt-2 md:mt-0 flex-shrink-0">
+            <button 
+              onClick={() => {
+                // Format location to just the district name for the filter
+                let districtParam = "Tất cả quận";
+                if (location) {
+                  const parts = location.split(',');
+                  districtParam = parts[0].replace('Quận ', '').replace('Huyện ', '').trim();
+                }
+                const dateString = date ? date.toLocaleDateString('en-CA') : ''; // yyyy-mm-dd
+                window.location.href = `/branches?district=${encodeURIComponent(districtParam)}&date=${dateString}&time=${time}&guests=${guestCount || ''}`;
+              }}
+              className="w-full md:w-auto px-8 py-3.5 bg-[#ef5914] hover:bg-[#d44e11] text-white font-bold rounded-full transition-colors flex items-center justify-center shadow-md"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               Search
             </button>
           </div>

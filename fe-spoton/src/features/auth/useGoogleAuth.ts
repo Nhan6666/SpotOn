@@ -5,7 +5,9 @@ import { authService } from './auth.service';
 import { AppError } from '@/lib/errors';
 import { useRouter } from 'next/navigation';
 
-export const useGoogleAuth = (options?: { onSuccess?: () => void }) => {
+import { AuthUser } from './auth.types';
+
+export const useGoogleAuth = (options?: { onSuccess?: (token: string, user: AuthUser) => void }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -27,13 +29,8 @@ export const useGoogleAuth = (options?: { onSuccess?: () => void }) => {
       
       // Thành công: Xử lý lưu Auth Context và redirect
       console.log('Đăng nhập Google thành công:', response.data);
-      document.cookie = `spoton_token=${response.data.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`; // 7 ngày
-      sessionStorage.setItem('spoton_token', response.data.token);
-      
       if (options?.onSuccess) {
-        options.onSuccess();
-      } else {
-        router.push('/');
+        options.onSuccess(response.data.token, response.data.user);
       }
 
     } catch (err) {

@@ -2,16 +2,16 @@
 // AUTH CONTROLLER
 // Xử lý: Đăng ký, Đăng nhập, Google OAuth, Refresh Token
 // ============================================================
-const User = require('../models/User');
-const Otp = require('../models/Otp'); 
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const sendEmail = require('../utils/sendEmail'); 
-const normalizeEmail = require('../utils/normalizeEmail');
+const User = require("../models/User");
+const Otp = require("../models/Otp");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const sendEmail = require("../utils/sendEmail");
+const normalizeEmail = require("../utils/normalizeEmail");
 
-const app = require('../config/firebase');
-const { getAuth } = require('firebase-admin/auth');
-const crypto = require('crypto');
+const app = require("../config/firebase");
+const { getAuth } = require("firebase-admin/auth");
+const crypto = require("crypto");
 
 // Hàm phụ trợ: Sinh mã OTP 6 số
 const generateOTP = () => {
@@ -28,16 +28,17 @@ const register = async (req, res) => {
     const email = normalizeEmail(req.body.email);
 
     // Kiểm tra xem email hoặc số điện thoại đã tồn tại chưa
-    const query = phone && phone.trim() !== '' 
-      ? { $or: [{ email }, { phone: phone.trim() }] }
-      : { email };
+    const query =
+      phone && phone.trim() !== ""
+        ? { $or: [{ email }, { phone: phone.trim() }] }
+        : { email };
 
     const existingUser = await User.findOne(query);
 
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: 'Email hoặc số điện thoại đã được sử dụng.',
+        message: "Email hoặc số điện thoại đã được sử dụng.",
       });
     }
 
@@ -51,7 +52,7 @@ const register = async (req, res) => {
       email,
       phone,
       password_hash,
-      auth_provider: 'LOCAL',
+      auth_provider: "LOCAL",
     });
 
     await newUser.save();
@@ -82,7 +83,7 @@ const register = async (req, res) => {
     try {
       await sendEmail({
         email: newUser.email,
-        subject: 'Mã xác thực tài khoản SpotOn',
+        subject: "Mã xác thực tài khoản SpotOn",
         html: emailHtml,
       });
     } catch (emailError) {
@@ -95,17 +96,17 @@ const register = async (req, res) => {
     // Trả kết quả về Frontend (Yêu cầu xác thực OTP, chưa cấp Token vội)
     res.status(201).json({
       success: true,
-      message: 'Đăng ký thành công. Vui lòng kiểm tra email để lấy mã xác nhận.',
+      message:
+        "Đăng ký thành công. Vui lòng kiểm tra email để lấy mã xác nhận.",
       data: {
-        email: newUser.email // Gửi kèm email về FE để FE biết user nào đang cần xác thực
-      }
+        email: newUser.email, // Gửi kèm email về FE để FE biết user nào đang cần xác thực
+      },
     });
-
   } catch (error) {
-    console.error('Lỗi Register:', error);
+    console.error("Lỗi Register:", error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi server nội bộ.',
+      message: "Lỗi server nội bộ.",
     });
   }
 };
@@ -122,43 +123,54 @@ const login = async (req, res) => {
     // Tìm user theo email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Email hoặc mật khẩu không đúng.' });
+      return res
+        .status(401)
+        .json({ success: false, message: "Email hoặc mật khẩu không đúng." });
     }
 
     // Kiểm tra mật khẩu
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Email hoặc mật khẩu không đúng.' });
+      return res
+        .status(401)
+        .json({ success: false, message: "Email hoặc mật khẩu không đúng." });
     }
 
     // Kiểm tra xem đã xác thực email chưa
     if (!user.is_email_verified) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Tài khoản chưa được xác thực. Vui lòng kiểm tra email để nhập OTP.',
-        data: { email: user.email, needsVerification: true }
+      return res.status(403).json({
+        success: false,
+        message:
+          "Tài khoản chưa được xác thực. Vui lòng kiểm tra email để nhập OTP.",
+        data: { email: user.email, needsVerification: true },
       });
     }
 
     // Cấp JWT Token
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET || 'spoton_default_secret',
-      { expiresIn: '7d' }
+      process.env.JWT_SECRET || "spoton_default_secret",
+      { expiresIn: "7d" },
     );
 
     res.status(200).json({
       success: true,
-      message: 'Đăng nhập thành công.',
+      message: "Đăng nhập thành công.",
       data: {
         token,
-        user: { _id: user._id, email: user.email, full_name: user.full_name, role: user.role }
-      }
+        user: {
+          _id: user._id,
+          email: user.email,
+          full_name: user.full_name,
+          role: user.role,
+          avatar: user.avatar,
+          branch_id: user.branch_id || null,
+        },
+      },
     });
-
   } catch (error) {
-    console.error('Lỗi Login:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+    console.error("Lỗi Login:", error);
+    res.status(500).json({ success: false, message: "Lỗi server nội bộ." });
   }
 };
 
@@ -172,11 +184,10 @@ const googleAuth = async (req, res) => {
     if (!idToken) {
       return res.status(400).json({
         success: false,
-        message: 'Thiếu idToken từ client.',
+        message: "Thiếu idToken từ client.",
       });
     }
 
-    
     const decodedToken = await getAuth(app).verifyIdToken(idToken);
 
     const { email, name, picture } = decodedToken;
@@ -188,40 +199,39 @@ const googleAuth = async (req, res) => {
 
     if (!user) {
       // TRƯỜNG HỢP 1: User hoàn toàn mới -> Tạo tài khoản tự động
-      const randomPassword = crypto.randomBytes(16).toString('hex');
-      const salt = await bcrypt.genSalt(10);
-      const password_hash = await bcrypt.hash(randomPassword, salt);
+      // Mật khẩu để null để biết đây là tài khoản Google chưa từng tạo mật khẩu
+      const password_hash = null;
 
       user = new User({
         full_name: name,
         email: normalizedEmail,
         password_hash: password_hash,
-        auth_provider: 'GOOGLE', // Đánh dấu nguồn đăng nhập
+        auth_provider: "GOOGLE", // Đánh dấu nguồn đăng nhập
         is_email_verified: true, // Google đã xác thực email này rồi, set true luôn
-        avatar: picture || User.DEFAULT_AVATAR,
+        avatar: picture || "",
       });
 
       await user.save();
     } else {
-      // TRƯỜNG HỢP 2: User đã tồn tại 
+      // TRƯỜNG HỢP 2: User đã tồn tại
       // (Có thể họ từng đăng ký bằng Form thường trước đây nhưng chưa kịp xác thực OTP)
-      
+
       let isUpdated = false;
 
-      // Nếu trước đây họ đăng ký thường mà chưa xác thực, 
+      // Nếu trước đây họ đăng ký thường mà chưa xác thực,
       // giờ họ dùng chính Google của email đó để login -> Duyệt cho họ đã xác thực luôn.
       if (!user.is_email_verified) {
         user.is_email_verified = true;
         isUpdated = true;
       }
 
-      if (user.auth_provider === 'LOCAL') {
-         user.auth_provider = 'GOOGLE';
-         isUpdated = true;
+      if (user.auth_provider === "LOCAL") {
+        user.auth_provider = "GOOGLE";
+        isUpdated = true;
       }
 
       // ưu tiên Avatar:
-      if (picture && (!user.avatar || user.avatar === User.DEFAULT_AVATAR)) {
+      if (picture && !user.has_custom_avatar) {
         user.avatar = picture;
         isUpdated = true;
       }
@@ -234,46 +244,46 @@ const googleAuth = async (req, res) => {
     // Cấp JWT Token của hệ thống SpotOn
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET || 'spoton_default_secret',
-      { expiresIn: '7d' }
+      process.env.JWT_SECRET || "spoton_default_secret",
+      { expiresIn: "7d" },
     );
 
     // Trả về response chuẩn
     res.status(200).json({
       success: true,
-      message: 'Đăng nhập Google thành công.',
+      message: "Đăng nhập Google thành công.",
       data: {
         token,
-        user: { 
-          _id: user._id, 
-          email: user.email, 
-          full_name: user.full_name, 
+        user: {
+          _id: user._id,
+          email: user.email,
+          full_name: user.full_name,
           role: user.role,
-          avatar: user.avatar // Trả về ảnh đại diện nếu có
-        }
-      }
+          avatar: user.avatar,
+          branch_id: user.branch_id || null,
+        },
+      },
     });
-
   } catch (error) {
-    console.error('Lỗi Google Auth:', error);
-    
+    console.error("Lỗi Google Auth:", error);
+
     // Bắt lỗi cụ thể từ Firebase (ví dụ: token hết hạn, token bị chế độ)
-    if (error.code && error.code.startsWith('auth/')) {
+    if (error.code && error.code.startsWith("auth/")) {
       return res.status(401).json({
         success: false,
-        message: 'Xác thực Google thất bại hoặc phiên đăng nhập đã hết hạn.'
+        message: "Xác thực Google thất bại hoặc phiên đăng nhập đã hết hạn.",
       });
     }
 
     // Lỗi khác (database, logic, v.v...)
     return res.status(500).json({
       success: false,
-      message: 'Đã xảy ra lỗi hệ thống khi xác thực Google.'
+      message: "Đã xảy ra lỗi hệ thống khi xác thực Google.",
     });
 
     res.status(500).json({
       success: false,
-      message: 'Lỗi server nội bộ.',
+      message: "Lỗi server nội bộ.",
     });
   }
 };
@@ -283,20 +293,23 @@ const googleAuth = async (req, res) => {
 // @access Private
 const getMe = async (req, res) => {
   try {
-    // req.user.userId được truyền từ middleware xác thực (auth.middleware.js)
-    const user = await User.findById(req.user.userId).select('-password_hash'); 
-    
+    // Sử dụng trực tiếp req.user đã được gán từ authMiddleware để tối ưu hiệu suất (không cần gọi DB lần 2)
+    const user = req.user;
+
     if (!user) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy người dùng." });
     }
 
-    res.status(200).json({ 
-      success: true, 
-      data: user 
+    res.status(200).json({
+      success: true,
+      message: "Lấy thông tin tài khoản thành công.",
+      data: user,
     });
   } catch (error) {
-    console.error('Lỗi GetMe:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+    console.error("Lỗi GetMe:", error);
+    res.status(500).json({ success: false, message: "Lỗi server nội bộ." });
   }
 };
 
@@ -305,21 +318,26 @@ const getMe = async (req, res) => {
 const verifyOtp = async (req, res) => {
   try {
     const { otp } = req.body;
-    
+
     const email = normalizeEmail(req.body.email);
 
     // Tìm mã OTP trong DB bằng email chuẩn hóa
     const otpDoc = await Otp.findOne({ email, otp });
 
     if (!otpDoc) {
-      return res.status(400).json({ success: false, message: 'Mã OTP không đúng hoặc đã hết hạn.' });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Mã OTP không đúng hoặc đã hết hạn.",
+        });
     }
 
     // Tìm User và cập nhật trạng thái xác thực
     const user = await User.findOneAndUpdate(
       { email },
       { is_email_verified: true },
-      { new: true }
+      { new: true },
     );
 
     // Xóa mã OTP sau khi dùng xong
@@ -328,20 +346,165 @@ const verifyOtp = async (req, res) => {
     // Cấp Token (Lúc này mới chính thức cho đăng nhập)
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET || 'spoton_default_secret',
-      { expiresIn: '7d' }
+      process.env.JWT_SECRET || "spoton_default_secret",
+      { expiresIn: "7d" },
     );
 
     res.status(200).json({
       success: true,
-      message: 'Xác thực thành công!',
-      token, 
-      user: { _id: user._id, email: user.email, full_name: user.full_name, role: user.role }
+      message: "Xác thực thành công!",
+      token,
+      user: {
+        _id: user._id,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role,
+      },
     });
   } catch (error) {
-    console.error('Lỗi Verify OTP:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server.' });
+    console.error("Lỗi Verify OTP:", error);
+    res.status(500).json({ success: false, message: "Lỗi server." });
   }
 };
 
-module.exports = { register, login, googleAuth, getMe, verifyOtp };
+// @desc   Yêu cầu đặt lại mật khẩu (Gửi OTP)
+// @route  POST /api/v1/auth/forgot-password
+// @access Public
+const forgotPassword = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy tài khoản với email này.",
+      });
+    }
+
+    // Xóa OTP cũ nếu có
+    await Otp.deleteMany({ email });
+
+    // Sinh mã OTP mới (Mã tự hủy sau 5 phút theo TTL)
+    const otpCode = generateOTP();
+    await Otp.create({
+      email,
+      otp: otpCode,
+    });
+
+    // Gửi email
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #8a5a19; text-align: center;">SpotOn - Quên Mật Khẩu</h2>
+        <p>Xin chào <strong>${user.full_name}</strong>,</p>
+        <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng sử dụng mã xác nhận (OTP) dưới đây:</p>
+        <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0;">
+          <h1 style="color: #333; letter-spacing: 5px; margin: 0;">${otpCode}</h1>
+        </div>
+        <p style="color: #d9534f; font-size: 14px;"><strong>Lưu ý:</strong> Mã này sẽ hết hạn sau 5 phút. Nếu bạn không yêu cầu đổi mật khẩu, vui lòng bỏ qua email này.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="font-size: 12px; color: #777; text-align: center;">Đội ngũ hỗ trợ SpotOn</p>
+      </div>
+    `;
+
+    await sendEmail({
+      email,
+      subject: "Mã xác thực đặt lại mật khẩu SpotOn",
+      html: emailHtml,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Mã OTP đã được gửi đến email của bạn.",
+      data: { email },
+    });
+  } catch (error) {
+    console.error("Lỗi Forgot Password:", error);
+    res.status(500).json({ success: false, message: "Lỗi server nội bộ." });
+  }
+};
+
+// @desc   Đặt lại mật khẩu mới bằng OTP
+// @route  POST /api/v1/auth/reset-password
+// @access Public
+const resetPassword = async (req, res) => {
+  try {
+    const { otp, newPassword } = req.body;
+    const email = normalizeEmail(req.body.email);
+
+    // Kiểm tra OTP
+    const otpDoc = await Otp.findOne({ email, otp });
+    if (!otpDoc) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Mã OTP không đúng hoặc đã hết hạn.",
+        });
+    }
+
+    // Băm mật khẩu mới
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    // Cập nhật mật khẩu user
+    const user = await User.findOneAndUpdate(
+      { email },
+      { password_hash, auth_provider: "LOCAL" }, // Reset về LOCAL nếu lỡ dùng Google nhưng muốn dùng mật khẩu
+      { new: true },
+    );
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy người dùng." });
+    }
+
+    // Xóa OTP
+    await Otp.deleteOne({ _id: otpDoc._id });
+
+    res.status(200).json({
+      success: true,
+      message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.",
+    });
+  } catch (error) {
+    console.error("Lỗi Reset Password:", error);
+    res.status(500).json({ success: false, message: "Lỗi server nội bộ." });
+  }
+};
+
+// @desc   Xác minh OTP để đổi mật khẩu (chưa đổi mật khẩu)
+// @route  POST /api/v1/auth/verify-forgot-password-otp
+// @access Public
+const verifyForgotPasswordOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const email = normalizeEmail(req.body.email);
+
+    const otpDoc = await Otp.findOne({ email, otp });
+    if (!otpDoc) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Mã OTP không đúng hoặc đã hết hạn.",
+        });
+    }
+
+    res.status(200).json({ success: true, message: "Mã OTP hợp lệ." });
+  } catch (error) {
+    console.error("Lỗi Verify Forgot Password OTP:", error);
+    res.status(500).json({ success: false, message: "Lỗi server nội bộ." });
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  googleAuth,
+  getMe,
+  verifyOtp,
+  forgotPassword,
+  resetPassword,
+  verifyForgotPasswordOtp,
+};

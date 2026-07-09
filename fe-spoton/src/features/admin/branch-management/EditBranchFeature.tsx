@@ -1,0 +1,198 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { AddBranchForm } from "./components/AddBranchForm";
+import { AddBranchOperations } from "./components/AddBranchOperations";
+import { useAuth } from "@/providers/AuthProvider";
+import { Map } from "lucide-react";
+import { useBranchContext } from "./branch-management.context";
+import { useToast } from "@/components/ui/Toast";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+export function EditBranchFeature({ branchId }: { branchId: string }) {
+  const { updateBranch } = useBranchContext();
+  const { success, error: showError } = useToast();
+  const { user } = useAuth();
+  const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    address: {
+      full: "",
+      city: "Cần Thơ",
+      district: "",
+      ward: "",
+      street: ""
+    },
+    location: {
+      type: "Point",
+      coordinates: [105.783, 10.033]
+    },
+    hotline: "",
+    manager_id: "",
+    service_periods: {
+      lunch: { start: '08:00', end: '13:00', last_booking: '12:00', last_order: '12:30' },
+      dinner: { start: '15:00', end: '23:00', last_booking: '22:00', last_order: '22:30' }
+    },
+    status: "OPEN" as "OPEN" | "FULL" | "CLOSED",
+    overload_threshold: 85,
+    amenities: [] as string[],
+    description: "",
+  });
+
+  // Fetch branch data trực tiếp từ API theo branchId
+  useEffect(() => {
+    const fetchBranch = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/v1/branches/${branchId}`);
+        const result = await response.json();
+        if (result.success && result.data) {
+          const b = result.data;
+          setFormData({
+            name: b.name || "",
+            address: b.address || {
+              full: "", city: "Cần Thơ", district: "", ward: "", street: ""
+            },
+            location: b.location || {
+              type: "Point", coordinates: [105.783, 10.033]
+            },
+            hotline: b.hotline || "",
+            // manager_id có thể là object (sau populate) hoặc string (ObjectId)
+            manager_id:
+              typeof b.manager_id === "object" && b.manager_id
+                ? b.manager_id._id
+                : b.manager_id || "",
+            service_periods: b.service_periods || {
+              lunch: { start: '08:00', end: '13:00', last_booking: '12:00', last_order: '12:30' },
+              dinner: { start: '15:00', end: '23:00', last_booking: '22:00', last_order: '22:30' }
+            },
+            status: b.status || "OPEN",
+            overload_threshold: b.overload_threshold || 85,
+            amenities: b.amenities?.map((a: any) => typeof a === 'string' ? a : a._id) || [],
+            description: b.description || "",
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch branch:", error);
+        showError("Failed to load branch data.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchBranch();
+  }, [branchId]);
+
+  const updateFormData = (fields: Partial<typeof formData>) => {
+    setFormData((prev) => ({ ...prev, ...fields }));
+  };
+
+  const handleUpdate = async () => {
+    if (!formData.name || !formData.address.full || !formData.address.district) {
+      showError("Tên chi nhánh, Quận/Huyện và Địa chỉ đầy đủ là bắt buộc!");
+      return;
+    }
+
+    if (!formData.manager_id) {
+      showError("Please assign a Manager for this branch!");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updateBranch(branchId, formData);
+      success(`Đã cập nhật chi nhánh "${formData.name}" thành công.`);
+      if (user?.role !== 'MANAGER') {
+        router.push("/admin/branches");
+      }
+    } catch (error) {
+      showError("Lỗi khi cập nhật chi nhánh. Vui lòng thử lại.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
+      {/* Breadcrumbs - Only show for Admin */}
+      {user?.role !== 'MANAGER' && (
+        <div className="flex items-center text-sm mb-6">
+          <Link
+            href="/admin/branches"
+            className="text-gray-500 hover:text-amber-700 transition-colors font-medium"
+          >
+            Branch Management
+          </Link>
+          <span className="mx-3 text-gray-300">/</span>
+          <span className="font-semibold text-gray-900">
+            Edit Branch
+          </span>
+        </div>
+      )}
+
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
+            {user?.role === 'MANAGER' ? 'Chi nhánh: ' : 'Edit Branch: '}
+            <span className="font-medium text-gray-600">
+              {formData.name || "Loading..."}
+            </span>
+          </h1>
+          <p className="text-sm md:text-base text-gray-500 mt-1">
+            Quản lý thông tin và các giới hạn vận hành của chi nhánh.
+          </p>
+        </div>
+        {user?.role === 'MANAGER' && (
+          <div className="flex items-center gap-3">
+            <Link href={`/manager/branch/map-editor`}>
+              <Button variant="outline" className="shadow-sm flex items-center gap-2">
+                <Map className="w-4 h-4" />
+                Chỉnh Sửa Sơ Đồ Bàn
+              </Button>
+            </Link>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+        <AddBranchForm
+          formData={formData}
+          updateFormData={updateFormData}
+          currentBranchId={branchId}
+          disabled={user?.role === "MANAGER"}
+        />
+        <AddBranchOperations
+          formData={formData}
+          updateFormData={updateFormData}
+          disabled={false}
+        />
+      </div>
+
+      <div className="flex justify-end items-center mt-8 pb-12 pt-6 border-t border-gray-200 gap-4">
+        {user?.role !== 'MANAGER' && (
+          <Link href="/admin/branches">
+            <Button
+              variant="outline"
+              className="w-32 bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
+            >
+              Hủy
+            </Button>
+          </Link>
+        )}
+        <Button
+          variant="primary"
+          className="bg-amber-700 hover:bg-amber-800 text-white border-0"
+          onClick={handleUpdate}
+          disabled={isSaving}
+        >
+          {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+        </Button>
+      </div>
+    </div>
+  );
+}

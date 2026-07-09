@@ -66,10 +66,12 @@ function OfferCard({ offer, index }: { offer: LastMinuteOffer; index: number }) 
             </div>
             <span className="text-[10px]" style={{ color: '#6b5d4a' }}>({offer.reviewCount})</span>
           </div>
-          <button className="mt-1 w-full py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105"
-            style={{ background: 'linear-gradient(135deg, #c8891a 0%, #f0b843 100%)', color: '#fff' }}>
-            Đặt ngay
-          </button>
+          <Link href="/branches" className="mt-1 w-full block">
+            <button className="w-full py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #c8891a 0%, #f0b843 100%)', color: '#fff' }}>
+              Đặt ngay
+            </button>
+          </Link>
         </div>
       </div>
     </AOS>

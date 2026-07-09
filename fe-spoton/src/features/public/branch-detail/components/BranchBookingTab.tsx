@@ -242,7 +242,7 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
           </div>
           <div className="p-1.5 w-full md:w-auto mt-2 md:mt-0 flex-shrink-0">
             <button 
-              onClick={handleCheckAvailability}
+              onClick={() => handleCheckAvailability(false)}
               disabled={isChecking}
               className="w-full md:w-auto px-8 py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold rounded-full transition-colors flex items-center justify-center shadow-md disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
             >

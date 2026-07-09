@@ -400,7 +400,8 @@ export function TableCanvas({
                 const lunchBooking = tableBookings.find(b => b.shift === 'LUNCH');
                 const dinnerBooking = tableBookings.find(b => b.shift === 'DINNER');
 
-                const getShiftConfig = (booking: any) => {
+                const getShiftConfig = (booking: any, manualStatus?: TableStatus) => {
+                  if (manualStatus && manualStatus !== 'EMPTY') return TABLE_STATUS_CONFIG[manualStatus];
                   if (!booking) return TABLE_STATUS_CONFIG['EMPTY'];
                   if (booking.status === 'CONFIRMED') return TABLE_STATUS_CONFIG['RESERVED'];
                   if (booking.status === 'PENDING_PAYMENT' || booking.status === 'PENDING_DEPOSIT') return TABLE_STATUS_CONFIG['LOCKED'];
@@ -408,8 +409,8 @@ export function TableCanvas({
                   return TABLE_STATUS_CONFIG['EMPTY'];
                 };
 
-                const lunchConfig = getShiftConfig(lunchBooking);
-                const dinnerConfig = getShiftConfig(dinnerBooking);
+                const lunchConfig = getShiftConfig(lunchBooking, table.status_lunch);
+                const dinnerConfig = getShiftConfig(dinnerBooking, table.status_dinner);
 
                 // Map shape to CSS
                 const shapeClasses = isCircle ? "rounded-full" : "rounded-lg";

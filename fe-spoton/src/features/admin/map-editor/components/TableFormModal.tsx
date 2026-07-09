@@ -30,6 +30,8 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
   const [tableNumber, setTableNumber] = useState("");
   const [capacity, setCapacity] = useState(2);
   const [status, setStatus] = useState<TableStatus>("EMPTY");
+  const [statusLunch, setStatusLunch] = useState<TableStatus>("EMPTY");
+  const [statusDinner, setStatusDinner] = useState<TableStatus>("EMPTY");
   const [shape, setShape] = useState<"RECTANGLE" | "CIRCLE">("RECTANGLE");
   const [width, setWidth] = useState(70);
   const [height, setHeight] = useState(70);
@@ -45,6 +47,8 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
       setTableNumber(initialData?.table_number || "");
       setCapacity(initialData?.capacity || 2);
       setStatus(initialData?.status || "EMPTY");
+      setStatusLunch((initialData as any)?.status_lunch || "EMPTY");
+      setStatusDinner((initialData as any)?.status_dinner || "EMPTY");
       setShape(initialData?.shape || "RECTANGLE");
       setWidth(initialData?.width || 70);
       setHeight(initialData?.height || 70);
@@ -71,7 +75,11 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
         y,
         image_url: imageUrl
       };
-      if (mode === "edit") data.status = status;
+      if (mode === "edit") {
+        data.status = status;
+        data.status_lunch = statusLunch;
+        data.status_dinner = statusDinner;
+      }
       await onSubmit(data);
       onClose();
     } catch {
@@ -265,28 +273,80 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
           </div>
 
           {mode === "edit" && !isTemplate && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                {ADMIN_TEXTS.mapEditor.modalTableStatusLabel}
-              </label>
-              <div className="grid grid-cols-3 gap-1.5">
-                {ALL_STATUSES.map((s) => {
-                  const config = TABLE_STATUS_CONFIG[s];
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setStatus(s)}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
-                        status === s
-                          ? `${config.bg} ${config.border} ${config.color} ring-2 ring-offset-1 ring-current shadow-sm scale-[1.02]`
-                          : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:border-gray-300 hover:shadow-sm"
-                      }`}
-                    >
-                      {config.label}
-                    </button>
-                  );
-                })}
+            <div className="space-y-4 pt-2 border-t border-gray-100">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  {ADMIN_TEXTS.mapEditor.modalTableStatusLabel} (Tức thời)
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {ALL_STATUSES.map((s) => {
+                    const config = TABLE_STATUS_CONFIG[s];
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setStatus(s)}
+                        className={`px-3 py-2 rounded-xl text-xs font-semibold border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                          status === s
+                            ? `${config.bg} ${config.border} ${config.color} ring-2 ring-offset-1 ring-current shadow-sm scale-[1.02]`
+                            : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:border-gray-300 hover:shadow-sm"
+                        }`}
+                      >
+                        {config.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Trạng thái Ca Trưa
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {ALL_STATUSES.map((s) => {
+                    const config = TABLE_STATUS_CONFIG[s];
+                    return (
+                      <button
+                        key={`lunch-${s}`}
+                        type="button"
+                        onClick={() => setStatusLunch(s)}
+                        className={`px-3 py-1.5 rounded-xl text-[10px] font-semibold border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                          statusLunch === s
+                            ? `${config.bg} ${config.border} ${config.color} ring-2 ring-offset-1 ring-current shadow-sm scale-[1.02]`
+                            : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:border-gray-300 hover:shadow-sm"
+                        }`}
+                      >
+                        {config.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Trạng thái Ca Tối
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {ALL_STATUSES.map((s) => {
+                    const config = TABLE_STATUS_CONFIG[s];
+                    return (
+                      <button
+                        key={`dinner-${s}`}
+                        type="button"
+                        onClick={() => setStatusDinner(s)}
+                        className={`px-3 py-1.5 rounded-xl text-[10px] font-semibold border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                          statusDinner === s
+                            ? `${config.bg} ${config.border} ${config.color} ring-2 ring-offset-1 ring-current shadow-sm scale-[1.02]`
+                            : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:border-gray-300 hover:shadow-sm"
+                        }`}
+                      >
+                        {config.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}

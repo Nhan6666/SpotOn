@@ -9,6 +9,16 @@ const TableSchema = new mongoose.Schema({
     enum: ['EMPTY', 'HOLDING', 'LOCKED', 'RESERVED', 'OCCUPIED', 'CLEANING', 'MAINTENANCE'],
     default: 'EMPTY',
   },
+  status_lunch: {
+    type: String,
+    enum: ['EMPTY', 'HOLDING', 'LOCKED', 'RESERVED', 'OCCUPIED', 'CLEANING', 'MAINTENANCE'],
+    default: 'EMPTY',
+  },
+  status_dinner: {
+    type: String,
+    enum: ['EMPTY', 'HOLDING', 'LOCKED', 'RESERVED', 'OCCUPIED', 'CLEANING', 'MAINTENANCE'],
+    default: 'EMPTY',
+  },
   x: { type: Number, default: 0 },
   y: { type: Number, default: 0 },
   width: { type: Number, default: 70 },

@@ -4,7 +4,7 @@
 // ============================================================
 const Booking = require('../models/Booking');
 const Branch = require('../models/Branch');
-const Notification = require('../models/Notification');
+// const Notification = require('../models/Notification');
 const mongoose = require('mongoose');
 const asyncHandler = require('../utils/asyncHandler');
 
@@ -72,12 +72,15 @@ const createBooking = async (req, res) => {
 
         if (currentCapacityPercent >= branch.overload_threshold) {
           // Check if an alert was already sent recently to avoid spam (e.g. in the last hour)
+          /*
           const recentAlert = await Notification.findOne({
             user_id: branch.manager_id,
             type: 'OVERLOAD_ALERT',
             created_at: { $gte: new Date(Date.now() - 60 * 60 * 1000) }
           });
+          */
 
+          /*
           if (!recentAlert) {
             await Notification.create({
               user_id: branch.manager_id,
@@ -87,6 +90,7 @@ const createBooking = async (req, res) => {
             });
             console.log(`[UC-6.1] Overload alert sent to manager of branch ${branch.name}`);
           }
+          */
         }
       }
     }

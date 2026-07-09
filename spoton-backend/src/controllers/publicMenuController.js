@@ -9,7 +9,10 @@ const getPublicCategories = async (req, res) => {
   try {
     const branchId = req.params.branchId;
 
-    const localMenus = await Menu.find({ branch_id: branchId }).select('category_name').lean();
+    let localMenus = [];
+    if (branchId && branchId !== 'master') {
+      localMenus = await Menu.find({ branch_id: branchId }).select('category_name').lean();
+    }
     const masterMenus = await Menu.find({ branch_id: null }).select('category_name').lean();
 
     const categorySet = new Set();
@@ -52,7 +55,10 @@ const getPublicMenuItems = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Thiếu tham số category_name.' });
     }
 
-    const localMenu = await Menu.findOne({ branch_id: branchId, category_name }).lean();
+    let localMenu = null;
+    if (branchId && branchId !== 'master') {
+      localMenu = await Menu.findOne({ branch_id: branchId, category_name }).lean();
+    }
     const masterMenu = await Menu.findOne({ branch_id: null, category_name }).lean();
 
     const items = [];

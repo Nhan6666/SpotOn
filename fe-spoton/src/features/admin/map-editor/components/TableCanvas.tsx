@@ -396,16 +396,18 @@ export function TableCanvas({
                 const isCircle = table.shape === "CIRCLE";
 
                 // Tính toán ca đã được đặt cho bàn này
-                const tableBookings = bookings?.filter((b) => b.table_ids.includes(table._id)) || [];
+                const tableBookings = bookings?.filter((b) => b.table_ids?.some((id: any) => id.toString() === table._id.toString())) || [];
                 const lunchBooking = tableBookings.find(b => b.shift === 'LUNCH');
                 const dinnerBooking = tableBookings.find(b => b.shift === 'DINNER');
 
                 const getShiftConfig = (booking: any, manualStatus?: TableStatus) => {
+                  if (booking) {
+                    if (booking.status === 'IN_USE') return TABLE_STATUS_CONFIG['OCCUPIED'];
+                    if (booking.status === 'CONFIRMED') return TABLE_STATUS_CONFIG['RESERVED'];
+                    if (booking.status === 'PENDING_PAYMENT' || booking.status === 'PENDING_DEPOSIT') return TABLE_STATUS_CONFIG['LOCKED'];
+                    if (booking.status === 'HOLDING') return TABLE_STATUS_CONFIG['HOLDING'];
+                  }
                   if (manualStatus && manualStatus !== 'EMPTY') return TABLE_STATUS_CONFIG[manualStatus];
-                  if (!booking) return TABLE_STATUS_CONFIG['EMPTY'];
-                  if (booking.status === 'CONFIRMED') return TABLE_STATUS_CONFIG['RESERVED'];
-                  if (booking.status === 'PENDING_PAYMENT' || booking.status === 'PENDING_DEPOSIT') return TABLE_STATUS_CONFIG['LOCKED'];
-                  if (booking.status === 'HOLDING') return TABLE_STATUS_CONFIG['HOLDING'];
                   return TABLE_STATUS_CONFIG['EMPTY'];
                 };
 

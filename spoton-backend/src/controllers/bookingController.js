@@ -114,8 +114,8 @@ const getAllBookings = async (req, res) => {
     let filter = {};
 
     // TÍNH NĂNG PHÂN QUYỀN (Tenant-based Access): 
-    // Manager và Waiter chỉ được lấy danh sách đơn của chi nhánh mình làm việc
-    if (['MANAGER', 'WAITER'].includes(req.user.role)) {
+    // Manager, Waiter và Kitchen chỉ được lấy danh sách đơn của chi nhánh mình làm việc
+    if (['MANAGER', 'WAITER', 'KITCHEN'].includes(req.user.role)) {
       filter.branch_id = req.user.branch_id;
     }
 
@@ -289,12 +289,22 @@ const updateBookingInfo = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt bàn.' });
     }
 
+    if (!walk_in_name || walk_in_name.trim().length < 2) {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập họ tên hợp lệ (ít nhất 2 ký tự).' });
+    }
+    
+    const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
+    if (!walk_in_phone || !phoneRegex.test(walk_in_phone)) {
+      return res.status(400).json({ success: false, message: 'Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng Việt Nam.' });
+    }
+
     if (order_items) booking.order_items = order_items;
     if (notes !== undefined) booking.notes = notes;
     if (note !== undefined) booking.notes = note; // frontend sends 'note'
     if (meal_type) booking.meal_type = meal_type;
-    if (walk_in_name) booking.walk_in_name = walk_in_name;
-    if (walk_in_phone) booking.walk_in_phone = walk_in_phone;
+    
+    booking.walk_in_name = walk_in_name.trim();
+    booking.walk_in_phone = walk_in_phone.trim();
 
     await booking.save();
 

@@ -133,10 +133,97 @@ const updateUserRole = async (req, res) => {
   }
 };
 
+// @desc   Admin tạo tài khoản nhân viên (MANAGER/WAITER)
+// @route  POST /api/v1/users/admin/create
+// @access Private/Admin
+const createUser = async (req, res) => {
+  try {
+    const { full_name, email, phone, password, role, branch_id } = req.body;
+
+    // Validate bắt buộc
+    if (!full_name || !email || !password || !role) {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ họ tên, email, mật khẩu và vai trò.' });
+    }
+
+    // Chỉ cho tạo MANAGER hoặc WAITER
+    if (!['MANAGER', 'WAITER'].includes(role)) {
+      return res.status(400).json({ success: false, message: 'Chỉ được phép tạo tài khoản Quản lý (MANAGER) hoặc Nhân viên (WAITER).' });
+    }
+
+    // MANAGER/WAITER phải có chi nhánh
+    if (!branch_id) {
+      return res.status(400).json({ success: false, message: 'Vui lòng chọn chi nhánh phân công cho nhân viên.' });
+    }
+
+    // Check email trùng
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existingUser) {
+      return res.status(409).json({ success: false, message: 'Email đã tồn tại trong hệ thống.' });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    const newUser = await User.create({
+      full_name: full_name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone?.trim() || '',
+      password_hash,
+      auth_provider: 'LOCAL',
+      role,
+      branch_id,
+      is_email_verified: true, // Admin tạo nên mặc định verified
+    });
+
+    // Populate branch để trả về
+    const populatedUser = await User.findById(newUser._id)
+      .select('-password_hash')
+      .populate('branch_id', 'name address');
+
+    res.status(201).json({
+      success: true,
+      message: `Tạo tài khoản ${role} thành công.`,
+      data: populatedUser,
+    });
+  } catch (error) {
+    console.error('Lỗi createUser:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi tạo tài khoản.' });
+  }
+};
+
+// @desc   Admin xóa tài khoản Khách hàng
+// @route  DELETE /api/v1/users/admin/:id
+// @access Private/Admin
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Người dùng không tồn tại.' });
+    }
+
+    if (user.role !== 'CUSTOMER') {
+      return res.status(403).json({ success: false, message: 'Chỉ có thể xóa tài khoản Khách hàng (CUSTOMER). Vui lòng thu hồi quyền quản trị trước khi xóa.' });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: `Đã xóa tài khoản "${user.full_name}" thành công.`,
+    });
+  } catch (error) {
+    console.error('Lỗi deleteUser:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi xóa tài khoản.' });
+  }
+};
+
 
 module.exports = {
   getProfile,
   updateProfile,
   getAllUsers,
   updateUserRole,
+  createUser,
+  deleteUser,
 };

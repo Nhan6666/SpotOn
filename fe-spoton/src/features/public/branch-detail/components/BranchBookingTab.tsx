@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PublicBranchDetail } from '../branch-detail.types';
 import { branchDetailService } from '../branch-detail.service';
-import { Calendar, Clock, Users, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Calendar, Clock, Users, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { BookingCheckoutStep } from './BookingCheckoutStep';
 import { socket } from '@/lib/socket';
 import { PUBLIC_TEXTS } from '@/constants/texts/public';
@@ -28,7 +28,7 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
   
   // Flow State
   const [isHolding, setIsHolding] = useState(false);
-  const [holdData, setHoldData] = useState<{ id: string; expiresAt: string; branchId: string } | null>(null);
+  const [holdData, setHoldData] = useState<{ id: string; expiresAt: string; branchId: string; selectedTables?: any[] } | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   // Restore from localStorage on mount
@@ -39,6 +39,9 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
         const parsed = JSON.parse(saved);
         if (new Date(parsed.expiresAt) > new Date() && parsed.branchId === branch._id) {
           setHoldData(parsed);
+          if (parsed.selectedTables) {
+            setSelectedTables(parsed.selectedTables);
+          }
         } else {
           localStorage.removeItem('spoton_draft_booking');
         }
@@ -61,10 +64,44 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
     const [hours, minutes] = time.split(':').map(Number);
     selectedDateObj.setHours(hours, minutes, 0, 0);
 
-    if (selectedDateObj < now) {
+    if (selectedDateObj.getTime() < now.getTime()) {
       if (!keepError) setErrorMsg('Không thể đặt bàn vào thời điểm trong quá khứ. Vui lòng chọn ngày giờ hợp lệ.');
       setHasChecked(false);
       return;
+    }
+
+    // Bắt lỗi đặt trước ít nhất 2 tiếng
+    const diffHours = (selectedDateObj.getTime() - now.getTime()) / (1000 * 60 * 60);
+    if (diffHours < 2) {
+      if (!keepError) setErrorMsg('Vui lòng đặt bàn trước ít nhất 2 tiếng để nhà hàng chuẩn bị tốt nhất.');
+      setHasChecked(false);
+      return;
+    }
+
+    // Kiểm tra giờ đóng cửa dựa trên service_periods của chi nhánh
+    if (branch.service_periods) {
+      const { lunch, dinner } = branch.service_periods;
+      const inLunch = time >= lunch.start && time <= lunch.end;
+      const inDinner = time >= dinner.start && time <= dinner.end;
+
+      if (!inLunch && !inDinner) {
+        if (!keepError) setErrorMsg(`Nhà hàng chỉ mở cửa ca Trưa (${lunch.start}-${lunch.end}) và ca Tối (${dinner.start}-${dinner.end}).`);
+        setHasChecked(false);
+        return;
+      }
+
+      // Kiểm tra last_booking (thường admin đã cấu hình trước 2 tiếng so với giờ đóng)
+      if (inLunch && time > lunch.last_booking) {
+        if (!keepError) setErrorMsg(`Ca trưa chỉ nhận đặt bàn muộn nhất đến ${lunch.last_booking}. Vui lòng chọn giờ sớm hơn.`);
+        setHasChecked(false);
+        return;
+      }
+
+      if (inDinner && time > dinner.last_booking) {
+        if (!keepError) setErrorMsg(`Ca tối chỉ nhận đặt bàn muộn nhất đến ${dinner.last_booking}. Vui lòng chọn giờ sớm hơn.`);
+        setHasChecked(false);
+        return;
+      }
     }
 
     setIsChecking(true);
@@ -72,19 +109,35 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
     try {
       const res = await branchDetailService.checkAvailability(branch._id, date, time);
       if (res.success) {
-        setBookedTableIds(res.data.booked_table_ids || []);
+        const booked = res.data.booked_table_ids || [];
+        
+        // --- CHỐT CHẶN 1: Kiểm tra tổng sức chứa trống ---
+        const totalAvailableCapacity = branch.zones?.reduce((total: number, zone: any) => {
+          if (zone.status !== 'OPEN') return total;
+          const availableTablesInZone = zone.tables.filter((t: any) => !booked.includes(t._id));
+          const zoneCapacity = availableTablesInZone.reduce((sum: number, t: any) => sum + t.capacity, 0);
+          return total + zoneCapacity;
+        }, 0) || 0;
+
+        if (totalAvailableCapacity < guestCount) {
+          if (!keepError) setErrorMsg(`Rất tiếc, nhà hàng hiện không còn đủ bàn trống để phục vụ ${guestCount} khách vào lúc ${time}.`);
+          setHasChecked(false);
+          return;
+        }
+
+        setBookedTableIds(booked);
         setHasChecked(true);
       } else {
         if (!keepError) setErrorMsg(res.message || 'Lỗi kiểm tra bàn trống.');
         setHasChecked(false);
       }
     } catch (err: any) {
-      if (!keepError) setErrorMsg(err.response?.data?.message || 'Có lỗi xảy ra khi kiểm tra bàn.');
+      if (!keepError) setErrorMsg(err.message || 'Có lỗi xảy ra khi kiểm tra bàn.');
       setHasChecked(false);
     } finally {
       setIsChecking(false);
     }
-  }, [branch._id, date, time]);
+  }, [branch._id, date, time, guestCount]);
 
   // Real-time Socket.io Sync
   useEffect(() => {
@@ -136,6 +189,13 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
 
   const handleHoldBooking = async () => {
     if (selectedTables.length === 0) return;
+
+    // --- CHỐT CHẶN 2: Bắt lỗi bàn quá nhỏ (dung sai cho phép ghép thêm tối đa 2 ghế) ---
+    if (totalCapacity + 2 < guestCount) {
+      setErrorMsg(`Bàn bạn chọn (chứa ${totalCapacity} người) quá nhỏ so với số lượng khách (${guestCount}). Vui lòng chọn thêm bàn!`);
+      return;
+    }
+
     if (totalCapacity < guestCount) {
       const msg = PUBLIC_TEXTS.branchDetail.bookingTab.capacityAlert
         .replace('{capacity}', String(totalCapacity))
@@ -159,7 +219,8 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
         const newData = {
           id: res.data._id,
           expiresAt: res.data.expires_at,
-          branchId: branch._id
+          branchId: branch._id,
+          selectedTables
         };
         setHoldData(newData);
         localStorage.setItem('spoton_draft_booking', JSON.stringify(newData));
@@ -167,7 +228,7 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
         setErrorMsg(res.message || 'Không thể giữ bàn lúc này.');
       }
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || 'Có lỗi xảy ra khi giữ bàn.');
+      setErrorMsg(err.message || 'Có lỗi xảy ra khi giữ bàn.');
       // Nếu lỗi 409 (Ai đó vừa đặt), ta nên gọi lại checkAvailability
       handleCheckAvailability(true);
     } finally {
@@ -181,6 +242,7 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
         branch={branch}
         bookingId={holdData.id}
         expiresAt={holdData.expiresAt}
+        selectedTables={holdData.selectedTables || selectedTables}
         onCancel={async () => { 
           if (holdData?.id) {
             await branchDetailService.releaseBooking(holdData.id);
@@ -209,7 +271,10 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
                 type="date" 
                 value={date}
                 min={new Date().toLocaleDateString('en-CA')}
-                onChange={e => setDate(e.target.value)}
+                onChange={e => {
+                  setDate(e.target.value);
+                  setHasChecked(false);
+                }}
                 className="w-full bg-transparent border-none p-0 outline-none text-gray-600 font-medium text-sm md:text-base focus:ring-0 mt-0.5 cursor-pointer"
               />
             </div>
@@ -221,7 +286,10 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
               <input 
                 type="time" 
                 value={time}
-                onChange={e => setTime(e.target.value)}
+                onChange={e => {
+                  setTime(e.target.value);
+                  setHasChecked(false);
+                }}
                 className="w-full bg-transparent border-none p-0 outline-none text-gray-600 font-medium text-sm md:text-base focus:ring-0 mt-0.5 cursor-pointer"
               />
             </div>
@@ -235,7 +303,10 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
                 min="1"
                 max="20"
                 value={guestCount}
-                onChange={e => setGuestCount(Number(e.target.value))}
+                onChange={e => {
+                  setGuestCount(Number(e.target.value));
+                  setHasChecked(false);
+                }}
                 className="w-full bg-transparent border-none p-0 outline-none text-gray-600 font-medium text-sm md:text-base focus:ring-0 mt-0.5 cursor-pointer"
               />
             </div>
@@ -262,9 +333,15 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
 
       {hasChecked && (
         <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-gray-900">{PUBLIC_TEXTS.branchDetail.bookingTab.step2}</h3>
-            <div className="text-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">{PUBLIC_TEXTS.branchDetail.bookingTab.step2}</h3>
+              <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                <Info className="w-3.5 h-3.5" /> 
+                Hệ thống cho phép chọn bàn nhỏ hơn số khách thực tế tối đa 2 người (để kê thêm ghế phụ).
+              </p>
+            </div>
+            <div className="text-sm bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 self-start sm:self-auto">
               {PUBLIC_TEXTS.branchDetail.bookingTab.selectedCount} <strong className="text-[#ea580c]">{selectedTables.length}</strong> / {PUBLIC_TEXTS.branchDetail.bookingTab.capacity} <strong className={totalCapacity < guestCount ? "text-red-500" : "text-emerald-600"}>{totalCapacity}</strong>
             </div>
           </div>

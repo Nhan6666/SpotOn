@@ -23,6 +23,7 @@ export function RunnerList({ bookings, onRefresh }: RunnerListProps) {
   };
 
   const handleMarkServed = async (bookingId: string, itemId: string, itemName: string) => {
+    if (!window.confirm(`Xác nhận đã mang món "${itemName}" ra bàn?`)) return;
     try {
       await posService.markItemServed(bookingId, itemId);
       success(`Đã bưng món: ${itemName}`);
@@ -37,7 +38,7 @@ export function RunnerList({ bookings, onRefresh }: RunnerListProps) {
       <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
         <h2 className="font-bold text-gray-800 text-lg flex items-center gap-2">
           <ChefHat className="text-blue-600" />
-          Danh sách Bưng món (Food Runner)
+          Danh sách Bưng món
         </h2>
         <span className="text-sm text-gray-500 font-medium">
           {activeBookings.length} Bàn đang phục vụ
@@ -118,7 +119,13 @@ export function RunnerList({ bookings, onRefresh }: RunnerListProps) {
                                   item.prep_status === 'SERVED' ? 'bg-gray-200 text-gray-600' :
                                   'bg-amber-100 text-amber-700'
                                 }`}>
-                                  {item.prep_status}
+                                  {
+                                    item.prep_status === 'READY' ? 'CHỜ BƯNG' :
+                                    item.prep_status === 'PREPARING' ? 'ĐANG NẤU' :
+                                    item.prep_status === 'SERVED' ? 'ĐÃ LÊN MÓN' :
+                                    item.prep_status === 'PENDING' ? 'CHỜ NẤU' :
+                                    item.prep_status
+                                  }
                                 </span>
                                 <span className="text-xs text-gray-500 font-medium">SL: {item.quantity}</span>
                               </div>

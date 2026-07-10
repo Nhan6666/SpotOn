@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { HOME_TEXTS } from '@/constants/texts/home';
+import { useToast } from '@/components/ui/Toast';
 
 const CAN_THO_LOCATIONS = [
   "Quận Ninh Kiều, Cần Thơ",
@@ -20,6 +21,7 @@ const CAN_THO_LOCATIONS = [
 ];
 
 export function HeroSection() {
+  const { error: showError } = useToast();
   const [location, setLocation] = useState('');
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const locationRef = useRef<HTMLDivElement>(null);
@@ -292,6 +294,25 @@ export function HeroSection() {
           <div className="p-1.5 w-full md:w-auto mt-2 md:mt-0 flex-shrink-0">
             <button 
               onClick={() => {
+                // Validation Date & Time
+                if (date && time) {
+                  const now = new Date();
+                  const [hours, minutes] = time.split(':').map(Number);
+                  const selectedDateObj = new Date(date);
+                  selectedDateObj.setHours(hours, minutes, 0, 0);
+
+                  if (selectedDateObj.getTime() < now.getTime()) {
+                    showError('Không thể chọn thời gian trong quá khứ. Vui lòng chọn lại ngày giờ đến.');
+                    return;
+                  }
+
+                  const diffHours = (selectedDateObj.getTime() - now.getTime()) / (1000 * 60 * 60);
+                  if (diffHours < 2) {
+                    showError('Vui lòng đặt bàn trước ít nhất 2 tiếng để nhà hàng chuẩn bị tốt nhất.');
+                    return;
+                  }
+                }
+
                 // Format location to just the district name for the filter
                 let districtParam = "Tất cả quận";
                 if (location) {

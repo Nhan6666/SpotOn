@@ -18,10 +18,20 @@ const { authorize } = require('../middlewares/authMiddleware');
 // @access Private/Admin
 router.get('/admin/list', protect, authorize('ADMIN'), userController.getAllUsers);
 
+// @desc   Admin tạo tài khoản nhân viên
+// @route  POST /api/v1/users/admin/create
+// @access Private/Admin
+router.post('/admin/create', protect, authorize('ADMIN'), userController.createUser);
+
 // @desc   Cập nhật Role và Branch cho User
 // @route  PUT /api/v1/users/admin/:id/role
 // @access Private/Admin
 router.put('/admin/:id/role', protect, authorize('ADMIN'), userController.updateUserRole);
+
+// @desc   Admin xóa tài khoản Khách hàng
+// @route  DELETE /api/v1/users/admin/:id
+// @access Private/Admin
+router.delete('/admin/:id', protect, authorize('ADMIN'), userController.deleteUser);
 
 
 // @desc   Lấy danh sách managers chưa quản lý chi nhánh nào

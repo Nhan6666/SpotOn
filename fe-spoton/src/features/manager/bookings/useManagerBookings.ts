@@ -116,15 +116,15 @@ export function useManagerBookings() {
 
   // Helper function to determine table status based on bookings
   const getTableStatus = useCallback((table: Table) => {
-    const tableBookings = bookings.filter(b => b.table_ids.includes(table._id));
+    const tableBookings = bookings.filter(b => b.table_ids?.some((id: any) => id.toString() === table._id.toString()) && b.shift === shift);
     if (tableBookings.length > 0) {
-      if (tableBookings.some(b => b.status === 'OCCUPIED')) return 'OCCUPIED';
+      if (tableBookings.some(b => b.status === 'IN_USE')) return 'OCCUPIED';
       if (tableBookings.some(b => b.status === 'CLEANING')) return 'CLEANING';
-      if (tableBookings.some(b => b.status === 'CONFIRMED' || b.status === 'PENDING_PAYMENT' || b.status === 'PENDING_DEPOSIT')) return 'RESERVED';
+      if (tableBookings.some(b => ['CONFIRMED', 'PENDING_PAYMENT', 'PENDING_DEPOSIT'].includes(b.status))) return 'RESERVED';
       if (tableBookings.some(b => b.status === 'HOLDING')) return 'HOLDING';
     }
-    return table.status || 'EMPTY';
-  }, [bookings]);
+    return (shift === 'LUNCH' ? table.status_lunch : table.status_dinner) || table.status || 'EMPTY';
+  }, [bookings, shift]);
 
   return {
     branch,

@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { useRouter } from "next/navigation";
 
 // Khai báo các types
-export type Role = "GUEST" | "CUSTOMER" | "WAITER" | "MANAGER" | "ADMIN";
+export type Role = "GUEST" | "CUSTOMER" | "WAITER" | "KITCHEN" | "MANAGER" | "ADMIN";
 
 export interface User {
   _id: string;

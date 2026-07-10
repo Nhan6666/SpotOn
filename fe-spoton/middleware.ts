@@ -10,9 +10,10 @@ const IS_AUTH_ENABLED = true; // ← Đổi thành FALSE khi cần tắt tạm
 // Định nghĩa các route cần bảo vệ và role tương ứng
 const PROTECTED_ROUTES: { path: string; roles: string[] }[] = [
   { path: '/admin', roles: ['ADMIN'] },
+  { path: '/kitchen', roles: ['KITCHEN', 'ADMIN'] },
   { path: '/manager', roles: ['MANAGER', 'ADMIN'] },
   { path: '/waiter', roles: ['WAITER', 'MANAGER', 'ADMIN'] },
-  { path: '/profile', roles: ['CUSTOMER', 'WAITER', 'MANAGER', 'ADMIN'] },
+  { path: '/profile', roles: ['CUSTOMER', 'WAITER', 'MANAGER', 'ADMIN', 'KITCHEN'] },
   { path: '/my-bookings', roles: ['CUSTOMER', 'WAITER', 'MANAGER', 'ADMIN'] },
 ];
 

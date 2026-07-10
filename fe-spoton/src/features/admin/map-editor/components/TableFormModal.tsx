@@ -202,108 +202,13 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              {ADMIN_TEXTS.mapEditor.modalTableImage}
-            </label>
-            <div className="border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all duration-300 rounded-xl p-3 flex flex-col items-center justify-center bg-gray-50/50 text-center relative group">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                accept="image/*"
-                className="hidden"
-              />
-              {imageUrl ? (
-                <div className="w-full flex flex-col items-center">
-                  <div className="relative w-full max-w-[140px] h-[80px] rounded-lg overflow-hidden border border-gray-200 shadow-sm mb-2 group bg-white flex items-center justify-center">
-                    <Image
-                      src={imageUrl}
-                      alt="Table image"
-                      width={140}
-                      height={80}
-                      className="object-contain w-full h-full"
-                      unoptimized
-                    />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        type="button"
-                        onClick={() => setImageUrl(null)}
-                        className="p-1.5 bg-red-600/90 text-white rounded-full hover:bg-red-700 hover:scale-105 transition-all focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-none"
-                        title={ADMIN_TEXTS.mapEditor.modalTableBtnDeleteImg}
-                        aria-label={ADMIN_TEXTS.mapEditor.modalTableBtnDeleteImg}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-[11px] px-2"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? ADMIN_TEXTS.mapEditor.modalTableBtnUploading : ADMIN_TEXTS.mapEditor.modalTableBtnChangeImg}
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center">
-                  <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-1.5">
-                    <ImageIcon className="w-4 h-4" />
-                  </div>
-                  <p className="text-[10px] text-gray-500 mb-2 max-w-[200px] leading-tight">
-                    {ADMIN_TEXTS.mapEditor.modalTableImgHint}
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="bg-white shadow-sm hover:shadow-md transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none h-7 text-[11px] px-3"
-                  >
-                    {isUploading ? <RefreshCcw className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}
-                    {isUploading ? ADMIN_TEXTS.mapEditor.modalTableBtnUploading : ADMIN_TEXTS.mapEditor.modalTableBtnUploadImg}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
           {mode === "edit" && !isTemplate && (
-            <div className="space-y-4 pt-2 border-t border-gray-100">
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  {ADMIN_TEXTS.mapEditor.modalTableStatusLabel} (Tức thời)
-                </label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {ALL_STATUSES.map((s) => {
-                    const config = TABLE_STATUS_CONFIG[s];
-                    return (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setStatus(s)}
-                        className={`px-3 py-2 rounded-xl text-xs font-semibold border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
-                          status === s
-                            ? `${config.bg} ${config.border} ${config.color} ring-2 ring-offset-1 ring-current shadow-sm scale-[1.02]`
-                            : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:border-gray-300 hover:shadow-sm"
-                        }`}
-                      >
-                        {config.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                <label className="block text-[11px] font-semibold text-center bg-blue-50 text-blue-700 py-1 rounded-md mb-2">
                   Trạng thái Ca Trưa
                 </label>
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-2 gap-1">
                   {ALL_STATUSES.map((s) => {
                     const config = TABLE_STATUS_CONFIG[s];
                     return (
@@ -311,10 +216,10 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                         key={`lunch-${s}`}
                         type="button"
                         onClick={() => setStatusLunch(s)}
-                        className={`px-3 py-1.5 rounded-xl text-[10px] font-semibold border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                        className={`px-2 py-1.5 rounded-lg text-[9px] font-semibold border transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 ${
                           statusLunch === s
-                            ? `${config.bg} ${config.border} ${config.color} ring-2 ring-offset-1 ring-current shadow-sm scale-[1.02]`
-                            : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:border-gray-300 hover:shadow-sm"
+                            ? `${config.bg} ${config.border} ${config.color} ring-1 ring-offset-0 ring-current shadow-sm`
+                            : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"
                         }`}
                       >
                         {config.label}
@@ -325,10 +230,10 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                <label className="block text-[11px] font-semibold text-center bg-indigo-50 text-indigo-700 py-1 rounded-md mb-2">
                   Trạng thái Ca Tối
                 </label>
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-2 gap-1">
                   {ALL_STATUSES.map((s) => {
                     const config = TABLE_STATUS_CONFIG[s];
                     return (
@@ -336,10 +241,10 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
                         key={`dinner-${s}`}
                         type="button"
                         onClick={() => setStatusDinner(s)}
-                        className={`px-3 py-1.5 rounded-xl text-[10px] font-semibold border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                        className={`px-2 py-1.5 rounded-lg text-[9px] font-semibold border transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 ${
                           statusDinner === s
-                            ? `${config.bg} ${config.border} ${config.color} ring-2 ring-offset-1 ring-current shadow-sm scale-[1.02]`
-                            : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:border-gray-300 hover:shadow-sm"
+                            ? `${config.bg} ${config.border} ${config.color} ring-1 ring-offset-0 ring-current shadow-sm`
+                            : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"
                         }`}
                       >
                         {config.label}
@@ -351,27 +256,98 @@ export function TableFormModal({ isOpen, onClose, onSubmit, onDelete, initialDat
             </div>
           )}
 
-          {/* QR Code Section for iPad Self-Ordering */}
-          {mode === 'edit' && tableId && (
-            <div className="pt-4 mt-2 border-t border-gray-100 flex flex-col items-center">
-              <div className="flex items-center gap-2 text-slate-700 font-bold mb-3 text-sm">
-                <ScanLine className="w-4 h-4 text-blue-600" />
-                Mã QR Self-Ordering (In đặt tại bàn)
-              </div>
-              
-              <div className="bg-slate-50 p-3 rounded-xl shadow-sm border border-slate-100 mb-3">
-                <QRCodeSVG 
-                  value={`${window.location.origin}/ipad/table/${tableId}`} 
-                  size={110}
-                  level="H"
-                  includeMargin={true}
+          <div className={`grid ${mode === 'edit' && tableId && !isTemplate ? 'grid-cols-2' : 'grid-cols-1'} gap-4 pt-2 border-t border-gray-100`}>
+            {/* Hình ảnh bàn */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1 text-center">
+                {ADMIN_TEXTS.mapEditor.modalTableImage}
+              </label>
+              <div className="border border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all duration-300 rounded-xl p-2 flex flex-col items-center justify-center bg-gray-50/50 text-center relative group h-[120px]">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
                 />
+                {imageUrl ? (
+                  <div className="w-full flex flex-col items-center">
+                    <div className="relative w-full max-w-[100px] h-[60px] rounded-lg overflow-hidden border border-gray-200 shadow-sm mb-2 group bg-white flex items-center justify-center">
+                      <Image
+                        src={imageUrl}
+                        alt="Table image"
+                        width={100}
+                        height={60}
+                        className="object-contain w-full h-full"
+                        unoptimized
+                      />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => setImageUrl(null)}
+                          className="p-1 bg-red-600/90 text-white rounded-full hover:bg-red-700 transition-all"
+                          title={ADMIN_TEXTS.mapEditor.modalTableBtnDeleteImg}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-6 text-[10px] px-2"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                    >
+                      {isUploading ? "Đang tải..." : "Đổi ảnh"}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-1">
+                      <ImageIcon className="w-3 h-3" />
+                    </div>
+                    <p className="text-[9px] text-gray-500 mb-2 leading-tight">
+                      Tải ảnh (Tối đa 5MB)
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="bg-white shadow-sm h-6 text-[10px] px-2"
+                    >
+                      {isUploading ? "Đang tải..." : "Chọn ảnh"}
+                    </Button>
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-gray-500 text-center px-4">
-                Sử dụng mã QR này in ra dán tại bàn để khách hàng quét gọi món.
-              </p>
             </div>
-          )}
+
+            {/* QR Code Section */}
+            {mode === 'edit' && tableId && !isTemplate && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 text-center">
+                  Mã QR Self-Ordering
+                </label>
+                <div className="border border-dashed border-gray-300 rounded-xl p-2 flex flex-col items-center justify-center bg-gray-50/50 h-[120px]">
+                  <div className="bg-white p-1 rounded-lg shadow-sm border border-slate-100 mb-1">
+                    <QRCodeSVG 
+                      value={`${window.location.origin}/ipad/table/${tableId}`} 
+                      size={60}
+                      level="H"
+                      includeMargin={true}
+                    />
+                  </div>
+                  <p className="text-[9px] text-gray-500 text-center px-1 leading-tight">
+                    In mã dán tại bàn để khách gọi món
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
 
           {hasActiveBookings && mode === "edit" && (
             <div className="bg-red-50 border border-red-100 p-3 rounded-lg text-sm text-red-700 flex items-start gap-2 mt-2">

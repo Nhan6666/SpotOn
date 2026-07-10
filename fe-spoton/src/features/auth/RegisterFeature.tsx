@@ -14,6 +14,7 @@ import { AppError } from '@/lib/errors';
 import type { RegisterFormValues, RegisterPayload } from './auth.types';
 import { useGoogleAuth } from './useGoogleAuth';
 import { useAuth } from '@/providers/AuthProvider';
+import { AUTH_TEXTS } from '@/constants/texts/auth';
 
 // ─── Sub-component: Form Field ────────────────────────────────────────────────
 interface FieldProps {
@@ -51,12 +52,13 @@ export function RegisterFeature() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const { login } = useAuth();
+  const { login: loginUser } = useAuth();
+  const { register: registerText } = AUTH_TEXTS;
 
   const { loginWithGoogle, isLoading: isGoogleLoading, error: googleError } = useGoogleAuth({
     onSuccess: (token, user) => {
-      login(token, user);
-      setSuccessMessage('Đăng nhập Google thành công! Đang chuyển hướng...');
+      loginUser(token, user);
+      setSuccessMessage(registerText.messages.googleSuccess);
       setTimeout(() => router.push('/'), 1000);
     }
   });
@@ -96,7 +98,7 @@ export function RegisterFeature() {
 
     try {
       const result = await authService.register(payload);
-      setSuccessMessage('Đăng ký thành công! Đang chuyển đến trang xác thực...');
+      setSuccessMessage(registerText.messages.success);
       // Redirect sang trang verify-otp, truyền email qua query string
       setTimeout(() => {
         router.push(`/verify-otp?email=${encodeURIComponent(result.data.email)}`);
@@ -112,17 +114,17 @@ export function RegisterFeature() {
 
         switch (error.statusCode) {
           case 409:
-            setServerError('Email hoặc số điện thoại đã được sử dụng.');
+            setServerError(registerText.messages.emailExists);
             break;
           case 0:
           case undefined:
-            setServerError('Không thể kết nối đến máy chủ. Vui lòng thử lại.');
+            setServerError(registerText.messages.noConnection);
             break;
           default:
-            setServerError('Đăng ký thất bại. Vui lòng thử lại sau.');
+            setServerError(registerText.messages.error);
         }
       } else {
-        setServerError('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+        setServerError(registerText.messages.generalError);
       }
     }
   };
@@ -149,7 +151,7 @@ export function RegisterFeature() {
 
           {/* Heading */}
           <h1 className="mb-2 text-3xl font-bold text-gray-900">
-            Tạo Tài Khoản Mới
+            {registerText.title}
           </h1>
 
           {/* Success Message */}
@@ -170,12 +172,12 @@ export function RegisterFeature() {
           <form className="space-y-2" onSubmit={handleSubmit(onSubmit)} noValidate>
 
             {/* Full Name */}
-            <FormField id="fullname" label="Họ và Tên" error={errors.fullName?.message}>
+            <FormField id="fullname" label={registerText.fullNameLabel} error={errors.fullName?.message}>
               <input
                 id="fullname"
                 type="text"
                 autoComplete="name"
-                placeholder="Nhập họ và tên của bạn"
+                placeholder={registerText.fullNamePlaceholder}
                 className={errors.fullName ? inputErrorClass : inputClass}
                 aria-describedby={errors.fullName ? 'fullname-error' : undefined}
                 {...register('fullName')}
@@ -184,23 +186,23 @@ export function RegisterFeature() {
 
             {/* Email & Phone */}
             <div className="flex flex-col sm:flex-row gap-5">
-              <FormField id="email" label="Email" error={errors.email?.message}>
+              <FormField id="email" label={registerText.emailLabel} error={errors.email?.message}>
                 <input
                   id="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="ví dụ@domain.com"
+                  placeholder={registerText.emailPlaceholder}
                   className={errors.email ? inputErrorClass : inputClass}
                   {...register('email')}
                 />
               </FormField>
 
-              <FormField id="phone" label="Số điện thoại" error={errors.phone?.message}>
+              <FormField id="phone" label={registerText.phoneLabel} error={errors.phone?.message}>
                 <input
                   id="phone"
                   type="tel"
                   autoComplete="tel"
-                  placeholder="Nhập số điện thoại"
+                  placeholder={registerText.phonePlaceholder}
                   className={errors.phone ? inputErrorClass : inputClass}
                   {...register('phone')}
                 />
@@ -208,24 +210,24 @@ export function RegisterFeature() {
             </div>
 
             {/* Password */}
-            <FormField id="password" label="Mật khẩu" error={errors.password?.message}>
+            <FormField id="password" label={registerText.passwordLabel} error={errors.password?.message}>
               <input
                 id="password"
                 type="password"
                 autoComplete="new-password"
-                placeholder="Tạo mật khẩu an toàn"
+                placeholder={registerText.passwordPlaceholder}
                 className={errors.password ? inputErrorClass : inputClass}
                 {...register('password')}
               />
             </FormField>
 
             {/* Confirm Password */}
-            <FormField id="confirm-password" label="Xác nhận mật khẩu" error={errors.confirmPassword?.message}>
+            <FormField id="confirm-password" label={registerText.confirmPasswordLabel} error={errors.confirmPassword?.message}>
               <input
                 id="confirm-password"
                 type="password"
                 autoComplete="new-password"
-                placeholder="Nhập lại mật khẩu"
+                placeholder={registerText.confirmPasswordPlaceholder}
                 className={errors.confirmPassword ? inputErrorClass : inputClass}
                 {...register('confirmPassword')}
               />
@@ -238,7 +240,7 @@ export function RegisterFeature() {
               disabled={isSubmitting || isGoogleLoading}
               className="w-full rounded-md bg-[#8a5a19] cursor-pointer px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#724a15] transition-colors focus:outline-none focus:ring-2 focus:ring-[#8a5a19] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Đang xử lý...' : 'Đăng Ký Tài Khoản'}
+              {isSubmitting ? registerText.submittingBtn : registerText.submitBtn}
             </button>
           </form>
 
@@ -248,7 +250,7 @@ export function RegisterFeature() {
                 <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-3 text-gray-500">Hoặc tiếp tục với</span>
+                <span className="bg-white px-3 text-gray-500">{registerText.orText}</span>
               </div>
             </div>
 
@@ -278,16 +280,16 @@ export function RegisterFeature() {
                     fill="#34A853"
                   />
                 </svg>
-                {isGoogleLoading ? 'Đang kết nối...' : 'Tiếp tục với Google'}
+                {isGoogleLoading ? registerText.googleConnecting : registerText.googleBtn}
               </button>
             </div>
           </div>
 
           {/* Login Link */}
           <p className="mt-8 text-center text-sm text-slate-500">
-            Đã có tài khoản?{' '}
+            {registerText.hasAccount}{' '}
             <Link href="/login" className="font-semibold text-[#8a5a19] hover:underline">
-              Đăng nhập tại đây
+              {registerText.loginLink}
             </Link>
           </p>
         </div>
@@ -309,10 +311,10 @@ export function RegisterFeature() {
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-md mb-6">
           </div>
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4 leading-snug">
-            Kiểm soát hoàn toàn chuỗi nhà hàng của bạn
+            {registerText.bannerTitle}
           </h2>
           <p className="text-gray-300 text-sm lg:text-base leading-relaxed">
-            Quản lý đặt bàn, tối ưu hóa công suất và phân tích dữ liệu hiệu quả với giao diện được thiết kế riêng cho người quản lý cấp cao.
+            {registerText.bannerSubtitle}
           </p>
         </div>
       </div>

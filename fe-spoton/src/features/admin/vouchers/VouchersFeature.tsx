@@ -12,6 +12,7 @@ import {
     endEarlyVoucherAction
 } from './vouchers.actions';
 import { VoucherItem, computeStatus, VoucherStatus } from './vouchers.types';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -31,10 +32,10 @@ function usagePercent(voucher: VoucherItem): number {
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 const STATUS_BADGE_STYLES: Record<VoucherStatus, { className: string; dot: string; label: string }> = {
-    active: { className: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500', label: 'Đang phát hành' },
-    inactive: { className: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400', label: 'Bản nháp/Tạm dừng' },
-    expired: { className: 'bg-red-100 text-red-700', dot: 'bg-red-500', label: 'Đã kết thúc' },
-    scheduled: { className: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500', label: 'Sắp diễn ra' },
+    active: { className: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500', label: ADMIN_TEXTS.vouchers.statusActive },
+    inactive: { className: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400', label: ADMIN_TEXTS.vouchers.statusInactive },
+    expired: { className: 'bg-red-100 text-red-700', dot: 'bg-red-500', label: ADMIN_TEXTS.vouchers.statusExpired },
+    scheduled: { className: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500', label: ADMIN_TEXTS.vouchers.statusScheduled },
 };
 
 function StatusBadge({ status }: { status: VoucherStatus }) {
@@ -74,7 +75,7 @@ export default function VouchersFeature() {
         if (res.success && res.data) {
             setVouchers(res.data);
         } else {
-            showToast(res.error || 'Lỗi tải danh sách', 'error');
+            showToast(res.error || ADMIN_TEXTS.vouchers.errLoadList, 'error');
         }
         setIsLoading(false);
     };
@@ -87,7 +88,7 @@ export default function VouchersFeature() {
         vouchers.map((item) => ({
             item,
             status: computeStatus(item),
-            searchText: `${item.code} ${item.discount_percentage} ${item.max_discount_amount || ''} ${item.branch_id ? 'chi nhánh riêng' : 'toàn chuỗi'}`.toLowerCase(),
+            searchText: `${item.code} ${item.discount_percentage} ${item.max_discount_amount || ''} ${item.branch_id ? ADMIN_TEXTS.vouchers.branchSpecific : ADMIN_TEXTS.vouchers.branchAll}`.toLowerCase(),
         })), [vouchers, tick]);
 
     const filteredVouchers = useMemo(() => {
@@ -134,18 +135,18 @@ export default function VouchersFeature() {
         if (action === 'end_early') {
             const result = await endEarlyVoucherAction(voucher._id);
             if (result.success) {
-                showToast('Đã kết thúc sớm voucher', 'success');
+                showToast(ADMIN_TEXTS.vouchers.successEndEarly, 'success');
                 loadData();
             } else {
-                showToast(result.error || 'Lỗi khi kết thúc sớm', 'error');
+                showToast(result.error || ADMIN_TEXTS.vouchers.errEndEarly, 'error');
             }
         } else if (action === 'delete') {
             const result = await deleteVoucherAction(voucher._id);
             if (result.success) {
-                showToast('Đã xóa voucher', 'success');
+                showToast(ADMIN_TEXTS.vouchers.successDelete, 'success');
                 loadData();
             } else {
-                showToast(result.error || 'Lỗi khi xóa', 'error');
+                showToast(result.error || ADMIN_TEXTS.vouchers.errDelete, 'error');
             }
         }
     };
@@ -154,15 +155,15 @@ export default function VouchersFeature() {
         <div className="p-6 md:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Quản lý Khuyến mãi</h1>
-                    <p className="text-sm md:text-base text-gray-500 mt-1">Tạo và quản lý các mã giảm giá cho nhà hàng</p>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{ADMIN_TEXTS.vouchers.title}</h1>
+                    <p className="text-sm md:text-base text-gray-500 mt-1">{ADMIN_TEXTS.vouchers.subtitle}</p>
                 </div>
                 <Link
                     href="/admin/vouchers/add"
                 >
                     <Button className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
                         <Plus className="w-5 h-5" strokeWidth={2.5} />
-                        Thêm voucher mới
+                        {ADMIN_TEXTS.vouchers.btnAdd}
                     </Button>
                 </Link>
             </div>
@@ -175,7 +176,7 @@ export default function VouchersFeature() {
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Tìm mã voucher..."
+                            placeholder={ADMIN_TEXTS.vouchers.searchPlaceholder}
                             className="block w-full py-2 pl-10 pr-3 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 placeholder:text-gray-400"
                         />
                     </div>
@@ -185,11 +186,11 @@ export default function VouchersFeature() {
                             onChange={(e) => setStatusFilter(e.target.value)}
                             className="block w-full sm:w-48 py-2 px-3 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 cursor-pointer"
                         >
-                            <option value="all">Tất cả trạng thái</option>
-                            <option value="active">Đang phát hành</option>
-                            <option value="scheduled">Sắp diễn ra</option>
-                            <option value="expired">Đã kết thúc</option>
-                            <option value="inactive">Bản nháp / Tạm dừng</option>
+                            <option value="all">{ADMIN_TEXTS.vouchers.filterAllStatus}</option>
+                            <option value="active">{ADMIN_TEXTS.vouchers.filterActive}</option>
+                            <option value="scheduled">{ADMIN_TEXTS.vouchers.filterScheduled}</option>
+                            <option value="expired">{ADMIN_TEXTS.vouchers.filterExpired}</option>
+                            <option value="inactive">{ADMIN_TEXTS.vouchers.filterInactive}</option>
                         </select>
                     </div>
                 </div>
@@ -198,24 +199,24 @@ export default function VouchersFeature() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                                <th className="px-6 py-4">MÃ VOUCHER</th>
-                                <th className="px-6 py-4">GIẢM GIÁ</th>
-                                <th className="px-6 py-4">LƯỢT DÙNG</th>
-                                <th className="px-6 py-4">THỜI GIAN ÁP DỤNG</th>
-                                <th className="px-6 py-4">TRẠNG THÁI</th>
-                                <th className="px-6 py-4 text-right">THAO TÁC</th>
+                                <th className="px-6 py-4">{ADMIN_TEXTS.vouchers.thCode}</th>
+                                <th className="px-6 py-4">{ADMIN_TEXTS.vouchers.thDiscount}</th>
+                                <th className="px-6 py-4">{ADMIN_TEXTS.vouchers.thUsage}</th>
+                                <th className="px-6 py-4">{ADMIN_TEXTS.vouchers.thTime}</th>
+                                <th className="px-6 py-4">{ADMIN_TEXTS.vouchers.thStatus}</th>
+                                <th className="px-6 py-4 text-right">{ADMIN_TEXTS.vouchers.thActions}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
-                                <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" /> Đang tải...</td></tr>
+                                <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" /> {ADMIN_TEXTS.vouchers.loading}</td></tr>
                             ) : currentVouchers.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <Tag size={48} className="text-slate-300" />
-                                            <h3 className="text-lg font-semibold text-slate-700">Chưa có voucher nào</h3>
-                                            <p className="text-sm text-slate-500">Bạn chưa tạo voucher hoặc không có kết quả tìm kiếm.</p>
+                                            <h3 className="text-lg font-semibold text-slate-700">{ADMIN_TEXTS.vouchers.emptyTitle}</h3>
+                                            <p className="text-sm text-slate-500">{ADMIN_TEXTS.vouchers.emptyDesc}</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -226,12 +227,12 @@ export default function VouchersFeature() {
                                             <div className="flex items-center gap-2">
                                                 <code className="px-2 py-1 bg-slate-100 text-slate-700 rounded font-mono text-sm font-semibold">{promo.code}</code>
                                             </div>
-                                            <p className="text-xs text-slate-500 mt-1">{promo.branch_id ? 'Chi nhánh riêng' : 'Toàn chuỗi'}</p>
+                                            <p className="text-xs text-slate-500 mt-1">{promo.branch_id ? ADMIN_TEXTS.vouchers.branchSpecific : ADMIN_TEXTS.vouchers.branchAll}</p>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="text-sm font-semibold text-emerald-600">{promo.discount_percentage}%</span>
                                             <p className="text-xs text-slate-500 mt-0.5">
-                                                Tối đa: {promo.max_discount_amount ? formatCurrency(promo.max_discount_amount) : 'Không giới hạn'}
+                                                {ADMIN_TEXTS.vouchers.maxDiscount}{promo.max_discount_amount ? formatCurrency(promo.max_discount_amount) : ADMIN_TEXTS.vouchers.noLimit}
                                             </p>
                                         </td>
                                         <td className="px-6 py-4">
@@ -245,23 +246,23 @@ export default function VouchersFeature() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <p className="text-sm text-slate-900">{formatDate(promo.valid_from)}</p>
-                                            <p className="text-xs text-slate-500">Đến: {formatDate(promo.valid_until)}</p>
+                                            <p className="text-sm text-slate-900">{ADMIN_TEXTS.vouchers.fromTime}{formatDate(promo.valid_from)}</p>
+                                            <p className="text-xs text-slate-500">{ADMIN_TEXTS.vouchers.toTime}{formatDate(promo.valid_until)}</p>
                                         </td>
                                         <td className="px-6 py-4">
                                             <StatusBadge status={status} />
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-1">
-                                                <Link href={`/admin/vouchers/${promo._id}`} className="p-2 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer" title="Chỉnh sửa">
+                                                <Link href={`/admin/vouchers/${promo._id}`} className="p-2 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer" title={ADMIN_TEXTS.vouchers.actionEdit}>
                                                     <Edit size={18} />
                                                 </Link>
                                                 {status === 'active' ? (
-                                                    <button onClick={() => setConfirmModal({ isOpen: true, action: 'end_early', voucher: promo })} className="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer" title="Kết thúc sớm">
+                                                    <button onClick={() => setConfirmModal({ isOpen: true, action: 'end_early', voucher: promo })} className="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer" title={ADMIN_TEXTS.vouchers.actionEndEarly}>
                                                         <StopCircle size={18} />
                                                     </button>
                                                 ) : (
-                                                    <button onClick={() => setConfirmModal({ isOpen: true, action: 'delete', voucher: promo })} className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer" title="Xóa">
+                                                    <button onClick={() => setConfirmModal({ isOpen: true, action: 'delete', voucher: promo })} className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer" title={ADMIN_TEXTS.vouchers.actionDelete}>
                                                         <Trash2 size={18} />
                                                     </button>
                                                 )}
@@ -278,8 +279,8 @@ export default function VouchersFeature() {
                 <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
                     <p className="text-sm text-slate-500">
                         {totalItems === 0
-                            ? 'Không có kết quả'
-                            : `Đang hiển thị ${showingFrom} đến ${showingTo} trong tổng số ${totalItems} mã`}
+                            ? ADMIN_TEXTS.vouchers.noResults
+                            : ADMIN_TEXTS.vouchers.paginationDesc.replace('{from}', String(showingFrom)).replace('{to}', String(showingTo)).replace('{total}', String(totalItems))}
                     </p>
                     {totalPages > 1 && (
                         <div className="flex items-center gap-1">
@@ -328,12 +329,12 @@ export default function VouchersFeature() {
                     </div>
                     <div className="mt-4 text-center">
                         <h3 className="text-lg font-semibold text-slate-900">
-                            {confirmModal.action === 'delete' ? 'Xóa Khuyến mãi' : 'Kết thúc sớm'}
+                            {confirmModal.action === 'delete' ? ADMIN_TEXTS.vouchers.modalTitleDelete : ADMIN_TEXTS.vouchers.modalTitleEndEarly}
                         </h3>
                         <p className="mt-2 text-sm text-slate-500">
                             {confirmModal.action === 'delete' 
-                                ? `Bạn có chắc chắn muốn xóa mã giảm giá "${confirmModal.voucher?.code}"? Hành động này không thể hoàn tác.`
-                                : `Bạn có chắc chắn muốn kết thúc sớm mã "${confirmModal.voucher?.code}"? Người dùng sẽ không thể sử dụng mã này nữa.`}
+                                ? ADMIN_TEXTS.vouchers.modalDescDelete.replace('{code}', confirmModal.voucher?.code || '')
+                                : ADMIN_TEXTS.vouchers.modalDescEndEarly.replace('{code}', confirmModal.voucher?.code || '')}
                         </p>
                     </div>
                     <div className="mt-6 flex gap-3">
@@ -341,7 +342,7 @@ export default function VouchersFeature() {
                             onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
                             className="flex-1 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors cursor-pointer"
                         >
-                            Hủy
+                            {ADMIN_TEXTS.vouchers.modalBtnCancel}
                         </button>
                         <button 
                             onClick={handleConfirm}
@@ -349,7 +350,7 @@ export default function VouchersFeature() {
                                 confirmModal.action === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-500 hover:bg-amber-600'
                             }`}
                         >
-                            {confirmModal.action === 'delete' ? 'Xóa' : 'Kết thúc'}
+                            {confirmModal.action === 'delete' ? ADMIN_TEXTS.vouchers.modalBtnDelete : ADMIN_TEXTS.vouchers.modalBtnEndEarly}
                         </button>
                     </div>
                 </div>

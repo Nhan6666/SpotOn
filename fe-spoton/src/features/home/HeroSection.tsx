@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { HOME_TEXTS } from '@/constants/texts/home';
 
 const CAN_THO_LOCATIONS = [
   "Quận Ninh Kiều, Cần Thơ",
@@ -126,19 +127,18 @@ export function HeroSection() {
         <div 
           className="bg-[#f5f5f5] bg-opacity-95 backdrop-blur-sm rounded-2xl p-10 md:p-14 text-center max-w-4xl shadow-xl w-full mx-4 animate-fadeInUp"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 font-playfair tracking-tight">
-            Trải Nghiệm Ẩm Thực Đỉnh Cao Tại<br />SpotOn
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 font-playfair tracking-tight" dangerouslySetInnerHTML={{ __html: HOME_TEXTS.hero.title.replace('Tại SpotOn', 'Tại<br />SpotOn') }}>
           </h1>
           <p className="text-gray-600 mb-8 max-w-2xl mx-auto text-lg">
-            Enterprise-grade reservation and catering management for the discerning diner and the efficient operator.
+            {HOME_TEXTS.hero.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-8 py-3 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-full transition-colors shadow-md">
-              Đặt Bàn Ngay
-            </button>
-            <button className="px-8 py-3 bg-white hover:bg-gray-50 text-amber-500 font-medium rounded-full transition-colors shadow-sm border border-amber-500">
-              View Menu
-            </button>
+            <Link href="/branches" className="px-8 py-3 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-full transition-colors shadow-md cursor-pointer block">
+              {HOME_TEXTS.hero.bookingBtn}
+            </Link>
+            <Link href="/menu" className="px-8 py-3 bg-white hover:bg-gray-50 text-amber-500 font-medium rounded-full transition-colors shadow-sm border border-amber-500 cursor-pointer block">
+              {HOME_TEXTS.hero.menuBtn}
+            </Link>
           </div>
         </div>
       </div>
@@ -151,10 +151,10 @@ export function HeroSection() {
           <div ref={locationRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             <div className="ml-3 flex flex-col flex-1 overflow-hidden">
-              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Location</span>
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">{HOME_TEXTS.hero.location.label}</span>
               <input 
                 type="text" 
-                placeholder="Where are you going?" 
+                placeholder={HOME_TEXTS.hero.location.placeholder}
                 className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5"
                 value={location}
                 onChange={(e) => {
@@ -169,7 +169,7 @@ export function HeroSection() {
             {showLocationDropdown && (
               <div className="absolute top-[110%] left-0 w-full md:w-[150%] bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 max-h-64 overflow-y-auto">
                 <div className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Cần Thơ
+                  {HOME_TEXTS.hero.location.dropdownHeader}
                 </div>
                 {filteredLocations.length > 0 ? (
                   filteredLocations.map((loc, index) => (
@@ -187,7 +187,7 @@ export function HeroSection() {
                   ))
                 ) : (
                   <div className="px-4 py-3 text-sm text-gray-500">
-                    Không tìm thấy địa điểm
+                    {HOME_TEXTS.hero.location.notFound}
                   </div>
                 )}
               </div>
@@ -198,12 +198,12 @@ export function HeroSection() {
           <div className="flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             <div className="ml-3 flex flex-col flex-1 overflow-hidden">
-              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Date</span>
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">{HOME_TEXTS.hero.date.label}</span>
               <DatePicker
                 selected={date}
                 onChange={(d: Date | null) => setDate(d)}
                 dateFormat="dd/MM/yyyy"
-                placeholderText="Chọn ngày"
+                placeholderText={HOME_TEXTS.hero.date.placeholder}
                 minDate={new Date()}
                 className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-pointer custom-datepicker-input"
                 wrapperClassName="w-full"
@@ -215,15 +215,15 @@ export function HeroSection() {
           {/* TIME */}
           <div ref={timeRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <div className="ml-3 flex flex-col flex-1 overflow-hidden" onClick={() => setShowTimeDropdown(true)}>
-              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Time</span>
+            <div className="ml-3 flex flex-col flex-1 overflow-hidden cursor-pointer" onClick={() => setShowTimeDropdown(true)}>
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide cursor-pointer">{HOME_TEXTS.hero.time.label}</span>
               <input 
                 type="text" 
-                placeholder="VD: 10:15"
+                placeholder={HOME_TEXTS.hero.time.placeholder}
                 value={time}
                 onChange={handleTimeChange}
                 onBlur={handleTimeBlur}
-                className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-text" 
+                className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-pointer" 
               />
             </div>
 
@@ -231,7 +231,7 @@ export function HeroSection() {
             {showTimeDropdown && (
               <div className="absolute top-[110%] left-0 w-full md:w-[150%] bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 max-h-64 overflow-y-auto">
                 <div className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Chọn giờ đến
+                  {HOME_TEXTS.hero.time.dropdownHeader}
                 </div>
                 <div className="grid grid-cols-3 gap-1 px-2">
                   {TIME_OPTIONS.map((t, index) => (
@@ -254,12 +254,12 @@ export function HeroSection() {
           {/* GUESTS */}
           <div ref={guestsRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ef5914] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            <div className="ml-3 flex flex-col flex-1 overflow-hidden" onClick={() => setShowGuestsDropdown(!showGuestsDropdown)}>
-              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">Guests</span>
+            <div className="ml-3 flex flex-col flex-1 overflow-hidden cursor-pointer" onClick={() => setShowGuestsDropdown(!showGuestsDropdown)}>
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide cursor-pointer">{HOME_TEXTS.hero.guests.label}</span>
               <input 
                 type="text" 
                 readOnly
-                placeholder="Số lượng"
+                placeholder={HOME_TEXTS.hero.guests.placeholder}
                 value={guestCount ? `${guestCount} Khách` : ''} 
                 className="w-full bg-transparent outline-none text-gray-500 font-medium text-sm md:text-base placeholder-gray-400 group-hover:placeholder-gray-500 truncate mt-0.5 cursor-pointer" 
               />
@@ -269,7 +269,7 @@ export function HeroSection() {
             {showGuestsDropdown && (
               <div className="absolute top-[110%] right-0 w-full md:w-[150%] bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 max-h-64 overflow-y-auto">
                 <div className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Số lượng khách
+                  {HOME_TEXTS.hero.guests.dropdownHeader}
                 </div>
                 {GUEST_OPTIONS.map((num, index) => (
                   <div 
@@ -301,10 +301,10 @@ export function HeroSection() {
                 const dateString = date ? date.toLocaleDateString('en-CA') : ''; // yyyy-mm-dd
                 window.location.href = `/branches?district=${encodeURIComponent(districtParam)}&date=${dateString}&time=${time}&guests=${guestCount || ''}`;
               }}
-              className="w-full md:w-auto px-8 py-3.5 bg-[#ef5914] hover:bg-[#d44e11] text-white font-bold rounded-full transition-colors flex items-center justify-center shadow-md"
+              className="w-full md:w-auto px-8 py-3.5 bg-[#ef5914] hover:bg-[#d44e11] text-white font-bold rounded-full transition-colors flex items-center justify-center shadow-md cursor-pointer"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-              Search
+              {HOME_TEXTS.hero.searchBtn}
             </button>
           </div>
         </div>

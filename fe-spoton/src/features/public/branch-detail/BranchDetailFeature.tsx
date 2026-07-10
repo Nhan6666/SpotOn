@@ -10,6 +10,7 @@ import { BranchBookingTab } from './components/BranchBookingTab';
 import { BranchMenuTab } from './components/BranchMenuTab';
 import { BranchVouchersTab } from './components/BranchVouchersTab';
 import { STATUS_MAP } from '../branches/branches.constants';
+import { PUBLIC_TEXTS } from '@/constants/texts/public';
 
 export function BranchDetailFeature({ branchId }: { branchId: string }) {
   const { branch, menu, vouchers, isLoading, error } = useBranchDetail(branchId);
@@ -19,7 +20,7 @@ export function BranchDetailFeature({ branchId }: { branchId: string }) {
     return (
       <div className="min-h-screen bg-[#fafafa] flex flex-col items-center justify-center py-20">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#ea580c] mb-4"></div>
-        <p className="text-gray-500 font-medium">Đang tải thông tin chi nhánh...</p>
+        <p className="text-gray-500 font-medium">{PUBLIC_TEXTS.branches.list.loading}</p>
       </div>
     );
   }
@@ -29,10 +30,10 @@ export function BranchDetailFeature({ branchId }: { branchId: string }) {
       <div className="min-h-screen bg-[#fafafa] py-20 px-4">
         <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
           <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy chi nhánh</h2>
-          <p className="text-gray-500 mb-6">{error || 'Chi nhánh này không tồn tại hoặc đã bị xóa.'}</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{PUBLIC_TEXTS.branches.list.notFound.title}</h2>
+          <p className="text-gray-500 mb-6">{error || PUBLIC_TEXTS.branches.list.notFound.desc}</p>
           <Link href="/branches" className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-[#ea580c] hover:bg-[#c2410c] transition-colors">
-            Quay lại danh sách chi nhánh
+            {PUBLIC_TEXTS.branchDetail.backBtn}
           </Link>
         </div>
       </div>
@@ -55,11 +56,10 @@ export function BranchDetailFeature({ branchId }: { branchId: string }) {
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
         <div className="absolute bottom-0 left-0 w-full">
           <div className="container mx-auto px-4 max-w-6xl pb-8">
-            {/* Breadcrumb */}
             <div className="flex items-center text-sm text-gray-300 mb-4">
-              <Link href="/" className="hover:text-white transition-colors">Trang chủ</Link>
+              <Link href="/" className="hover:text-white transition-colors">{PUBLIC_TEXTS.branches.header.breadcrumbs.home}</Link>
               <span className="mx-2">›</span>
-              <Link href="/branches" className="hover:text-white transition-colors">Chi nhánh</Link>
+              <Link href="/branches" className="hover:text-white transition-colors">{PUBLIC_TEXTS.branches.header.title}</Link>
               <span className="mx-2">›</span>
               <span className="text-white font-medium truncate">{branch.name}</span>
             </div>
@@ -97,13 +97,13 @@ export function BranchDetailFeature({ branchId }: { branchId: string }) {
               onClick={() => setActiveTab('info')}
               className={`flex-1 min-w-[120px] py-4 px-6 text-sm font-bold uppercase tracking-wide text-center transition-colors border-b-2 ${activeTab === 'info' ? 'border-[#ea580c] text-[#ea580c] bg-amber-50/30' : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
             >
-              Chi tiết
+              {PUBLIC_TEXTS.branchDetail.tabs.overview}
             </button>
             <button 
               onClick={() => setActiveTab('menu')}
               className={`flex-1 min-w-[120px] py-4 px-6 text-sm font-bold uppercase tracking-wide text-center transition-colors border-b-2 ${activeTab === 'menu' ? 'border-[#ea580c] text-[#ea580c] bg-amber-50/30' : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
             >
-              Thực đơn
+              {PUBLIC_TEXTS.branchDetail.tabs.menu}
             </button>
             <button 
               onClick={() => setActiveTab('vouchers')}

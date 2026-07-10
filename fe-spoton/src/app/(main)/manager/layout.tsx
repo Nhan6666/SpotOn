@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
-import { Store, UtensilsCrossed, BarChart3, CalendarDays, ClipboardCheck, Flame, LogOut } from 'lucide-react';
+import { Store, UtensilsCrossed, BarChart3, CalendarDays, ClipboardCheck, Flame, LogOut, Ticket } from 'lucide-react';
 import { Navbar } from '@/components/ui/Navbar';
 
 const MANAGER_NAV = [
@@ -14,6 +14,7 @@ const MANAGER_NAV = [
   { href: '/manager/check-in', label: 'Check-in (Kanban)', icon: ClipboardCheck },
   { href: '/manager/kds', label: 'Hệ thống Bếp (KDS)', icon: Flame },
   { href: '/manager/stats', label: 'Thống kê', icon: BarChart3 },
+  { href: '/manager/vouchers', label: 'Khuyến mãi', icon: Ticket },
 ];
 
 export default function ManagerLayout({

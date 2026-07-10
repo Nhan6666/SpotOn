@@ -20,7 +20,7 @@ export function useBranchDetail(branchId: string) {
         const [branchData, menuData, vouchersData] = await Promise.all([
           branchDetailService.getBranchById(branchId),
           branchDetailService.getMenu(branchId),
-          branchDetailService.getVouchers()
+          branchDetailService.getVouchers(branchId)
         ]);
 
         if (isMounted) {

@@ -51,7 +51,25 @@ const getBranchById = async (req, res) => {
 // @access Private (ADMIN)
 const createBranch = async (req, res) => {
   try {
-    const branch = await Branch.create(req.body);
+    const branchData = { ...req.body };
+
+    // UC-7.3 BR: Configuration Inheritance
+    // Lấy cấu hình mặc định từ SystemConfig nếu có
+    if (!branchData.service_periods) {
+      const config = await SystemConfig.findOne({ config_key: 'DEFAULT_BOOKING_RULES' });
+      if (config && config.config_value) {
+        try {
+          const parsedConfig = JSON.parse(config.config_value);
+          if (parsedConfig.service_periods) {
+            branchData.service_periods = parsedConfig.service_periods;
+          }
+        } catch (e) {
+          console.error("Lỗi parse DEFAULT_BOOKING_RULES", e);
+        }
+      }
+    }
+
+    const branch = await Branch.create(branchData);
 
     // Sync manager
     if (branch.manager_id) {
@@ -139,6 +157,7 @@ const deleteBranch = async (req, res) => {
     res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
   }
 };
+
 
 module.exports = {
   getAllBranches,

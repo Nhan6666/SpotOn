@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { BookingRules } from './system-settings.types';
 import { systemSettingsService } from './system-settings.service';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 export function BookingRulesFeature() {
   const [rules, setRules] = useState<BookingRules>({
@@ -22,6 +23,7 @@ export function BookingRulesFeature() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { success, error: showError } = useToast();
 
   useEffect(() => {
@@ -34,31 +36,37 @@ export function BookingRulesFeature() {
       setRules(data);
     } catch (err) {
       console.error('Failed to load booking rules:', err);
-      showError('Không thể tải chính sách đặt bàn.');
+      showError(ADMIN_TEXTS.settings.errLoadRules);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSave = async () => {
-    // Validate
+  // Step 1: Validate và mở Modal xác nhận
+  const handleSave = () => {
     if (rules.deposit_percent < 0 || rules.deposit_percent > 100) {
-      showError('Tỷ lệ cọc phải từ 0-100%.');
+      showError(ADMIN_TEXTS.settings.errDepositRange);
       return;
     }
     if (rules.min_advance_hours < 0 || rules.max_advance_days <= 0 || rules.max_party_size <= 0) {
-      showError('Vui lòng nhập các giá trị hợp lệ lớn hơn 0.');
+      showError(ADMIN_TEXTS.settings.errInvalidValues);
       return;
     }
+    // BR: Two-Step Confirmation — Mở modal xác nhận trước khi lưu
+    setShowConfirmModal(true);
+  };
 
+  // Step 2: Xác nhận và thực sự lưu
+  const handleConfirmSave = async () => {
+    setShowConfirmModal(false);
     setIsSaving(true);
     try {
       const updatedData = await systemSettingsService.updateBookingRules(rules);
       setRules(updatedData);
-      success('Lưu chính sách đặt bàn thành công!');
+      success(ADMIN_TEXTS.settings.successSaveRules);
     } catch (err) {
       console.error('Failed to save booking rules:', err);
-      showError('Lưu thất bại. Vui lòng thử lại.');
+      showError(ADMIN_TEXTS.settings.errSaveRules);
     } finally {
       setIsSaving(false);
     }
@@ -75,25 +83,24 @@ export function BookingRulesFeature() {
   };
 
   if (isLoading) {
-    return <div className="p-8 text-center text-gray-500 animate-pulse">Đang tải cấu hình...</div>;
+    return <div className="p-8 text-center text-gray-500 animate-pulse">{ADMIN_TEXTS.settings.loadingConfig}</div>;
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">System Settings</h1>
-        <p className="text-gray-500">Manage global configurations for the SpotOn platform.</p>
+    <div className="max-w-6xl mx-auto py-8 flex flex-col gap-6 px-4 xl:px-0">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{ADMIN_TEXTS.settings.title}</h1>
+          <p className="text-sm md:text-base text-gray-500 mt-1">{ADMIN_TEXTS.settings.subtitle}</p>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-6 sm:p-8">
           <div className="flex items-start justify-between mb-8">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-1">Global Booking Policies</h2>
-              <p className="text-sm text-gray-500">These rules apply to all branches by default unless overridden.</p>
-            </div>
-            <div className="bg-amber-50 p-2 rounded-lg text-amber-600">
-              <AlertCircle className="w-5 h-5" />
+              <h2 className="text-xl font-bold text-gray-900 mb-1">{ADMIN_TEXTS.settings.globalPolicyTitle}</h2>
+              <p className="text-sm text-gray-500">{ADMIN_TEXTS.settings.globalPolicyDesc}</p>
             </div>
           </div>
 
@@ -101,8 +108,8 @@ export function BookingRulesFeature() {
             {/* Deposit Percent */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start pb-6 border-b border-gray-100">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Deposit Percent</label>
-                <p className="text-xs text-gray-500">Amount required to secure a reservation (%).</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">{ADMIN_TEXTS.settings.lblDeposit}</label>
+                <p className="text-xs text-gray-500">{ADMIN_TEXTS.settings.descDeposit}</p>
               </div>
               <div className="sm:col-span-2">
                 <div className="relative max-w-xs">
@@ -124,8 +131,8 @@ export function BookingRulesFeature() {
             {/* Min Advance Hours */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start pb-6 border-b border-gray-100">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Minimum Advance Time</label>
-                <p className="text-xs text-gray-500">How many hours in advance guests must book.</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">{ADMIN_TEXTS.settings.lblMinAdvance}</label>
+                <p className="text-xs text-gray-500">{ADMIN_TEXTS.settings.descMinAdvance}</p>
               </div>
               <div className="sm:col-span-2">
                 <div className="relative max-w-xs">
@@ -136,7 +143,7 @@ export function BookingRulesFeature() {
                     onChange={(e) => handleChange('min_advance_hours', e.target.value)}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <span className="text-gray-500 sm:text-sm">hours</span>
+                    <span className="text-gray-500 sm:text-sm">giờ</span>
                   </div>
                 </div>
               </div>
@@ -145,8 +152,8 @@ export function BookingRulesFeature() {
             {/* Max Advance Days */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start pb-6 border-b border-gray-100">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Maximum Advance Time</label>
-                <p className="text-xs text-gray-500">How far in the future guests can make reservations.</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">{ADMIN_TEXTS.settings.lblMaxAdvance}</label>
+                <p className="text-xs text-gray-500">{ADMIN_TEXTS.settings.descMaxAdvance}</p>
               </div>
               <div className="sm:col-span-2">
                 <div className="relative max-w-xs">
@@ -157,7 +164,7 @@ export function BookingRulesFeature() {
                     onChange={(e) => handleChange('max_advance_days', e.target.value)}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <span className="text-gray-500 sm:text-sm">days</span>
+                    <span className="text-gray-500 sm:text-sm">ngày</span>
                   </div>
                 </div>
               </div>
@@ -166,8 +173,8 @@ export function BookingRulesFeature() {
             {/* Max Party Size */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-1">Maximum Party Size</label>
-                <p className="text-xs text-gray-500">Largest group size allowed per single booking.</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">{ADMIN_TEXTS.settings.lblMaxParty}</label>
+                <p className="text-xs text-gray-500">{ADMIN_TEXTS.settings.descMaxParty}</p>
               </div>
               <div className="sm:col-span-2">
                 <div className="relative max-w-xs">
@@ -178,7 +185,7 @@ export function BookingRulesFeature() {
                     onChange={(e) => handleChange('max_party_size', e.target.value)}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <span className="text-gray-500 sm:text-sm">guests</span>
+                    <span className="text-gray-500 sm:text-sm">khách</span>
                   </div>
                 </div>
               </div>
@@ -194,10 +201,49 @@ export function BookingRulesFeature() {
             disabled={isSaving}
           >
             <Save className="w-4 h-4 mr-2" />
-            {isSaving ? 'Saving...' : 'Save Policies'}
+            {isSaving ? ADMIN_TEXTS.settings.btnSaving : ADMIN_TEXTS.settings.btnSavePolicy}
           </Button>
         </div>
       </div>
+
+      {/* BR: Two-Step Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-start gap-4 mb-5">
+              <div className="p-2.5 bg-amber-100 text-amber-600 rounded-lg flex-shrink-0">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">{ADMIN_TEXTS.settings.confirmModalTitle}</h3>
+                <p className="text-sm text-gray-500" dangerouslySetInnerHTML={{ __html: ADMIN_TEXTS.settings.confirmModalDesc }} />
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4 mb-5 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-gray-500">Tỷ lệ cọc</span><span className="font-semibold text-gray-900">{rules.deposit_percent}%</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Đặt trước tối thiểu</span><span className="font-semibold text-gray-900">{rules.min_advance_hours} giờ</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Đặt trước tối đa</span><span className="font-semibold text-gray-900">{rules.max_advance_days} ngày</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Số khách tối đa</span><span className="font-semibold text-gray-900">{rules.max_party_size} khách</span></div>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                {ADMIN_TEXTS.settings.confirmBtnCancel}
+              </button>
+              <button
+                onClick={handleConfirmSave}
+                className="px-4 py-2 text-sm font-bold text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
+              >
+                {ADMIN_TEXTS.settings.confirmBtnSave}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

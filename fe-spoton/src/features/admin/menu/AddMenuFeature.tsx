@@ -9,6 +9,7 @@ import { AddMenuBasics } from './components/AddMenuBasics';
 import { AddMenuMedia } from './components/AddMenuMedia';
 import { AddMenuPricing } from './components/AddMenuPricing';
 import { useMenuContext } from './menu.context';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 export function AddMenuFeature() {
   const router = useRouter();
@@ -57,9 +58,9 @@ export function AddMenuFeature() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const STEPS = [
-    { id: 1, label: 'Basic Details' },
-    { id: 2, label: 'Pricing & Branches' },
-    { id: 3, label: 'Media & Review' },
+    { id: 1, label: ADMIN_TEXTS.menu.addStep1 },
+    { id: 2, label: ADMIN_TEXTS.menu.addStep2 },
+    { id: 3, label: ADMIN_TEXTS.menu.addStep3 },
   ];
 
   const handlePublish = async () => {
@@ -87,7 +88,7 @@ export function AddMenuFeature() {
 
         if (!uploadRes.ok) {
           const err = await uploadRes.json();
-          throw new Error(err.message || 'Upload ảnh thất bại.');
+          throw new Error(err.message || ADMIN_TEXTS.menu.addUploadError);
         }
 
         const uploadData = await uploadRes.json();
@@ -122,7 +123,7 @@ export function AddMenuFeature() {
       await addItem(menuId, payload);
       router.push('/admin/menu');
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Lỗi khi tạo món ăn. Vui lòng thử lại.';
+      const errorMessage = err instanceof Error ? err.message : ADMIN_TEXTS.menu.addCreateError;
       setSubmitError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -145,10 +146,10 @@ export function AddMenuFeature() {
       {/* Top Navigation / Breadcrumb */}
       <div className="px-8 py-4 flex items-center text-sm border-b border-gray-100 bg-white">
         <Link href="/admin/menu" className="text-gray-500 hover:text-gray-900 font-medium flex items-center gap-1.5 transition-colors">
-          Menu Management
+          {ADMIN_TEXTS.menu.addBreadcrumbParent}
         </Link>
         <ChevronRight className="w-4 h-4 text-gray-400 mx-2" strokeWidth={2} />
-        <span className="text-[#e67e22] font-bold">Add New Menu Item</span>
+        <span className="text-[#e67e22] font-bold">{ADMIN_TEXTS.menu.addBreadcrumbChild}</span>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
@@ -157,20 +158,20 @@ export function AddMenuFeature() {
           <div className="flex justify-between items-start mb-10">
             <div>
               {currentStep === 3 ? (
-                <>
-                  <h1 className="text-[28px] font-bold text-[#0f172a] tracking-tight">Step 3: Media & Review</h1>
-                  <p className="text-[15px] text-[#64748b] mt-1">Finalize your item presentation and check configurations before publishing.</p>
+              <>
+                  <h1 className="text-[28px] font-bold text-[#0f172a] tracking-tight">{ADMIN_TEXTS.menu.addStep3Title}</h1>
+                  <p className="text-[15px] text-[#64748b] mt-1">{ADMIN_TEXTS.menu.addStep3Desc}</p>
                 </>
               ) : (
                 <>
-                  <h1 className="text-[28px] font-bold text-[#0f172a] tracking-tight">Add New Menu Item</h1>
-                  <p className="text-[15px] text-[#64748b] mt-1">Create a new dish or product for your menu categories.</p>
+                  <h1 className="text-[28px] font-bold text-[#0f172a] tracking-tight">{ADMIN_TEXTS.menu.addTitle}</h1>
+                  <p className="text-[15px] text-[#64748b] mt-1">{ADMIN_TEXTS.menu.addDesc}</p>
                 </>
               )}
             </div>
             <div className="flex items-center gap-3 mt-2">
               <Button className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
-                Save as Draft
+                {ADMIN_TEXTS.menu.addBtnDraft}
               </Button>
             </div>
           </div>
@@ -246,20 +247,20 @@ export function AddMenuFeature() {
                       </div>
                     )}
                     <div className="bg-[#d97706] p-5">
-                      <p className="text-[10px] font-bold text-white/80 uppercase tracking-widest mb-1">Final Summary</p>
+                      <p className="text-[10px] font-bold text-white/80 uppercase tracking-widest mb-1">{ADMIN_TEXTS.menu.addFinalSummary}</p>
                       <h3 className="text-[20px] font-bold text-white leading-tight">{itemName}</h3>
                     </div>
 
                     <div className="p-5 space-y-5 bg-white">
                       <div className="flex items-center justify-between">
-                        <span className="text-[13px] text-gray-500">Category</span>
+                        <span className="text-[13px] text-gray-500">{ADMIN_TEXTS.menu.addCategory}</span>
                         <span className="text-[12px] font-bold bg-gray-100 text-gray-700 px-2 py-1 rounded">{category}</span>
                       </div>
 
                       <div className="h-px w-full bg-gray-100"></div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-[13px] text-gray-500">Base Price</span>
+                        <span className="text-[13px] text-gray-500">{ADMIN_TEXTS.menu.addBasePrice}</span>
                         <span className="text-[14px] font-bold text-[#d97706]">{parseInt(basePrice).toLocaleString('vi-VN')} VND</span>
                       </div>
 
@@ -267,7 +268,7 @@ export function AddMenuFeature() {
 
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <span className="text-[13px] text-gray-500">Active Branches</span>
+                          <span className="text-[13px] text-gray-500">{ADMIN_TEXTS.menu.addActiveBranches}</span>
                           <span className="text-[12px] font-bold text-[#d97706]">{selectedBranches.length} Branches</span>
                         </div>
                         <div className="space-y-2">
@@ -291,21 +292,21 @@ export function AddMenuFeature() {
                   <div className="bg-[#fffbeb] border border-[#fde68a] rounded-xl p-5 sticky top-8">
                     <div className="flex items-center gap-3 mb-5">
                       <Lightbulb className="w-5 h-5 text-[#f59e0b]" strokeWidth={2.5} />
-                      <h3 className="text-[15px] font-bold text-[#92400e]">Pro Tips</h3>
+                      <h3 className="text-[15px] font-bold text-[#92400e]">{ADMIN_TEXTS.menu.addProTips}</h3>
                     </div>
 
                     <div className="space-y-4">
                       <div>
-                        <h4 className="text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">Photography Quality</h4>
+                        <h4 className="text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">{ADMIN_TEXTS.menu.addTipPhotoTitle}</h4>
                         <p className="text-[12px] text-gray-500 leading-relaxed">
-                          Items with high-resolution, bright photos see 3x higher click-through rates. Avoid using stock images when possible.
+                          {ADMIN_TEXTS.menu.addTipPhotoDesc}
                         </p>
                       </div>
                       <div className="h-px bg-[#fde68a] w-full"></div>
                       <div>
-                        <h4 className="text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">Dietary Search</h4>
+                        <h4 className="text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">{ADMIN_TEXTS.menu.addTipDietTitle}</h4>
                         <p className="text-[12px] text-gray-500 leading-relaxed">
-                          Dietary tags are the most used filter in the consumer app. Ensure &quot;Spicy&quot; or &quot;Gluten-Free&quot; is accurately marked for better visibility.
+                          {ADMIN_TEXTS.menu.addTipDietDesc}
                         </p>
                       </div>
                     </div>
@@ -318,21 +319,21 @@ export function AddMenuFeature() {
                       <Lightbulb className="w-4 h-4 text-[#f59e0b]" strokeWidth={2.5} />
                     </div>
                     <div>
-                      <h3 className="text-[15px] font-bold text-[#92400e]">Pro Tips</h3>
+                      <h3 className="text-[15px] font-bold text-[#92400e]">{ADMIN_TEXTS.menu.addProTips}</h3>
                     </div>
                   </div>
 
                   {currentStep === 1 ? (
                     <div className="space-y-4">
                       <div>
-                        <p className="text-[12px] text-[#b45309] mb-3">Optimize for more sales</p>
+                        <p className="text-[12px] text-[#b45309] mb-3">{ADMIN_TEXTS.menu.addTipOptimize}</p>
                         <div className="bg-white rounded-lg p-4 shadow-sm border border-[#fef3c7] mb-3">
                           <div className="flex items-center gap-2 mb-1.5">
                             <Type className="w-3.5 h-3.5 text-[#d97706]" strokeWidth={2.5} />
-                            <h4 className="text-[13px] font-bold text-gray-900">Naming</h4>
+                            <h4 className="text-[13px] font-bold text-gray-900">{ADMIN_TEXTS.menu.addTipNameTitle}</h4>
                           </div>
                           <p className="text-[12px] text-gray-500 leading-relaxed">
-                            Use descriptive adjectives in titles. &quot;Signature Beef Pho&quot; sells 22% better than just &quot;Pho&quot;.
+                            {ADMIN_TEXTS.menu.addTipNameDesc}
                           </p>
                         </div>
                       </div>
@@ -340,9 +341,9 @@ export function AddMenuFeature() {
                   ) : (
                     <div className="space-y-5">
                       <div>
-                        <h4 className="text-[13px] font-bold text-gray-900 mb-1">Dynamic Pricing</h4>
+                        <h4 className="text-[13px] font-bold text-gray-900 mb-1">{ADMIN_TEXTS.menu.addTipPriceTitle}</h4>
                         <p className="text-[12px] text-gray-500 leading-relaxed">
-                          Consider setting a slightly higher base price for &apos;Premium Location&apos; branches...
+                          {ADMIN_TEXTS.menu.addTipPriceDesc}
                         </p>
                       </div>
                     </div>
@@ -363,7 +364,7 @@ export function AddMenuFeature() {
           className="bg-gray-50 border-none text-gray-900 hover:bg-gray-100 px-6 py-2.5 rounded-lg font-bold transition-colors flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" strokeWidth={2.5} />
-          {currentStep > 1 ? `Back to Step ${currentStep - 1}` : 'Back'}
+          {currentStep > 1 ? `${ADMIN_TEXTS.menu.addBtnBackStep}${currentStep - 1}` : ADMIN_TEXTS.menu.addBtnBack}
         </Button>
 
         <div className="flex items-center gap-4">
@@ -382,9 +383,9 @@ export function AddMenuFeature() {
             {isSubmitting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Publishing...
+                {ADMIN_TEXTS.menu.addBtnPublishing}
               </>
-            ) : currentStep === 3 ? 'Publish Item' : 'Next'}
+            ) : currentStep === 3 ? ADMIN_TEXTS.menu.addBtnPublish : ADMIN_TEXTS.menu.addBtnNext}
           </Button>
         </div>
       </div>

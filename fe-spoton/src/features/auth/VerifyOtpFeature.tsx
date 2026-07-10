@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from './auth.service';
 import { AppError } from '@/lib/errors';
-
 import { useAuth } from '@/providers/AuthProvider';
+import { AUTH_TEXTS } from '@/constants/texts/auth';
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export function VerifyOtpFeature() {
@@ -20,6 +20,8 @@ export function VerifyOtpFeature() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const { verifyOtp: texts } = AUTH_TEXTS;
 
   // Tự focus vào ô đầu tiên khi load trang
   useEffect(() => {
@@ -67,14 +69,14 @@ export function VerifyOtpFeature() {
 
     const otpCode = otp.join('');
     if (otpCode.length < 6) {
-      setServerError('Vui lòng nhập đủ 6 chữ số OTP.');
+      setServerError(texts.messages.incomplete);
       return;
     }
 
     setIsSubmitting(true);
     try {
       const result = await authService.verifyOtp({ email, otp: otpCode });
-      setSuccessMessage('Xác thực thành công! Đang chuyển hướng...');
+      setSuccessMessage(texts.messages.success);
       // Lưu token vào Cookie và cập nhật Context state thông qua useAuth()
       login(result.token, result.user);
       setTimeout(() => {
@@ -84,17 +86,17 @@ export function VerifyOtpFeature() {
       if (error instanceof AppError) {
         switch (error.statusCode) {
           case 400:
-            setServerError('Mã OTP không đúng hoặc đã hết hạn. Vui lòng thử lại.');
+            setServerError(texts.messages.invalid);
             break;
           case 0:
           case undefined:
-            setServerError('Không thể kết nối đến máy chủ. Vui lòng thử lại.');
+            setServerError(texts.messages.noConnection);
             break;
           default:
-            setServerError('Xác thực thất bại. Vui lòng thử lại sau.');
+            setServerError(texts.messages.fail);
         }
       } else {
-        setServerError('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+        setServerError(texts.messages.error);
       }
       // Reset OTP input khi lỗi
       setOtp(['', '', '', '', '', '']);
@@ -131,9 +133,9 @@ export function VerifyOtpFeature() {
           </div>
 
           {/* Heading */}
-          <h1 className="mb-2 text-center text-2xl font-bold text-gray-900">Xác Thực Email</h1>
+          <h1 className="mb-2 text-center text-2xl font-bold text-gray-900">{texts.title}</h1>
           <p className="mb-6 text-center text-sm text-gray-500">
-            Chúng tôi đã gửi mã OTP gồm 6 chữ số đến{' '}
+            {texts.descPrefix}
             <span className="font-semibold text-amber-700">{email}</span>
           </p>
 
@@ -177,18 +179,18 @@ export function VerifyOtpFeature() {
               disabled={isSubmitting || otp.join('').length < 6}
               className="w-full rounded-md bg-[#8a5a19] px-4 cursor-pointer py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#724a15] transition-colors focus:outline-none focus:ring-2 focus:ring-[#8a5a19] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Đang xác thực...' : 'Xác Nhận'}
+              {isSubmitting ? texts.submittingBtn : texts.submitBtn}
             </button>
           </form>
 
           <p className="mt-6 text-center text-xs text-gray-400">
-            Không nhận được mã?{' '}
+            {texts.notReceived}{' '}
             <button
               type="button"
               onClick={() => router.push('/register')}
               className="font-semibold cursor-pointer text-amber-700 hover:underline"
             >
-              Quay lại đăng ký
+              {texts.resendLink}
             </button>
           </p>
         </div>

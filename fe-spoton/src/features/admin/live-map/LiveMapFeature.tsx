@@ -9,6 +9,7 @@ import type { TableData } from "../../booking/components/TableShape";
 import { TABLE_STATUS_CONFIG } from "../map-editor/map-editor.types";
 import { Loader2, X, RefreshCw, Power } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
+import { ADMIN_TEXTS } from "@/constants/texts/admin";
 
 interface LiveMapFeatureProps {
   branchId: string;
@@ -133,18 +134,18 @@ export function LiveMapFeature({ branchId }: LiveMapFeatureProps) {
       <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between shadow-sm z-10 flex-wrap gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-            Live Map: {branchName}
+            {ADMIN_TEXTS.liveMap.title} {branchName}
             {branchStatus === 'CLOSED' && (
-              <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-600 uppercase">Tạm đóng</span>
+              <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-600 uppercase">{ADMIN_TEXTS.liveMap.statusTempClosed}</span>
             )}
           </h1>
-          <p className="text-sm text-gray-500">Update physical table status in real-time</p>
+          <p className="text-sm text-gray-500">{ADMIN_TEXTS.liveMap.subtitle}</p>
         </div>
         
         <div className="flex items-center gap-3">
           {!isAdmin && (
             <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
-              <span className="text-xs font-medium text-gray-600">Hoạt động quán:</span>
+              <span className="text-xs font-medium text-gray-600">{ADMIN_TEXTS.liveMap.branchStatusLabel}</span>
               <button
                 onClick={handleBranchStatusToggle}
                 disabled={isUpdating}
@@ -155,7 +156,7 @@ export function LiveMapFeature({ branchId }: LiveMapFeatureProps) {
                 } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <Power className="w-3 h-3" />
-                {branchStatus === 'CLOSED' ? 'ĐANG ĐÓNG' : 'ĐANG MỞ'}
+                {branchStatus === 'CLOSED' ? ADMIN_TEXTS.liveMap.branchStatusClosed : ADMIN_TEXTS.liveMap.branchStatusOpen}
               </button>
             </div>
           )}
@@ -165,7 +166,7 @@ export function LiveMapFeature({ branchId }: LiveMapFeatureProps) {
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-blue-500" : ""}`} />
-            Refresh
+            {ADMIN_TEXTS.liveMap.btnRefresh}
           </button>
         </div>
       </div>
@@ -187,7 +188,7 @@ export function LiveMapFeature({ branchId }: LiveMapFeatureProps) {
                 >
                   {zone.name}
                   {zone.status === 'CLOSED' && (
-                    <span className="px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 text-[10px] uppercase">Đóng</span>
+                    <span className="px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 text-[10px] uppercase">{ADMIN_TEXTS.liveMap.zoneStatusClosed}</span>
                   )}
                 </button>
               ))}
@@ -196,7 +197,7 @@ export function LiveMapFeature({ branchId }: LiveMapFeatureProps) {
 
           {!isAdmin && selectedZone && (
             <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm shrink-0">
-              <span className="text-sm font-medium text-gray-700">Trạng thái khu vực:</span>
+              <span className="text-sm font-medium text-gray-700">{ADMIN_TEXTS.liveMap.zoneStatusLabel}</span>
               <button
                 onClick={handleZoneStatusToggle}
                 disabled={isUpdating}
@@ -207,7 +208,7 @@ export function LiveMapFeature({ branchId }: LiveMapFeatureProps) {
                 } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <Power className="w-4 h-4" />
-                {selectedZone.status === 'CLOSED' ? 'ĐANG ĐÓNG' : 'ĐANG MỞ'}
+                {selectedZone.status === 'CLOSED' ? ADMIN_TEXTS.liveMap.branchStatusClosed : ADMIN_TEXTS.liveMap.branchStatusOpen}
               </button>
             </div>
           )}
@@ -231,7 +232,7 @@ export function LiveMapFeature({ branchId }: LiveMapFeatureProps) {
               <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                   <h3 className="font-bold text-gray-900">
-                    Bàn số {selectedTable.table_number || "..."}
+                    {ADMIN_TEXTS.liveMap.tableModalTitle} {selectedTable.table_number || "..."}
                   </h3>
                   <button 
                     onClick={() => setSelectedTableId(null)}
@@ -241,7 +242,7 @@ export function LiveMapFeature({ branchId }: LiveMapFeatureProps) {
                   </button>
                 </div>
                 <div className="p-5">
-                  <p className="text-sm font-medium text-gray-500 mb-4 uppercase tracking-wider">Cập nhật trạng thái</p>
+                  <p className="text-sm font-medium text-gray-500 mb-4 uppercase tracking-wider">{ADMIN_TEXTS.liveMap.tableModalSubtitle}</p>
                   <div className="grid grid-cols-2 gap-3">
                     {(Object.keys(TABLE_STATUS_CONFIG) as TableStatus[]).map((status) => {
                       const config = TABLE_STATUS_CONFIG[status];

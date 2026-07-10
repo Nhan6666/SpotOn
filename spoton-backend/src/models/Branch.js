@@ -9,6 +9,16 @@ const TableSchema = new mongoose.Schema({
     enum: ['EMPTY', 'HOLDING', 'LOCKED', 'RESERVED', 'OCCUPIED', 'CLEANING', 'MAINTENANCE'],
     default: 'EMPTY',
   },
+  status_lunch: {
+    type: String,
+    enum: ['EMPTY', 'HOLDING', 'LOCKED', 'RESERVED', 'OCCUPIED', 'CLEANING', 'MAINTENANCE'],
+    default: 'EMPTY',
+  },
+  status_dinner: {
+    type: String,
+    enum: ['EMPTY', 'HOLDING', 'LOCKED', 'RESERVED', 'OCCUPIED', 'CLEANING', 'MAINTENANCE'],
+    default: 'EMPTY',
+  },
   x: { type: Number, default: 0 },
   y: { type: Number, default: 0 },
   width: { type: Number, default: 70 },
@@ -54,10 +64,10 @@ const BranchSchema = new mongoose.Schema(
     status: { type: String, enum: ['OPEN', 'FULL', 'CLOSED'], default: 'OPEN' },
     overload_threshold: { type: Number, default: 85 }, // % công suất tối đa
     amenities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Amenity' }], // Các tiện ích của chi nhánh
+    disabled_vouchers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Voucher' }], // Các voucher chung không được áp dụng
     
     // TÍNH NĂNG IPAD TẠI BÀN
     ipad_pin: { type: String, default: '1234' }, // Mật khẩu dùng nội bộ do manager set để mở khóa iPad
-    
     zones: [ZoneSchema], // Nhúng mảng Zones vào Branch
     table_templates: {
       type: [{

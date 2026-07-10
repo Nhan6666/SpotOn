@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { http } from '@/lib/http';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { HOME_TEXTS } from '@/constants/texts/home';
 
 interface MenuItem {
   _id: string;
@@ -57,7 +58,7 @@ export function NewDishesSection() {
   if (isLoading) {
     return (
       <section className="bg-transparent py-16 text-center">
-        <h2 className="text-[#1a3826] text-4xl font-black tracking-tight mb-12 uppercase">Món mới ra lò</h2>
+        <h2 className="text-[#1a3826] text-4xl font-black tracking-tight mb-12 uppercase">{HOME_TEXTS.newDishes.title}</h2>
         <div className="flex justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e67e22]"></div>
         </div>
@@ -72,13 +73,13 @@ export function NewDishesSection() {
   return (
     <section className="bg-transparent py-16 px-4 md:px-8 relative">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-[#1a3826] text-[42px] font-black tracking-tight mb-12 text-center uppercase">Món mới ra lò</h2>
+        <h2 className="text-[#1a3826] text-[42px] font-black tracking-tight mb-12 text-center uppercase">{HOME_TEXTS.newDishes.title}</h2>
 
         <div className="relative">
           {/* Grid: 2 rows of 4 cards on desktop */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 min-h-[600px]">
             {currentItems.map((item) => (
-              <div key={item._id} className="bg-white rounded-xl overflow-hidden shadow-lg flex flex-col group h-[340px]">
+              <div key={item._id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow group h-full flex flex-col cursor-pointer">
                 <div className="h-[180px] w-full overflow-hidden relative shrink-0">
                   {item.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -92,7 +93,7 @@ export function NewDishesSection() {
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
-                      No Image
+                      {HOME_TEXTS.newDishes.noImage}
                     </div>
                   )}
                 </div>
@@ -100,13 +101,13 @@ export function NewDishesSection() {
                   <div>
                     <h3 className="text-[17px] font-bold text-gray-900 line-clamp-2 mb-1">{item.name}</h3>
                     <p className="text-[#1a3826] font-semibold text-[15px]">
-                      {(item.base_price || 0).toLocaleString('vi-VN')} đ
+                      {(item.base_price || 0).toLocaleString('vi-VN')} {HOME_TEXTS.newDishes.currency}
                     </p>
                   </div>
                   <div className="mt-4 flex justify-end">
-                    <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-gray-200 hover:border-[#e67e22] hover:text-[#e67e22] hover:bg-amber-50 transition-colors text-sm font-semibold text-gray-700">
+                    <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-gray-200 hover:border-[#e67e22] hover:text-[#e67e22] hover:bg-amber-50 transition-colors text-sm font-semibold text-gray-700 cursor-pointer">
                       <Plus className="w-4 h-4" />
-                      Đặt
+                      {HOME_TEXTS.newDishes.orderBtn}
                     </button>
                   </div>
                 </div>
@@ -138,7 +139,7 @@ export function NewDishesSection() {
               <button
                 key={idx}
                 onClick={() => setCurrentPage(idx)}
-                className={`w-2.5 h-2.5 rounded-full transition-colors ${idx === currentPage ? 'bg-[#e67e22]' : 'bg-black/20 hover:bg-black/40'}`}
+                className={`w-2.5 h-2.5 rounded-full transition-colors cursor-pointer ${idx === currentPage ? 'bg-[#e67e22]' : 'bg-black/20 hover:bg-black/40'}`}
                 aria-label={`Go to page ${idx + 1}`}
               ></button>
             ))}
@@ -148,7 +149,7 @@ export function NewDishesSection() {
         {/* View All Button */}
         <div className="flex justify-center mt-10">
           <Link href="/menu" className="px-8 py-3 rounded-lg border-2 border-[#e67e22] text-[#1a3826] font-bold text-[15px] hover:bg-[#e67e22] transition-colors inline-block uppercase tracking-wide">
-            Xem thực đơn
+            {HOME_TEXTS.newDishes.viewMenuBtn}
           </Link>
         </div>
       </div>

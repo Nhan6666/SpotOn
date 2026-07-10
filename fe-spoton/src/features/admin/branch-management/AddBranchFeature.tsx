@@ -12,6 +12,7 @@ import { useBranchContext } from './branch-management.context';
 import { useToast } from '@/components/ui/Toast';
 import Link from 'next/link';
 import { systemSettingsService } from '../system-settings/system-settings.service';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 export function AddBranchFeature() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -65,20 +66,20 @@ export function AddBranchFeature() {
     // Bước 2: Lưu Branch -> Chuyển sang Upload Ảnh (Bước 3)
     if (currentStep === 2) {
       if (!formData.name || !formData.address.full) {
-        showError('Name and Full Address are required!');
+        showError(ADMIN_TEXTS.addBranch.errorNameAddress);
         return;
       }
       if (!formData.manager_id) {
-        showError('Please assign a Manager for this branch!');
+        showError(ADMIN_TEXTS.addBranch.errorManager);
         return;
       }
       try {
         const id = await addBranch(formData);
         setCreatedBranchId(id);
-        success('Branch details saved! Please upload branch photos.');
+        success(ADMIN_TEXTS.addBranch.successSave);
         setCurrentStep(3); // Bước 3 = màn hình Upload Ảnh
       } catch (error) {
-        showError('Failed to create branch. Please try again.');
+        showError(ADMIN_TEXTS.addBranch.errorSave);
       }
     } else {
       setCurrentStep(prev => Math.min(prev + 1, 4));
@@ -119,12 +120,12 @@ export function AddBranchFeature() {
     <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
       {/* Breadcrumbs */}
       <div className="flex items-center text-sm mb-4">
-        <Link href="/admin/branches" className="text-gray-500 hover:text-amber-700 transition-colors">Branch Management</Link>
+        <Link href="/admin/branches" className="text-gray-500 hover:text-amber-700 transition-colors">{ADMIN_TEXTS.addBranch.breadcrumbList}</Link>
         <span className="mx-2 text-gray-300">/</span>
-        <span className="font-medium text-gray-900">Add New Branch</span>
+        <span className="font-medium text-gray-900">{ADMIN_TEXTS.addBranch.breadcrumbAdd}</span>
       </div>
 
-      <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-10">Add New Branch</h1>
+      <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-10">{ADMIN_TEXTS.addBranch.title}</h1>
 
       <AddBranchStepper currentStep={currentStep} />
 
@@ -143,18 +144,18 @@ export function AddBranchFeature() {
               {currentStep > 1 ? (
                 <Button variant="outline" className="w-32 bg-white hover:bg-gray-50 text-gray-700 border-gray-300" onClick={handleBack}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
+                  {ADMIN_TEXTS.addBranch.btnBack}
                 </Button>
               ) : (
                 <Link href="/admin/branches">
                   <Button variant="outline" className="w-32 bg-white hover:bg-gray-50 text-gray-700 border-gray-300">
-                    Cancel
+                    {ADMIN_TEXTS.addBranch.btnCancel}
                   </Button>
                 </Link>
               )}
 
               <Button variant="primary" className="bg-amber-600 hover:bg-amber-700 text-white border-0" onClick={handleNext}>
-                {currentStep === 1 ? 'Continue to Operations' : 'Save & Continue'}
+                {currentStep === 1 ? ADMIN_TEXTS.addBranch.btnContinueToOps : ADMIN_TEXTS.addBranch.btnSaveContinue}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>

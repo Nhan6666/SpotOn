@@ -42,9 +42,8 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
         return (
           <>
             <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.waiter.profile}</Link>
-            <Link href="/waiter/tables" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.waiter.tables}</Link>
-            <Link href="/waiter/bookings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.waiter.bookings}</Link>
-            <Link href="/waiter/dispatch" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.waiter.dispatch}</Link>
+            <Link href="/waiter/pos" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.waiter.tables}</Link>
+            <Link href="/waiter/runner" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.waiter.dispatch}</Link>
           </>
         );
       case 'MANAGER':

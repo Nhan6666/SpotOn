@@ -27,7 +27,7 @@ export interface AuthUser {
   email: string;
   full_name: string;
   phone?: string;
-  role: 'ADMIN' | 'MANAGER' | 'WAITER' | 'CUSTOMER';
+  role: 'ADMIN' | 'MANAGER' | 'KITCHEN' | 'WAITER' | 'CUSTOMER';
   is_email_verified?: boolean; 
   avatar?: string; 
   profile_allergies?: string;

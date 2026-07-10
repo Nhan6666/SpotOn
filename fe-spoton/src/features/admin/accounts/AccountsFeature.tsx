@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { http } from '@/lib/http';
-import { Search, Filter, Edit2, ShieldAlert, CheckCircle2, UserCog } from 'lucide-react';
+import { Search, Filter, Edit2, ShieldAlert, CheckCircle2, UserCog, Plus, Trash2, Eye, EyeOff, UserMinus } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Dropdown, DropdownItem } from '@/components/ui/Dropdown';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { DeleteConfirmModal } from '@/features/admin/map-editor/components/DeleteConfirmModal';
 import { useAuth } from '@/providers/AuthProvider';
 import { useToast } from '@/components/ui/Toast';
 import Image from 'next/image';
@@ -41,12 +42,26 @@ export function AccountsFeature() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
 
-  // Modal state
+  // Edit Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
   const [editRole, setEditRole] = useState<'ADMIN' | 'MANAGER' | 'WAITER' | 'CUSTOMER'>('CUSTOMER');
   const [editBranchId, setEditBranchId] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Create Modal state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createFullName, setCreateFullName] = useState('');
+  const [createEmail, setCreateEmail] = useState('');
+  const [createPhone, setCreatePhone] = useState('');
+  const [createPassword, setCreatePassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [createRole, setCreateRole] = useState<'MANAGER' | 'WAITER'>('WAITER');
+  const [createBranchId, setCreateBranchId] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+
+  // Confirm Modal state (for both Revoke and Delete)
+  const [confirmModal, setConfirmModal] = useState<{ open: boolean; userId: string; userName: string; type: 'REVOKE' | 'DELETE' }>({ open: false, userId: '', userName: '', type: 'REVOKE' });
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -108,6 +123,55 @@ export function AccountsFeature() {
     }
   };
 
+  // CREATE handler
+  const handleCreateUser = async () => {
+    if (!createFullName.trim() || !createEmail.trim() || !createPassword.trim()) {
+      toastError('Vui lòng nhập đầy đủ họ tên, email và mật khẩu.');
+      return;
+    }
+    if (!createBranchId) {
+      toastError('Vui lòng chọn chi nhánh phân công.');
+      return;
+    }
+    setIsCreating(true);
+    try {
+      const res = await http.post<{ success: boolean; message: string }>('/users/admin/create', {
+        full_name: createFullName.trim(),
+        email: createEmail.trim(),
+        phone: createPhone.trim(),
+        password: createPassword,
+        role: createRole,
+        branch_id: createBranchId,
+      });
+      toastSuccess(res.message || 'Tạo tài khoản thành công!');
+      setIsCreateModalOpen(false);
+      // Reset form
+      setCreateFullName(''); setCreateEmail(''); setCreatePhone(''); setCreatePassword(''); setCreateRole('WAITER'); setCreateBranchId('');
+      fetchData();
+    } catch (error: any) {
+      toastError(error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo tài khoản.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Confirm Action Handler (Revoke or Delete)
+  const handleConfirmAction = async () => {
+    try {
+      if (confirmModal.type === 'REVOKE') {
+        await http.put(`/users/admin/${confirmModal.userId}/role`, { role: 'CUSTOMER' });
+        toastSuccess(`Đã thu hồi quyền của tài khoản "${confirmModal.userName}" thành công!`);
+      } else {
+        await http.delete(`/users/admin/${confirmModal.userId}`);
+        toastSuccess(`Đã xóa tài khoản "${confirmModal.userName}" thành công!`);
+      }
+      setConfirmModal({ open: false, userId: '', userName: '', type: 'REVOKE' });
+      fetchData();
+    } catch (error: any) {
+      toastError(error.response?.data?.message || error.message || 'Có lỗi xảy ra.');
+    }
+  };
+
   // Filter users
   const filteredUsers = users.filter(u => {
     const matchSearch = u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -146,6 +210,13 @@ export function AccountsFeature() {
             Phân quyền hệ thống và quản lý nhân sự cho các chi nhánh.
           </p>
         </div>
+        <Button 
+          className="bg-[#ea580c] hover:bg-[#c2410c] text-white shadow-sm"
+          onClick={() => setIsCreateModalOpen(true)}
+        >
+          <Plus className="w-4 h-4 mr-1.5" />
+          Tạo tài khoản
+        </Button>
       </div>
 
       {/* Toolbar */}
@@ -247,15 +318,38 @@ export function AccountsFeature() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       {currentUser?._id !== user._id && user.role !== 'ADMIN' && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleEditClick(user)}
-                          className="text-[#ea580c] border-[#ea580c] hover:bg-orange-50"
-                        >
-                          <UserCog className="w-4 h-4 mr-1.5" />
-                          Sửa quyền
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditClick(user)}
+                            className="text-[#ea580c] border-[#ea580c] hover:bg-orange-50"
+                          >
+                            <UserCog className="w-4 h-4 mr-1.5" />
+                            Sửa quyền
+                          </Button>
+                          {user.role === 'CUSTOMER' ? (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              title="Xóa tài khoản"
+                              onClick={() => setConfirmModal({ open: true, userId: user._id, userName: user.full_name, type: 'DELETE' })}
+                              className="text-red-600 border-red-300 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              title="Thu hồi quyền"
+                              onClick={() => setConfirmModal({ open: true, userId: user._id, userName: user.full_name, type: 'REVOKE' })}
+                              className="text-gray-600 border-gray-300 hover:bg-gray-100"
+                            >
+                              <UserMinus className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -380,6 +474,127 @@ export function AccountsFeature() {
           )}
         </div>
       </Modal>
+
+      {/* Create Account Modal */}
+      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} maxWidth="md">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold text-gray-900">Tạo tài khoản nhân viên</h3>
+            <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <Plus className="w-6 h-6 rotate-45" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Họ và tên <span className="text-red-500">*</span></label>
+              <Input
+                placeholder="Nguyễn Văn A"
+                value={createFullName}
+                onChange={(e) => setCreateFullName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
+              <Input
+                type="email"
+                placeholder="email@spoton.vn"
+                value={createEmail}
+                onChange={(e) => setCreateEmail(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Số điện thoại</label>
+              <Input
+                type="tel"
+                placeholder="0901234567"
+                value={createPhone}
+                onChange={(e) => setCreatePhone(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Mật khẩu <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Tối thiểu 6 ký tự"
+                  value={createPassword}
+                  onChange={(e) => setCreatePassword(e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Vai trò <span className="text-red-500">*</span></label>
+              <select
+                className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ea580c] focus:border-transparent"
+                value={createRole}
+                onChange={(e) => setCreateRole(e.target.value as 'MANAGER' | 'WAITER')}
+              >
+                <option value="WAITER">Nhân viên phục vụ (WAITER)</option>
+                <option value="MANAGER">Quản lý chi nhánh (MANAGER)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Chi nhánh phân công <span className="text-red-500">*</span></label>
+              <select
+                className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ea580c] focus:border-transparent"
+                value={createBranchId}
+                onChange={(e) => setCreateBranchId(e.target.value)}
+              >
+                <option value="" disabled>-- Chọn chi nhánh --</option>
+                {branches.map(b => (
+                  <option key={b._id} value={b._id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t border-gray-100">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setIsCreateModalOpen(false)}
+                disabled={isCreating}
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                className="flex-1 bg-[#ea580c] hover:bg-[#c2410c] text-white"
+                onClick={handleCreateUser}
+                disabled={isCreating || !createFullName.trim() || !createEmail.trim() || !createPassword.trim() || !createBranchId}
+              >
+                {isCreating ? 'Đang tạo...' : 'Tạo tài khoản'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, userId: '', userName: '', type: 'REVOKE' })}
+        onConfirm={handleConfirmAction}
+        title={confirmModal.type === 'REVOKE' ? "Thu hồi quyền nhân viên" : "Xóa tài khoản"}
+        description={
+          confirmModal.type === 'REVOKE'
+            ? `Bạn có chắc chắn muốn thu hồi quyền của nhân viên này? Tài khoản sẽ trở thành Khách hàng bình thường và không còn quyền truy cập quản trị.`
+            : `Bạn có chắc chắn muốn xóa tài khoản này? Hành động này không thể hoàn tác.`
+        }
+        itemName={confirmModal.userName}
+      />
     </div>
   );
 }

@@ -105,10 +105,10 @@ export function NewDishesSection() {
                     </p>
                   </div>
                   <div className="mt-4 flex justify-end">
-                    <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-gray-200 hover:border-[#e67e22] hover:text-[#e67e22] hover:bg-amber-50 transition-colors text-sm font-semibold text-gray-700 cursor-pointer">
+                    <Link href="/branches" className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-gray-200 hover:border-[#e67e22] hover:text-[#e67e22] hover:bg-amber-50 transition-colors text-sm font-semibold text-gray-700 cursor-pointer">
                       <Plus className="w-4 h-4" />
                       {HOME_TEXTS.newDishes.orderBtn}
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>

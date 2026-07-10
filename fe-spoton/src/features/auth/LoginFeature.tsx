@@ -35,6 +35,8 @@ export function LoginFeature() {
           router.push('/admin');
         } else if (user?.role === 'MANAGER') {
           router.push('/manager/branch');
+        } else if (user?.role === 'KITCHEN') {
+          router.push('/kitchen');
         } else {
           router.push('/');
         }
@@ -96,6 +98,8 @@ export function LoginFeature() {
           router.push('/admin');
         } else if (userRole === 'MANAGER') {
           router.push('/manager/branch');
+        } else if (userRole === 'KITCHEN') {
+          router.push('/kitchen');
         } else {
           router.push('/');
         }

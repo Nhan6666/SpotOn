@@ -13,7 +13,8 @@ export default function MainLayout({
   const isAdmin = pathname?.startsWith('/admin');
   const isManager = pathname?.startsWith('/manager');
   const isWaiter = pathname?.startsWith('/waiter');
-  const hasOwnLayout = isAdmin || isManager || isWaiter;
+  const isKitchen = pathname?.startsWith('/kitchen');
+  const hasOwnLayout = isAdmin || isManager || isWaiter || isKitchen;
 
   return (
     <>

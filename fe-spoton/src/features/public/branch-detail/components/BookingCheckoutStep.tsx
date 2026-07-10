@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Image from 'next/image';
-import { AlertCircle, Clock, ShoppingCart, Trash2, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, Clock, ShoppingCart, Trash2, CheckCircle2, User, Phone, FileText } from 'lucide-react';
 import { PublicBranchDetail } from '../branch-detail.types';
 import { PUBLIC_TEXTS } from '@/constants/texts/public';
 import { branchDetailService } from '../branch-detail.service';
@@ -23,10 +23,11 @@ interface Props {
   branch: PublicBranchDetail;
   bookingId: string;
   expiresAt: string;
+  selectedTables?: any[];
   onCancel: () => void;
 }
 
-export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: Props) {
+export function BookingCheckoutStep({ branch, bookingId, expiresAt, selectedTables = [], onCancel }: Props) {
   const [categories, setCategories] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<string>('');
   const [menuItems, setMenuItems] = useState<any[]>([]);
@@ -35,6 +36,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
   const [isLoadingMenu, setIsLoadingMenu] = useState(false);
   const [tabOffset, setTabOffset] = useState(0);
 
+  const [tables, setTables] = useState<any[]>(selectedTables);
   const [cart, setCart] = useState<Record<string, { item: any; quantity: number }>>({});
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,6 +46,26 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
   const { register, handleSubmit, formState: { errors } } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
   });
+
+  // Fetch booking details if tables are missing (fallback for old cache)
+  useEffect(() => {
+    if (tables.length === 0 && bookingId) {
+      const fetchBooking = async () => {
+        const data = await branchDetailService.getBookingById(bookingId);
+        if (data && data.table_ids && data.table_ids.length > 0) {
+          setTables(data.table_ids);
+        }
+      };
+      fetchBooking();
+    }
+  }, [bookingId, tables.length]);
+
+  // Sync state if prop changes
+  useEffect(() => {
+    if (selectedTables && selectedTables.length > 0) {
+      setTables(selectedTables);
+    }
+  }, [selectedTables]);
 
   // Countdown Timer
   useEffect(() => {
@@ -367,6 +389,27 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
         {/* Right Column: Form & Cart Summary */}
         <div className="lg:col-span-1">
           <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden sticky top-32">
+            
+            {/* Selected Tables Info */}
+            <div className="bg-orange-50 border-b border-orange-100 p-4">
+              <h3 className="font-bold text-orange-900 flex items-center gap-2 mb-3">
+                <CheckCircle2 className="w-5 h-5 text-[#ea580c]" /> 
+                Bàn đã chọn
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {tables && tables.length > 0 ? (
+                  tables.map((t: any) => (
+                    <div key={t._id} className="bg-white border border-orange-200 text-orange-800 text-xs px-3 py-1.5 rounded-lg shadow-sm font-medium flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#ea580c]"></span>
+                      Bàn {t.table_number || t.name} <span className="text-gray-400 font-normal">({t.capacity} chỗ)</span>
+                    </div>
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-500 italic">Chưa có thông tin bàn</span>
+                )}
+              </div>
+            </div>
+
             <div className="bg-gray-50 border-b border-gray-200 p-4">
               <h3 className="font-bold text-gray-900 flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5 text-[#ea580c]" /> 
@@ -374,7 +417,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
               </h3>
             </div>
             
-            <div className="p-4 max-h-[300px] overflow-y-auto">
+            <div className="p-4 max-h-[300px] overflow-y-auto bg-white">
               {cartItems.length === 0 ? (
                 <p className="text-sm text-gray-500 italic text-center py-4">{PUBLIC_TEXTS.branchDetail.checkout.cart.empty}</p>
               ) : (
@@ -398,46 +441,64 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
             </div>
 
             {cartItems.length > 0 && (
-              <div className="p-4 bg-orange-50 border-t border-orange-100 flex justify-between items-center">
+              <div className="p-4 bg-orange-50 border-y border-orange-100 flex justify-between items-center">
                 <span className="font-medium text-orange-900">{PUBLIC_TEXTS.branchDetail.checkout.cart.total}</span>
                 <span className="text-xl font-bold text-[#ea580c]">{cartTotal.toLocaleString()}đ</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="p-4 border-t border-gray-200 bg-gray-50 space-y-4">
-              <h4 className="font-bold text-gray-900 mb-2">{PUBLIC_TEXTS.branchDetail.checkout.form.title}</h4>
+            <form onSubmit={handleSubmit(onSubmit)} className="p-5 bg-white space-y-4">
+              <h4 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2 flex items-center gap-2">
+                <User className="w-5 h-5 text-gray-500" />
+                {PUBLIC_TEXTS.branchDetail.checkout.form.title}
+              </h4>
               
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{PUBLIC_TEXTS.branchDetail.checkout.form.nameLabel} <span className="text-red-500">*</span></label>
-                <input 
-                  {...register('walk_in_name')}
-                  type="text" 
-                  className={`w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] ${errors.walk_in_name ? 'border-red-500' : ''}`}
-                  placeholder={PUBLIC_TEXTS.branchDetail.checkout.form.namePlaceholder}
-                />
-                {errors.walk_in_name && <p className="text-red-500 text-xs mt-1">{errors.walk_in_name.message}</p>}
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">{PUBLIC_TEXTS.branchDetail.checkout.form.nameLabel} <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <input 
+                    {...register('walk_in_name')}
+                    type="text" 
+                    className={`w-full pl-9 py-2.5 text-sm border-gray-300 rounded-xl shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] transition-colors bg-gray-50 focus:bg-white ${errors.walk_in_name ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                    placeholder={PUBLIC_TEXTS.branchDetail.checkout.form.namePlaceholder}
+                  />
+                </div>
+                {errors.walk_in_name && <p className="text-red-500 text-xs mt-1 font-medium">{errors.walk_in_name.message}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{PUBLIC_TEXTS.branchDetail.checkout.form.phoneLabel} <span className="text-red-500">*</span></label>
-                <input 
-                  {...register('walk_in_phone')}
-                  type="tel" 
-                  className={`w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] ${errors.walk_in_phone ? 'border-red-500' : ''}`}
-                  placeholder={PUBLIC_TEXTS.branchDetail.checkout.form.phonePlaceholder}
-                />
-                {errors.walk_in_phone && <p className="text-red-500 text-xs mt-1">{errors.walk_in_phone.message}</p>}
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">{PUBLIC_TEXTS.branchDetail.checkout.form.phoneLabel} <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <input 
+                    {...register('walk_in_phone')}
+                    type="tel" 
+                    className={`w-full pl-9 py-2.5 text-sm border-gray-300 rounded-xl shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] transition-colors bg-gray-50 focus:bg-white ${errors.walk_in_phone ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                    placeholder={PUBLIC_TEXTS.branchDetail.checkout.form.phonePlaceholder}
+                  />
+                </div>
+                {errors.walk_in_phone && <p className="text-red-500 text-xs mt-1 font-medium">{errors.walk_in_phone.message}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{PUBLIC_TEXTS.branchDetail.checkout.form.noteLabel}</label>
-                <textarea 
-                  {...register('note')}
-                  rows={2}
-                  className={`w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] ${errors.note ? 'border-red-500' : ''}`}
-                  placeholder={PUBLIC_TEXTS.branchDetail.checkout.form.notePlaceholder}
-                />
-                {errors.note && <p className="text-red-500 text-xs mt-1">{errors.note.message}</p>}
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">{PUBLIC_TEXTS.branchDetail.checkout.form.noteLabel}</label>
+                <div className="relative">
+                  <div className="absolute top-3 left-0 pl-3 flex items-start pointer-events-none">
+                    <FileText className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <textarea 
+                    {...register('note')}
+                    rows={2}
+                    className={`w-full pl-9 py-2.5 text-sm border-gray-300 rounded-xl shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] transition-colors bg-gray-50 focus:bg-white ${errors.note ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                    placeholder={PUBLIC_TEXTS.branchDetail.checkout.form.notePlaceholder}
+                  />
+                </div>
+                {errors.note && <p className="text-red-500 text-xs mt-1 font-medium">{errors.note.message}</p>}
               </div>
 
               {errorMsg && (

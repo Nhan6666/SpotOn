@@ -4,25 +4,20 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
-import { Store, UtensilsCrossed, BarChart3, CalendarDays, ClipboardCheck, Flame, LogOut, Ticket } from 'lucide-react';
+import { Flame } from 'lucide-react';
 import { Navbar } from '@/components/ui/Navbar';
 
-const MANAGER_NAV = [
-  { href: '/manager/branch', label: 'Chi nhánh', icon: Store },
-  { href: '/manager/menus', label: 'Thực đơn', icon: UtensilsCrossed },
-  { href: '/manager/bookings', label: 'Sơ đồ bàn', icon: CalendarDays },
-  { href: '/manager/check-in', label: 'Check-in (Kanban)', icon: ClipboardCheck },
-  { href: '/manager/stats', label: 'Thống kê', icon: BarChart3 },
-  { href: '/manager/vouchers', label: 'Khuyến mãi', icon: Ticket },
+const KITCHEN_NAV = [
+  { href: '/kitchen', label: 'Hệ thống Bếp (KDS)', icon: Flame },
 ];
 
-export default function ManagerLayout({
+export default function KitchenLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
     <div className="flex flex-col h-screen w-full bg-gray-50">
@@ -33,8 +28,8 @@ export default function ManagerLayout({
         {/* Sidebar */}
         <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col flex-shrink-0 h-full">
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-4">
-          {MANAGER_NAV.map((item) => {
-            const isActive = pathname?.startsWith(item.href);
+          {KITCHEN_NAV.map((item) => {
+            const isActive = pathname?.startsWith(item.href) || pathname === item.href;
             const Icon = item.icon;
             return (
               <Link
@@ -52,16 +47,15 @@ export default function ManagerLayout({
             );
           })}
         </nav>
-
         </aside>
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Page Content */}
-
-        {/* Page Content */}
-          <main className="flex-1 overflow-y-auto p-6">
-            {children}
+          <main className="flex-1 overflow-auto bg-gray-50 p-6">
+            <div className="max-w-[1400px] mx-auto w-full h-full">
+              {children}
+            </div>
           </main>
         </div>
       </div>

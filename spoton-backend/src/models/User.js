@@ -10,7 +10,7 @@ const UserSchema = new mongoose.Schema(
     phone: { type: String, trim: true },
     role: {
       type: String,
-      enum: ['ADMIN', 'MANAGER', 'WAITER', 'CUSTOMER'],
+      enum: ['ADMIN', 'MANAGER', 'WAITER', 'KITCHEN', 'CUSTOMER'],
       default: 'CUSTOMER',
     },
     // Liên kết nhân viên với chi nhánh (null nếu là ADMIN hoặc CUSTOMER)

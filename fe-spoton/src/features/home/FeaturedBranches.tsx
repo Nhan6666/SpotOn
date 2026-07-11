@@ -74,13 +74,13 @@ export function FeaturedBranches() {
   };
 
   return (
-    <section className="container mx-auto px-4 py-16 mb-10">
+    <section className="container mx-auto px-4 pt-16 pb-24">
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 font-playfair tracking-tight">{HOME_TEXTS.popularBranches.title}</h2>
-          <p className="text-gray-500 text-sm">{HOME_TEXTS.popularBranches.subtitle}</p>
+          <h2 className="text-2xl md:text-3xl font-stencil tracking-wider uppercase text-[#F2B02A] mb-2">{HOME_TEXTS.popularBranches.title}</h2>
+          <p className="text-gray-300 text-sm">{HOME_TEXTS.popularBranches.subtitle}</p>
         </div>
-        <Link href="/branches" className="text-amber-500 hover:text-amber-600 text-sm font-medium flex items-center transition-colors">
+        <Link href="/branches" className="text-[#F2B02A] hover:text-[#d99d24] text-sm font-bold uppercase tracking-wider flex items-center transition-colors">
           {HOME_TEXTS.popularBranches.viewAllBtn} <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
         </Link>
       </div>
@@ -90,13 +90,13 @@ export function FeaturedBranches() {
           {isLoading ? (
             // Skeletons
             Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col h-[320px] animate-pulse">
-                <div className="h-48 bg-gray-200 w-full"></div>
+              <div key={i} className="bg-[#0A2A12] rounded-2xl overflow-hidden shadow-sm border border-[#2A5A3A] flex flex-col h-[320px] animate-pulse">
+                <div className="h-48 bg-[#164626] w-full"></div>
                 <div className="p-5 flex flex-col justify-between flex-1">
                   <div>
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                    <div className="h-6 bg-[#164626] rounded w-3/4 mb-3"></div>
+                    <div className="h-4 bg-[#164626] rounded w-full mb-2"></div>
+                    <div className="h-4 bg-[#164626] rounded w-5/6"></div>
                   </div>
                 </div>
               </div>
@@ -108,7 +108,7 @@ export function FeaturedBranches() {
               : FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
 
             return (
-              <div key={branch._id} className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-gray-50 flex flex-col group h-full transition-transform hover:-translate-y-1">
+              <div key={branch._id} className="bg-[#0A2A12] rounded-2xl overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.3)] border border-[#2A5A3A] flex flex-col group h-full transition-transform hover:-translate-y-1">
                 <Link href={`/branches/${branch._id}`} className="flex flex-col h-full group cursor-pointer">
                   <div className="relative h-56 w-full overflow-hidden">
                     <Image 
@@ -125,25 +125,25 @@ export function FeaturedBranches() {
                   
                   <div className="p-5 flex flex-col justify-between flex-1">
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-amber-500 transition-colors line-clamp-1">{branch.name}</h3>
+                      <h3 className="text-xl font-bold text-white mb-3 group-hover:text-[#F2B02A] transition-colors line-clamp-1">{branch.name}</h3>
                       <div className="space-y-2">
-                        <div className="flex items-start text-gray-500 text-sm">
+                        <div className="flex items-start text-gray-400 text-sm">
                           <svg className="w-4 h-4 mr-1.5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
                           <span className="line-clamp-2">{getAddressDisplay(branch)}</span>
                         </div>
-                        <div className="flex items-start text-gray-500 text-sm">
+                        <div className="flex items-start text-gray-400 text-sm">
                           <Phone className="w-4 h-4 mr-1.5 mt-0.5 shrink-0" />
                           <span>{branch.hotline || 'Đang cập nhật'}</span>
                         </div>
-                        <div className="flex items-start text-gray-500 text-sm">
+                        <div className="flex items-start text-gray-400 text-sm">
                           <Clock className="w-4 h-4 mr-1.5 mt-0.5 shrink-0" />
                           <span className="line-clamp-1">{getServiceHoursDisplay(branch) || 'Đang cập nhật'}</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
-                      <span className="px-6 py-2 bg-amber-50 text-amber-600 hover:bg-amber-100 text-sm font-semibold rounded-full transition-colors w-full text-center cursor-pointer">
+                    <div className="flex justify-end mt-4 pt-4 border-t border-[#2A5A3A]">
+                      <span className="px-6 py-2 bg-[#164626] text-[#F2B02A] hover:bg-[#F2B02A] hover:text-[#164626] text-sm font-bold uppercase tracking-wider rounded-full transition-colors w-full text-center cursor-pointer border border-[#F2B02A]">
                         {HOME_TEXTS.popularBranches.bookingBtn || 'Đặt bàn'}
                       </span>
                     </div>
@@ -165,14 +165,14 @@ export function FeaturedBranches() {
             <button
               onClick={handlePrev}
               disabled={currentPage === 0}
-              className={`absolute -left-4 md:-left-12 top-1/2 -translate-y-1/2 transition-colors hidden lg:block ${currentPage === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-amber-500 cursor-pointer'}`}
+              className={`absolute -left-4 md:-left-12 top-1/2 -translate-y-1/2 transition-colors hidden lg:block ${currentPage === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-[#F2B02A] cursor-pointer'}`}
             >
               <ChevronLeft className="w-10 h-10" />
             </button>
             <button
               onClick={handleNext}
               disabled={currentPage >= totalPages - 1}
-              className={`absolute -right-4 md:-right-12 top-1/2 -translate-y-1/2 transition-colors hidden lg:block ${currentPage >= totalPages - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-amber-500 cursor-pointer'}`}
+              className={`absolute -right-4 md:-right-12 top-1/2 -translate-y-1/2 transition-colors hidden lg:block ${currentPage >= totalPages - 1 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-[#F2B02A] cursor-pointer'}`}
             >
               <ChevronRight className="w-10 h-10" />
             </button>

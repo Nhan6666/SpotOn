@@ -6,7 +6,7 @@ import { NewDishesSection } from './NewDishesSection';
 
 export function HomePageFeature() {
   return (
-    <main className="bg-[#f9fafb] min-h-screen">
+    <main className="bg-[#164626] min-h-screen text-white">
       <HeroSection />
       <NewDishesSection />
       <WhyChooseSpotOn />

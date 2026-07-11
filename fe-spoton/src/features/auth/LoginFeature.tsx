@@ -67,7 +67,7 @@ export function LoginFeature() {
   }, [setValue]);
 
   const inputClass =
-    'w-full rounded-md border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-[#8a5a19] focus:outline-none focus:ring-1 focus:ring-[#8a5a19] transition-colors';
+    'w-full rounded-md border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-[#164626] focus:outline-none focus:ring-1 focus:ring-[#164626] transition-colors';
   const inputErrorClass =
     'w-full rounded-md border border-red-400 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 transition-colors';
 
@@ -128,10 +128,10 @@ export function LoginFeature() {
         <div className="absolute inset-0 bg-black/60" />
 
         <div className="absolute bottom-0 left-0 flex h-full flex-col justify-end p-12 lg:p-16 w-full max-w-2xl">
-          <div className="mb-6 flex items-center gap-2 text-[#F2Dbb8]">
-            <span className="text-5xl font-bold tracking-tight">SpotOn</span>
+          <div className="mb-6 flex items-center gap-2 text-[#F2B02A]">
+            <span className="text-5xl font-stencil tracking-wider uppercase drop-shadow-md">SpotOn</span>
           </div>
-          <h2 className="text-3xl lg:text-4xl font-semibold text-white mb-4 leading-snug">
+          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4 leading-snug drop-shadow-sm">
             {login.bannerTitle}
           </h2>
           <p className="text-gray-300 text-sm lg:text-base leading-relaxed">
@@ -145,19 +145,19 @@ export function LoginFeature() {
         <div className="mx-auto w-full max-w-md">
           {/* Logo */}
           <div className="mb-8 flex items-center gap-2">
-            <div className="flex items-center justify-center text-amber-700">
+            <div className="flex items-center justify-center text-[#F2B02A]">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path d="M12 2C12 2 12 7.5 9 10.5C6 13.5 2 12 2 12M12 2C12 2 12 7.5 15 10.5C18 13.5 22 12 22 12M12 2V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M7 2L7 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M17 2L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span className="text-3xl font-bold tracking-tight text-gray-900">
+            <span className="text-3xl font-stencil tracking-wider uppercase text-[#164626]">
               SpotOn
             </span>
           </div>
 
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">
+          <h1 className="mb-2 text-3xl font-bold text-[#164626]">
             {login.title}
           </h1>
           <p className="mb-8 text-gray-500">
@@ -234,23 +234,22 @@ export function LoginFeature() {
                 <input
                   id="rememberMe"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-[#8a5a19] focus:ring-[#8a5a19]"
+                  className="h-4 w-4 rounded border-gray-300 text-[#164626] focus:ring-[#164626]"
                   {...register('rememberMe')}
                 />
                 <label htmlFor="rememberMe" className="text-sm text-gray-600">
                   Ghi nhớ đăng nhập
                 </label>
               </div>
-              <Link href="/forgot-password" className="text-sm font-semibold text-[#8a5a19] hover:underline">
+              <Link href="/forgot-password" className="text-sm font-semibold text-[#164626] hover:text-[#0A2A12] hover:underline">
                 {login.forgotPassword}
               </Link>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-md bg-[#8C5D2A] px-4 py-3 text-sm font-bold text-white transition-all hover:bg-[#6c4820] disabled:cursor-not-allowed disabled:opacity-70 mt-6 shadow-sm hover:shadow-md"
+              className="w-full rounded-md bg-[#F2B02A] px-4 py-3 text-sm font-bold uppercase tracking-wider text-[#164626] transition-all hover:bg-[#d99d24] disabled:cursor-not-allowed disabled:opacity-70 mt-6 shadow-sm hover:shadow-md"
             >
               {isSubmitting ? login.submittingBtn : login.submitBtn}
             </button>
@@ -287,7 +286,7 @@ export function LoginFeature() {
 
           <p className="mt-8 text-center text-sm text-gray-500">
             {login.noAccount}{' '}
-            <Link href="/register" className="font-semibold text-[#8a5a19] hover:underline">
+            <Link href="/register" className="font-semibold text-[#164626] hover:text-[#0A2A12] hover:underline">
               {login.registerLink}
             </Link>
           </p>

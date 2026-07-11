@@ -80,7 +80,7 @@ export function RegisterFeature() {
   });
 
   const inputClass =
-    'w-full rounded-md border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-amber-600 focus:outline-none focus:ring-1 focus:ring-amber-600 transition-colors';
+    'w-full rounded-md border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-[#164626] focus:outline-none focus:ring-1 focus:ring-[#164626] transition-colors';
 
   const inputErrorClass =
     'w-full rounded-md border border-red-400 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 transition-colors';
@@ -137,20 +137,20 @@ export function RegisterFeature() {
 
           {/* Logo */}
           <div className="mb-8 flex items-center gap-2">
-            <div className="flex items-center justify-center text-amber-700">
+            <div className="flex items-center justify-center text-[#F2B02A]">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path d="M12 2C12 2 12 7.5 9 10.5C6 13.5 2 12 2 12M12 2C12 2 12 7.5 15 10.5C18 13.5 22 12 22 12M12 2V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M7 2L7 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M17 2L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span className="text-3xl font-bold tracking-tight text-gray-900">
+            <span className="text-3xl font-stencil tracking-wider uppercase text-[#164626]">
               SpotOn
             </span>
           </div>
 
           {/* Heading */}
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">
+          <h1 className="mb-2 text-3xl font-bold text-[#164626]">
             {registerText.title}
           </h1>
 
@@ -238,7 +238,7 @@ export function RegisterFeature() {
             <button
               type="submit"
               disabled={isSubmitting || isGoogleLoading}
-              className="w-full rounded-md bg-[#8a5a19] cursor-pointer px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#724a15] transition-colors focus:outline-none focus:ring-2 focus:ring-[#8a5a19] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full rounded-md bg-[#F2B02A] cursor-pointer px-4 py-3.5 text-sm font-bold uppercase tracking-wider text-[#164626] shadow-sm hover:bg-[#d99d24] hover:shadow-md transition-all focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed mt-6"
             >
               {isSubmitting ? registerText.submittingBtn : registerText.submitBtn}
             </button>
@@ -259,7 +259,7 @@ export function RegisterFeature() {
                 type="button"
                 onClick={loginWithGoogle}
                 disabled={isGoogleLoading || isSubmitting}
-                className="flex w-full items-center cursor-pointer justify-center gap-3 rounded-md border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#8a5a19] focus:ring-offset-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex w-full items-center cursor-pointer justify-center gap-3 rounded-md border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {/* Icon Google chuẩn */}
                 <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
@@ -288,7 +288,7 @@ export function RegisterFeature() {
           {/* Login Link */}
           <p className="mt-8 text-center text-sm text-slate-500">
             {registerText.hasAccount}{' '}
-            <Link href="/login" className="font-semibold text-[#8a5a19] hover:underline">
+            <Link href="/login" className="font-semibold text-[#164626] hover:text-[#0A2A12] hover:underline">
               {registerText.loginLink}
             </Link>
           </p>
@@ -310,7 +310,7 @@ export function RegisterFeature() {
         <div className="absolute bottom-0 left-0 p-12 lg:p-16 w-full max-w-2xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-md mb-6">
           </div>
-          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4 leading-snug">
+          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4 leading-snug drop-shadow-sm">
             {registerText.bannerTitle}
           </h2>
           <p className="text-gray-300 text-sm lg:text-base leading-relaxed">

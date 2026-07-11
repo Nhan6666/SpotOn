@@ -163,24 +163,24 @@ export function BranchesFeature() {
   }, [branches, filterDistrict, filterStatus, filterGuests, filterTime, filterAmenities]);
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#fafafa] pb-12">
       {/* Header Section */}
       <div className="bg-white border-b border-gray-100 py-8">
         <div className="container mx-auto px-4 max-w-6xl">
-          <div className="flex items-center text-sm text-gray-500 mb-4">
-            <Link href="/" className="hover:text-amber-600 transition-colors">
+          <div className="flex items-center text-sm font-bold uppercase tracking-wider text-[#164626] mb-4">
+            <Link href="/" className="hover:text-[#F2B02A] transition-colors">
               {PUBLIC_TEXTS.branches.header.breadcrumbs.home}
             </Link>
-            <span className="mx-2">›</span>
-            <span className="text-gray-900 font-medium">
+            <span className="mx-2 text-gray-400">›</span>
+            <span className="text-[#164626] font-medium">
               {PUBLIC_TEXTS.branches.header.breadcrumbs.current}
             </span>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl md:text-4xl font-stencil uppercase tracking-wider text-[#164626] mb-2">
             {isLoading ? PUBLIC_TEXTS.branches.header.titleLoading : `${filteredBranches.length} ${PUBLIC_TEXTS.branches.header.title}`}
           </h1>
-          <p className="text-gray-500">
+          <p className="text-gray-600">
             {PUBLIC_TEXTS.branches.header.subtitle}
           </p>
         </div>
@@ -192,9 +192,9 @@ export function BranchesFeature() {
           <div className="w-full lg:w-1/4">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 sticky top-24">
               <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
-                <div className="flex items-center font-bold text-gray-800">
+                <div className="flex items-center font-bold text-[#164626] uppercase tracking-wider">
                   <svg
-                    className="w-5 h-5 mr-2"
+                    className="w-5 h-5 mr-2 text-[#F2B02A]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -219,7 +219,7 @@ export function BranchesFeature() {
                     setDraftGuests(0);
                     setDraftAmenities([]);
                   }}
-                  className="text-sm text-[#ea580c] hover:underline font-medium"
+                  className="text-sm text-[#F2B02A] hover:text-[#d99d24] hover:underline font-bold uppercase tracking-wider"
                 >
                   {PUBLIC_TEXTS.branches.filters.clearAll}
                 </button>
@@ -227,14 +227,14 @@ export function BranchesFeature() {
 
               {/* Location */}
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-[#164626] mb-2 uppercase tracking-wide">
                   {PUBLIC_TEXTS.branches.filters.district.label}
                 </label>
                 <div className="relative">
                   <select
                     value={draftDistrict}
                     onChange={(e) => setDraftDistrict(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg py-2.5 px-3 appearance-none bg-gray-50 text-gray-700 outline-none focus:border-[#ea580c]"
+                    className="w-full border border-gray-300 rounded-lg py-2.5 px-3 appearance-none bg-gray-50 text-gray-800 outline-none focus:border-[#164626] transition-colors"
                   >
                     <option>Tất cả quận</option>
                     <option>Ninh Kiều</option>
@@ -257,14 +257,14 @@ export function BranchesFeature() {
 
               {/* Status Filter */}
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-[#164626] mb-2 uppercase tracking-wide">
                   {PUBLIC_TEXTS.branches.filters.status.label}
                 </label>
                 <div className="relative">
                   <select
                     value={draftStatus}
                     onChange={(e) => setDraftStatus(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg py-2.5 px-3 appearance-none bg-gray-50 text-gray-700 outline-none focus:border-[#ea580c]"
+                    className="w-full border border-gray-300 rounded-lg py-2.5 px-3 appearance-none bg-gray-50 text-gray-800 outline-none focus:border-[#164626] transition-colors"
                   >
                     <option>Tất cả</option>
                     <option>Đang mở</option>
@@ -285,7 +285,7 @@ export function BranchesFeature() {
 
               {/* Event Size */}
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-[#164626] mb-2 uppercase tracking-wide">
                   {PUBLIC_TEXTS.branches.filters.guests.label}
                 </label>
                 <div className="flex items-center justify-between border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
@@ -293,7 +293,7 @@ export function BranchesFeature() {
                     onClick={() =>
                       setDraftGuests(Math.max(0, draftGuests - 1))
                     }
-                    className="px-4 py-2 text-gray-500 hover:bg-gray-200 transition-colors font-medium"
+                    className="px-4 py-2 text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-colors font-bold"
                   >
                     ─
                   </button>
@@ -302,7 +302,7 @@ export function BranchesFeature() {
                   </span>
                   <button
                     onClick={() => setDraftGuests(draftGuests + 1)}
-                    className="px-4 py-2 text-gray-500 hover:bg-gray-200 transition-colors font-medium"
+                    className="px-4 py-2 text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-colors font-bold"
                   >
                     +
                   </button>
@@ -311,7 +311,7 @@ export function BranchesFeature() {
 
               {/* Area Preferences */}
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-3">
+                <label className="block text-sm font-bold text-[#164626] mb-3 uppercase tracking-wide">
                   {PUBLIC_TEXTS.branches.filters.amenities.label}
                 </label>
                 <div className="space-y-3">
@@ -324,8 +324,8 @@ export function BranchesFeature() {
                         >
                         <div className={`relative flex items-center justify-center w-5 h-5 mr-3 border rounded-md transition-colors ${
                           draftAmenities.includes(amenity._id) 
-                            ? 'border-[#ea580c] bg-[#fffaf5]' 
-                            : 'border-gray-300 bg-white group-hover:border-[#ea580c]'
+                            ? 'border-[#F2B02A] bg-[#fffaf5]' 
+                            : 'border-gray-300 bg-white group-hover:border-[#F2B02A]'
                         }`}>
                           <input
                             type="checkbox"
@@ -341,7 +341,7 @@ export function BranchesFeature() {
                           />
                           {draftAmenities.includes(amenity._id) && (
                             <svg
-                              className="w-3 h-3 text-[#ea580c]"
+                              className="w-3 h-3 text-[#F2B02A]"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -355,14 +355,14 @@ export function BranchesFeature() {
                             </svg>
                           )}
                         </div>
-                        <span className="text-sm text-gray-600">{amenity.name}</span>
+                        <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">{amenity.name}</span>
                       </label>
                       ))}
                       
                       {amenityList.length > 4 && (
                         <button
                           onClick={() => setShowAllAmenities(!showAllAmenities)}
-                          className="text-sm font-medium text-[#ea580c] hover:underline flex items-center mt-2"
+                          className="text-sm font-bold text-[#F2B02A] hover:text-[#d99d24] hover:underline flex items-center mt-2 uppercase tracking-wider"
                         >
                           {showAllAmenities ? (
                             <>{PUBLIC_TEXTS.branches.filters.amenities.showLess} <span className="ml-1">↑</span></>
@@ -373,7 +373,7 @@ export function BranchesFeature() {
                       )}
                     </>
                   ) : (
-                    <p className="text-sm text-gray-400 italic">{PUBLIC_TEXTS.branches.filters.amenities.empty}</p>
+                    <p className="text-sm text-gray-500 italic">{PUBLIC_TEXTS.branches.filters.amenities.empty}</p>
                   )}
                 </div>
               </div>
@@ -386,7 +386,7 @@ export function BranchesFeature() {
                   setFilterAmenities(draftAmenities);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold py-3 rounded-lg transition-colors shadow-sm mt-4"
+                className="w-full bg-[#164626] text-[#F2B02A] hover:bg-[#F2B02A] hover:text-[#164626] border border-[#F2B02A] font-bold py-3 uppercase tracking-wider rounded-lg transition-colors shadow-sm mt-4"
               >
                 {PUBLIC_TEXTS.branches.filters.applyBtn}
               </button>
@@ -396,7 +396,7 @@ export function BranchesFeature() {
                   display: block;
                 }
                 input[type="checkbox"]:checked ~ div {
-                  border-color: #ea580c;
+                  border-color: #F2B02A;
                   background-color: #fffaf5;
                 }
               `}</style>
@@ -408,7 +408,7 @@ export function BranchesFeature() {
             {/* Loading State */}
             {isLoading && (
               <div className="flex flex-col items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#ea580c] mb-4"></div>
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#164626] mb-4"></div>
                 <p className="text-gray-500 font-medium">
                   {PUBLIC_TEXTS.branches.list.loading}
                 </p>
@@ -417,9 +417,9 @@ export function BranchesFeature() {
 
             {/* Error State */}
             {error && !isLoading && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center shadow-sm">
                 <svg
-                  className="w-10 h-10 text-red-400 mx-auto mb-3"
+                  className="w-10 h-10 text-red-500 mx-auto mb-3"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -437,7 +437,7 @@ export function BranchesFeature() {
 
             {/* Empty State */}
             {!isLoading && !error && filteredBranches.length === 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
                 <svg
                   className="w-16 h-16 text-gray-300 mx-auto mb-4"
                   fill="none"
@@ -451,7 +451,7 @@ export function BranchesFeature() {
                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                   ></path>
                 </svg>
-                <h3 className="text-lg font-bold text-gray-700 mb-1">
+                <h3 className="text-lg font-bold text-gray-700 mb-1 uppercase tracking-wider">
                   {PUBLIC_TEXTS.branches.list.notFound.title}
                 </h3>
                 <p className="text-gray-500 text-sm">
@@ -492,7 +492,7 @@ export function BranchesFeature() {
                 return (
                   <div
                     key={branch._id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow group cursor-pointer"
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow group cursor-pointer"
                   >
                     {/* Image Section */}
                     <div className="w-full md:w-5/12 h-56 md:h-auto relative overflow-hidden flex-shrink-0">
@@ -514,7 +514,7 @@ export function BranchesFeature() {
                     {/* Content Section */}
                     <div className="w-full md:w-7/12 p-5 lg:p-6 flex flex-col">
                       <div className="flex justify-between items-start mb-2">
-                        <h2 className="text-xl font-bold text-gray-900 line-clamp-1">
+                        <h2 className="text-2xl font-bold text-[#164626] group-hover:text-[#F2B02A] transition-colors line-clamp-1">
                           {branch.name}
                         </h2>
                       </div>
@@ -526,9 +526,9 @@ export function BranchesFeature() {
 
                       <div className="grid grid-cols-2 gap-y-3 gap-x-4 mb-5">
                         {/* Location / District */}
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-sm text-gray-700">
                           <svg
-                            className="w-4 h-4 mr-2 text-[#ea580c] flex-shrink-0"
+                            className="w-4 h-4 mr-2 text-[#F2B02A] flex-shrink-0"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -553,9 +553,9 @@ export function BranchesFeature() {
 
                         {/* Hotline */}
                         {branch.hotline && (
-                          <div className="flex items-center text-sm text-gray-600">
+                          <div className="flex items-center text-sm text-gray-700">
                             <svg
-                              className="w-4 h-4 mr-2 text-[#ea580c] flex-shrink-0"
+                              className="w-4 h-4 mr-2 text-[#F2B02A] flex-shrink-0"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -573,9 +573,9 @@ export function BranchesFeature() {
 
                         {/* Capacity */}
                         {totalCapacity && (
-                          <div className="flex items-center text-sm text-gray-600">
+                          <div className="flex items-center text-sm text-gray-700">
                             <svg
-                              className="w-4 h-4 mr-2 text-[#ea580c] flex-shrink-0"
+                              className="w-4 h-4 mr-2 text-[#F2B02A] flex-shrink-0"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -595,9 +595,9 @@ export function BranchesFeature() {
 
                         {/* Zone count */}
                         {branch.zones && branch.zones.length > 0 && (
-                          <div className="flex items-center text-sm text-gray-600">
+                          <div className="flex items-center text-sm text-gray-700">
                             <svg
-                              className="w-4 h-4 mr-2 text-[#ea580c] flex-shrink-0"
+                              className="w-4 h-4 mr-2 text-[#F2B02A] flex-shrink-0"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -618,10 +618,10 @@ export function BranchesFeature() {
 
                       {/* Service Hours */}
                       {serviceHours && (
-                        <div className="bg-gray-50 rounded-lg px-4 py-3 mb-5">
+                        <div className="bg-gray-50 rounded-lg px-4 py-3 mb-5 border border-gray-100">
                           <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                             <svg
-                              className="w-3.5 h-3.5 text-[#ea580c]"
+                              className="w-3.5 h-3.5 text-[#F2B02A]"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -657,7 +657,7 @@ export function BranchesFeature() {
                             {statusInfo.label}
                           </span>
                           {branch.current_capacity_percent > 0 && (
-                            <span className="bg-gray-100 text-gray-600 text-[11px] font-medium px-2.5 py-1 rounded">
+                            <span className="bg-gray-100 border border-gray-200 text-gray-600 text-[11px] font-medium px-2.5 py-1 rounded">
                               {branch.current_capacity_percent}%
                             </span>
                           )}
@@ -666,8 +666,9 @@ export function BranchesFeature() {
                         {hasSuitableTable ? (
                           <Link
                             href={`/branches/${branch._id}?date=${searchParams.get("date") || ""}&time=${searchParams.get("time") || ""}&guests=${searchParams.get("guests") || ""}`}
-                            className="w-full sm:w-auto px-6 py-2.5 border-2 border-[#ea580c] text-[#ea580c] hover:bg-[#fff6f0] font-bold rounded-full text-sm transition-colors text-center shrink-0"
+                            className="w-full sm:w-auto px-6 py-2 bg-gray-100 hover:bg-gray-200 text-[#164626] font-bold rounded-full text-sm transition-colors text-center shrink-0 flex items-center justify-center gap-2"
                           >
+                            <svg className="w-4 h-4 text-[#F2B02A]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                             {PUBLIC_TEXTS.branches.card.viewBtn}
                           </Link>
                         ) : (
@@ -675,7 +676,7 @@ export function BranchesFeature() {
                             <span className="text-[11px] text-red-500 font-bold mb-1.5 uppercase tracking-wider bg-red-50 px-2 py-0.5 rounded border border-red-100">{PUBLIC_TEXTS.branches.filters.status.full}</span>
                             <a
                               href={`tel:${branch.hotline || '19001234'}`}
-                              className="w-full sm:w-auto px-6 py-2 bg-red-500 text-white hover:bg-red-600 font-bold rounded-full text-sm transition-colors text-center shrink-0 flex items-center justify-center gap-2 shadow-sm"
+                              className="w-full sm:w-auto px-6 py-2 bg-[#164626] text-white hover:bg-[#0A2A12] font-bold rounded-full text-sm transition-colors text-center shrink-0 flex items-center justify-center gap-2 shadow-sm"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
                               {PUBLIC_TEXTS.branchDetail.bookingWidget.supportLink}

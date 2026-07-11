@@ -1,6 +1,6 @@
 export const HOME_TEXTS = {
   hero: {
-    title: "Trải Nghiệm Ẩm Thực Đỉnh Cao Tại SpotOn",
+    title: "TA TỰ DO TRONG THẾ GIỚI CỦA TA",
     subtitle: "Giải pháp quản lý đặt bàn và dịch vụ ăn uống cấp doanh nghiệp dành cho thực khách sành điệu và nhà quản lý hiệu quả.",
     bookingBtn: "Đặt Bàn Ngay",
     menuBtn: "Xem thực đơn",

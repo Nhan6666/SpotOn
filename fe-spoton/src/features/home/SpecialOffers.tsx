@@ -17,9 +17,9 @@ interface Voucher {
 }
 
 const CARD_STYLES = [
-  { bg: 'bg-[#e68a1a]', text: 'text-[#e68a1a]' },
-  { bg: 'bg-[#3e5f48]', text: 'text-[#3e5f48]' },
-  { bg: 'bg-[#2a2f3a]', text: 'text-[#2a2f3a]' }
+  { bg: 'bg-[#0A2A12] border border-[#2A5A3A]', text: 'text-[#164626]' },
+  { bg: 'bg-[#0A2A12] border border-[#2A5A3A]', text: 'text-[#164626]' },
+  { bg: 'bg-[#0A2A12] border border-[#2A5A3A]', text: 'text-[#164626]' }
 ];
 
 const DECORATIONS = [
@@ -73,13 +73,13 @@ export function SpecialOffers() {
       <section className="container mx-auto px-4 py-16">
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 font-playfair tracking-tight">{specialOffers.title}</h2>
-            <p className="text-gray-500 text-sm">{specialOffers.subtitle}</p>
+            <h2 className="text-2xl md:text-3xl font-stencil tracking-wider uppercase text-[#F2B02A] mb-2">{specialOffers.title}</h2>
+            <p className="text-gray-300 text-sm">{specialOffers.subtitle}</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-64 bg-gray-200 rounded-2xl animate-pulse"></div>
+            <div key={i} className="h-64 bg-[#0A2A12] border border-[#2A5A3A] rounded-2xl animate-pulse"></div>
           ))}
         </div>
       </section>
@@ -92,10 +92,10 @@ export function SpecialOffers() {
     <section className="container mx-auto px-4 py-16 mb-10">
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 font-playfair tracking-tight">{specialOffers.title}</h2>
-          <p className="text-gray-500 text-sm">{specialOffers.subtitle}</p>
+          <h2 className="text-2xl md:text-3xl font-stencil tracking-wider uppercase text-[#F2B02A] mb-2">{specialOffers.title}</h2>
+          <p className="text-gray-300 text-sm">{specialOffers.subtitle}</p>
         </div>
-        <Link href="/promotions" className="text-amber-500 hover:text-amber-600 text-sm font-medium flex items-center transition-colors">
+        <Link href="/promotions" className="text-[#F2B02A] hover:text-[#d99d24] text-sm font-bold uppercase tracking-wider flex items-center transition-colors">
           {specialOffers.viewAllBtn} <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
         </Link>
       </div>
@@ -117,17 +117,17 @@ export function SpecialOffers() {
               >
                 <div className={`absolute ${decoration}`}></div>
                 <div className="relative z-10">
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4 inline-block">
+                  <div className="bg-[#F2B02A] text-[#164626] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4 inline-block">
                     Ưu Đãi
                   </div>
-                  <h3 className="text-2xl font-bold mb-2 line-clamp-2" title={offer.name}>{offer.name}</h3>
-                  <p className="text-white text-opacity-90 text-sm mb-6 max-w-[85%] line-clamp-3">
+                  <h3 className="text-2xl font-bold mb-2 line-clamp-2 text-[#F2B02A]" title={offer.name}>{offer.name}</h3>
+                  <p className="text-gray-300 text-sm mb-6 max-w-[85%] line-clamp-3">
                     {offer.description || discountText}
                   </p>
                 </div>
                 <button 
                   onClick={() => handleCopyCode(offer.code)}
-                  className={`relative z-10 px-5 py-2 bg-white ${style.text} text-sm font-bold rounded-full hover:bg-gray-50 transition-colors shadow-sm cursor-pointer`}
+                  className={`relative z-10 px-5 py-2 bg-[#F2B02A] ${style.text} text-sm font-bold rounded-full hover:bg-[#d99d24] transition-colors shadow-sm cursor-pointer uppercase tracking-wider`}
                 >
                   Lấy Mã
                 </button>
@@ -142,14 +142,14 @@ export function SpecialOffers() {
             <button
               onClick={handlePrev}
               disabled={currentPage === 0}
-              className={`absolute -left-4 md:-left-12 top-1/2 -translate-y-1/2 transition-colors hidden lg:block ${currentPage === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-amber-500 cursor-pointer'}`}
+              className={`absolute -left-4 md:-left-12 top-1/2 -translate-y-1/2 transition-colors hidden lg:block ${currentPage === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-[#F2B02A] cursor-pointer'}`}
             >
               <ChevronLeft className="w-10 h-10" />
             </button>
             <button
               onClick={handleNext}
               disabled={currentPage >= totalPages - 1}
-              className={`absolute -right-4 md:-right-12 top-1/2 -translate-y-1/2 transition-colors hidden lg:block ${currentPage >= totalPages - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-amber-500 cursor-pointer'}`}
+              className={`absolute -right-4 md:-right-12 top-1/2 -translate-y-1/2 transition-colors hidden lg:block ${currentPage >= totalPages - 1 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-[#F2B02A] cursor-pointer'}`}
             >
               <ChevronRight className="w-10 h-10" />
             </button>

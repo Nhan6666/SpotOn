@@ -1,8 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
 @import "tailwindcss";
 
 /* ===== GLOBAL FONT ===== */
 * {
   font-family: var(--font-lexend), sans-serif;
+}
+
+.font-stencil {
+  font-family: 'Anton', sans-serif;
+  letter-spacing: 0.05em;
 }
 
 /* ===== BASE STYLES ===== */

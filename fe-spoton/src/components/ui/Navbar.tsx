@@ -3,16 +3,17 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 import logoImg from '@/assets/images/Logo-SpotOn-2.png';
 import { COMMON_TEXTS } from '@/constants/texts/common';
 
 export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
+  const pathname = usePathname();
+  const { navbar } = COMMON_TEXTS;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
-  const { navbar } = COMMON_TEXTS;
 
   // Xử lý click ra ngoài để tự động đóng Dropdown menu
   useEffect(() => {
@@ -81,32 +82,29 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
     : `https://ui-avatars.com/api/?name=${getInitials(user?.full_name)}&background=f59e0b&color=fff&length=1`;
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-100 shadow-sm transition-all duration-300">
+    <header className="sticky top-0 z-50 w-full bg-[#164626] border-b border-[#2A5A3A] shadow-sm transition-all duration-300">
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
 
         {/* === Logo === */}
         <Link href="/" className="flex items-center">
-          <Image
-            src={logoImg}
-            alt="SpotOn Logo"
-            className="h-16 w-auto object-contain"
-            priority
-          />
+          <span className="text-4xl font-stencil tracking-wider uppercase text-white drop-shadow-md">
+            SPOT<span className="text-[#F2B02A]">ON</span>
+          </span>
         </Link>
 
         {/* === Center Nav === */}
         {!isAdmin && (
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-sm font-medium text-amber-500 border-b-2 border-amber-500 pb-1">
+            <Link href="/" className={`text-sm font-bold uppercase tracking-wider transition-colors pb-1 border-b-2 ${pathname === '/' ? 'text-[#F2B02A] border-[#F2B02A]' : 'text-gray-300 border-transparent hover:border-[#F2B02A] hover:text-[#F2B02A]'}`}>
               {navbar.home}
             </Link>
-            <Link href="/branches" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
+            <Link href="/branches" className={`text-sm font-bold uppercase tracking-wider transition-colors pb-1 border-b-2 ${pathname?.startsWith('/branches') ? 'text-[#F2B02A] border-[#F2B02A]' : 'text-gray-300 border-transparent hover:border-[#F2B02A] hover:text-[#F2B02A]'}`}>
               {navbar.branches}
             </Link>
-            <Link href="/menu" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
+            <Link href="/menu" className={`text-sm font-bold uppercase tracking-wider transition-colors pb-1 border-b-2 ${pathname?.startsWith('/menu') ? 'text-[#F2B02A] border-[#F2B02A]' : 'text-gray-300 border-transparent hover:border-[#F2B02A] hover:text-[#F2B02A]'}`}>
               {navbar.menus}
             </Link>
-            <Link href="/promotions" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
+            <Link href="/promotions" className={`text-sm font-bold uppercase tracking-wider transition-colors pb-1 border-b-2 ${pathname?.startsWith('/promotions') ? 'text-[#F2B02A] border-[#F2B02A]' : 'text-gray-300 border-transparent hover:border-[#F2B02A] hover:text-[#F2B02A]'}`}>
               {navbar.promotions}
             </Link>
           </nav>
@@ -161,8 +159,8 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
               )}
             </div>
           ) : (
-            <Link href="/login" className="flex items-center justify-center px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-full transition-colors shadow-sm whitespace-nowrap">
-              {navbar.login}
+            <Link href="/login" className="flex items-center justify-center px-6 py-2.5 bg-transparent border-2 border-[#F2B02A] hover:bg-[#F2B02A] hover:text-[#164626] text-[#F2B02A] text-sm font-bold uppercase tracking-wider rounded-full transition-colors shadow-sm whitespace-nowrap">
+              ĐẶT BÀN
             </Link>
           )}
 

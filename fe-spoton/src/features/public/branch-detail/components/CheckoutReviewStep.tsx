@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Tag, ArrowRight, ShieldCheck } from 'lucide-react';
 import { branchDetailService } from '../branch-detail.service';
+import { voucherService } from '../../promotions/voucher.service';
 
 interface Props {
   bookingId: string;
@@ -40,10 +41,32 @@ export function CheckoutReviewStep({ bookingId, onBack, onPaymentSuccess }: Prop
     fetchDeposit();
   }, [bookingId]);
 
-  const handleApplyVoucher = (e: React.FormEvent) => {
+  const handleApplyVoucher = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!voucherCode.trim()) return;
-    fetchDeposit(voucherCode);
+    
+    setIsApplying(true);
+    setErrorMsg('');
+    try {
+      // Gọi API validate
+      const validateRes = await voucherService.validateVoucher(
+        voucherCode, 
+        depositInfo?.branch_id, 
+        depositInfo?.guest_count, 
+        depositInfo?.pre_order_total_amount
+      );
+      
+      if (validateRes.success) {
+        // Nếu hợp lệ thì mới gọi tính cọc
+        fetchDeposit(voucherCode);
+      } else {
+        setErrorMsg(validateRes.message || 'Mã giảm giá không hợp lệ.');
+        setIsApplying(false);
+      }
+    } catch (error: any) {
+      setErrorMsg(error.response?.data?.message || 'Lỗi kiểm tra mã giảm giá.');
+      setIsApplying(false);
+    }
   };
 
   const handleRemoveVoucher = () => {

@@ -36,10 +36,12 @@ export const EMPTY_FORM = {
     discount_percentage: '', 
     max_discount_amount: '', 
     min_order_value: '0', 
+    min_guest_count: '',
     usage_limit: '', 
     startDate: '', startTime: '00:00', 
     endDate: '', endTime: '23:59',
     is_active: true,
+    is_public: true,
 };
 
 export type VoucherFormState = typeof EMPTY_FORM;
@@ -74,9 +76,11 @@ export function buildPayload(formData: VoucherFormState): AdminVoucherCreateRequ
         discount_percentage: Number(formData.discount_percentage) || 0,
         max_discount_amount: parseNullablePrice(formData.max_discount_amount),
         min_order_value: parseNullablePrice(formData.min_order_value) || 0,
+        min_guest_count: parseNullableNumber(formData.min_guest_count),
         usage_limit: parseNullableNumber(formData.usage_limit),
         valid_from: new Date(`${formData.startDate}T${formData.startTime}:00`).toISOString(),
         valid_until: new Date(`${formData.endDate}T${formData.endTime}:00`).toISOString(),
         is_active: formData.is_active,
+        is_public: formData.is_public,
     };
 }

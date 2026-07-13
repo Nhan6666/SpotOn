@@ -277,21 +277,43 @@ exports.claimVoucher = async (req, res) => {
 // @access  Private
 exports.getMyWallet = async (req, res) => {
   try {
-    const customer_id = req.user.id;
+    const customer_id = req.user.id; // User logged in
     const UserVoucher = require('../models/UserVoucher');
 
-    const wallet = await UserVoucher.find({ customer_id })
-      .populate('voucher_id')
-      .sort({ created_at: -1 });
+    // Lấy tất cả voucher public
+    const publicVouchers = await Voucher.find({ is_public: true }).sort({ createdAt: -1 });
+    
+    // Lấy trạng thái sử dụng của user này
+    const userVouchers = await UserVoucher.find({ customer_id }).populate('voucher_id');
+
+    const wallet = publicVouchers.map(voucher => {
+      // Kiểm tra xem user đã dùng voucher này chưa
+      const userV = userVouchers.find(uv => uv.voucher_id && uv.voucher_id._id.toString() === voucher._id.toString());
+      
+      return {
+        _id: userV ? userV._id : `virtual_${voucher._id}`,
+        status: userV ? userV.status : 'UNUSED',
+        voucher_id: voucher
+      };
+    });
+
+    // Thêm các voucher private mà user đã lưu (nếu có lỡ lưu trước đó)
+    userVouchers.forEach(uv => {
+      if (uv.voucher_id && !uv.voucher_id.is_public) {
+        wallet.push(uv);
+      }
+    });
 
     res.status(200).json({
       success: true,
-      message: 'Lấy ví voucher thành công',
       data: wallet
     });
   } catch (error) {
-    console.error('Error in getMyWallet:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server khi lấy ví voucher.' });
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi lấy ví voucher',
+      error: error.message
+    });
   }
 };
 

@@ -35,7 +35,8 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
         handleSubmitClick,
         isRunning,
         isScheduled,
-        nowLocalStr
+        nowLocalStr,
+        tableCapacities
     } = useVoucherForm(initialData, onSubmit);
     return (
         <div className="max-w-3xl mx-auto space-y-6">
@@ -84,7 +85,7 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
                             {fieldErrors.code && <p className="text-red-500 text-xs mt-1">{fieldErrors.code}</p>}
                         </Field>
                         <Field label={ADMIN_TEXTS.vouchers.form.lblBranch}>
-                            <select disabled={isRunning} value={data.branch_id} onChange={(e) => updateForm('branch_id', e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900">
+                            <select disabled={isRunning} value={data.branch_id} onChange={(e) => updateForm('branch_id', e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer">
                                 <option value="">{ADMIN_TEXTS.vouchers.form.valAllBranch}</option>
                                 <option value="6600a98f1234567890abcdef">Chi nhánh Quận 1 (Mock)</option>
                                 <option value="6600a98f1234567890abcded">Chi nhánh Quận 3 (Mock)</option>
@@ -99,6 +100,14 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
                         </Field>
                         <Field label={ADMIN_TEXTS.vouchers.form.lblMinOrder}>
                             <input disabled={isRunning} type="text" inputMode="numeric" value={formatPriceInput(data.min_order_value)} onChange={(e) => updateForm('min_order_value', parsePriceInput(e.target.value))} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900" placeholder="Mặc định: 0đ" />
+                        </Field>
+                        <Field label="Điều kiện số người tối thiểu">
+                            <select value={data.min_guest_count} onChange={(e) => updateForm('min_guest_count', e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer">
+                                <option value="">Không yêu cầu (Áp dụng cho mọi bàn)</option>
+                                {tableCapacities.map(cap => (
+                                    <option key={cap} value={cap}>Áp dụng cho khách đặt bàn từ {cap} người trở lên</option>
+                                ))}
+                            </select>
                         </Field>
                         <Field label={ADMIN_TEXTS.vouchers.form.lblUsageLimit}>
                             <input type="number" min="1" value={data.usage_limit} onChange={(e) => updateForm('usage_limit', e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900" placeholder={ADMIN_TEXTS.vouchers.form.placeholderUsageLimit} />
@@ -117,8 +126,14 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
                             </div>
                             {fieldErrors.endDate && <p className="text-red-500 text-xs mt-1">{fieldErrors.endDate}</p>}
                         </Field>
+                        <Field label="Trạng thái hiển thị (Public)">
+                            <select value={data.is_public ? 'true' : 'false'} onChange={(e) => updateForm('is_public', e.target.value === 'true')} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer">
+                                <option value="true">Hiển thị công khai (Cho mọi người)</option>
+                                <option value="false">Mã ẩn (Chỉ dùng khi nhập code)</option>
+                            </select>
+                        </Field>
                         <Field label={ADMIN_TEXTS.vouchers.form.lblActive}>
-                            <select value={data.is_active ? 'true' : 'false'} onChange={(e) => updateForm('is_active', e.target.value === 'true')} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900">
+                            <select value={data.is_active ? 'true' : 'false'} onChange={(e) => updateForm('is_active', e.target.value === 'true')} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer">
                                 <option value="true">Bật (Active)</option>
                                 <option value="false">Tạm dừng / Bản nháp</option>
                             </select>
@@ -126,10 +141,10 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
                     </div>
                 </div>
                 <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-                    <Link href="/admin/vouchers" className="px-5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                    <Link href="/admin/vouchers" className="px-5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer">
                         {ADMIN_TEXTS.vouchers.form.btnCancel}
                     </Link>
-                    <button onClick={handleSubmitClick} disabled={isSubmitting} className="px-5 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-60 inline-flex items-center gap-2 shadow-sm">
+                    <button onClick={handleSubmitClick} disabled={isSubmitting} className="px-5 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-60 inline-flex items-center gap-2 shadow-sm cursor-pointer disabled:cursor-not-allowed">
                         {isSubmitting && <Loader2 size={16} className="animate-spin" />}
                         {isSubmitting ? ADMIN_TEXTS.vouchers.form.submitting : (initialData ? ADMIN_TEXTS.vouchers.form.btnSave : ADMIN_TEXTS.vouchers.form.btnCreate)}
                     </button>

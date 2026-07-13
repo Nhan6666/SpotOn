@@ -5,11 +5,13 @@ export interface VoucherItem {
     discount_percentage: number;
     max_discount_amount?: number;
     min_order_value: number;
+    min_guest_count?: number;
     valid_from: string;
     valid_until: string;
     usage_limit?: number;
     used_count: number;
     is_active: boolean;
+    is_public: boolean;
 }
 
 export type VoucherStatus = 'active' | 'inactive' | 'scheduled' | 'expired';
@@ -30,10 +32,12 @@ export interface AdminVoucherCreateRequest {
     discount_percentage: number;
     max_discount_amount?: number;
     min_order_value?: number;
+    min_guest_count?: number;
     valid_from: string;
     valid_until: string;
     usage_limit?: number;
     is_active: boolean;
+    is_public: boolean;
 }
 
 export interface AdminVoucherUpdateRequest extends Partial<AdminVoucherCreateRequest> {}

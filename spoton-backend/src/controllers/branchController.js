@@ -158,11 +158,41 @@ const deleteBranch = async (req, res) => {
   }
 };
 
+// @desc   Lấy danh sách các loại sức chứa bàn (capacity) trong hệ thống
+// @route  GET /api/v1/branches/table-capacities
+// @access Public
+const getTableCapacities = async (req, res) => {
+  try {
+    const branches = await Branch.find({}, 'zones.tables.capacity');
+    const capacities = new Set();
+    
+    branches.forEach(branch => {
+      branch.zones?.forEach(zone => {
+        zone.tables?.forEach(table => {
+          if (table.capacity) capacities.add(table.capacity);
+        });
+      });
+    });
+
+    // Chỉ lấy đúng những gì có trong DB
+    const sortedCapacities = Array.from(capacities).sort((a, b) => a - b);
+
+    res.status(200).json({
+      success: true,
+      data: sortedCapacities
+    });
+  } catch (error) {
+    console.error('Lỗi getTableCapacities:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
 
 module.exports = {
   getAllBranches,
   getBranchById,
   createBranch,
   updateBranch,
-  deleteBranch
+  deleteBranch,
+  getTableCapacities
 };

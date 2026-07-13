@@ -1,8 +1,14 @@
-version: '3.8'
+version: "3.8"
 
 services:
   redis:
-    image: redis:alpine
+    image: redis:latest
+    container_name: spoton-redis
     ports:
       - "6379:6379"
-    restart: unless-stopped
+    restart: always
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:

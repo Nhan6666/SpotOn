@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { X, Receipt, CreditCard, Banknote, Coffee, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Receipt, CreditCard, Banknote, Coffee, Plus, Tag, ChevronDown, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { http } from '@/lib/http';
 import { useToast } from '@/components/ui/Toast';
+import { voucherService } from '@/features/public/promotions/voucher.service';
 
 interface OrderItem {
   name: string;
@@ -13,6 +14,7 @@ interface OrderItem {
 
 interface BookingDetails {
   _id: string;
+  branch_id: string;
   customer_id?: { _id: string; full_name: string; phone: string };
   walk_in_name?: string;
   walk_in_phone?: string;
@@ -20,6 +22,9 @@ interface BookingDetails {
   order_items?: OrderItem[];
   pre_order_total_amount?: number;
   total_deposit_paid?: number;
+  applied_voucher_code?: string;
+  voucher_discount_amount?: number;
+  guest_count?: number;
 }
 
 interface CheckoutModalProps {
@@ -31,27 +36,91 @@ interface CheckoutModalProps {
 export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProps) {
   const { success, error: showError } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [publicVouchers, setPublicVouchers] = useState<any[]>([]);
+  const [showVouchers, setShowVouchers] = useState(false);
+  const [voucherCodeInput, setVoucherCodeInput] = useState('');
+  const [currentBooking, setCurrentBooking] = useState<BookingDetails | null>(booking);
 
-  if (!booking) return null;
+  useEffect(() => {
+    setCurrentBooking(booking);
+    setVoucherCodeInput(booking?.applied_voucher_code || '');
+  }, [booking]);
 
-  const customerName = booking.customer_id?.full_name || booking.walk_in_name || 'Khách vãng lai';
-  const tableNames = booking.assigned_tables?.map(t => t.table_number).join(', ') || 'N/A';
+  useEffect(() => {
+    if (booking?.branch_id) {
+      http.get<{ success: boolean; data: any[] }>(`/vouchers/public/branch/${booking.branch_id}`)
+        .then(res => setPublicVouchers(res?.data || []))
+        .catch(() => {});
+    }
+  }, [booking?.branch_id]);
+
+  if (!currentBooking) return null;
+
+  const customerName = currentBooking.customer_id?.full_name || currentBooking.walk_in_name || 'Khách vãng lai';
+  const tableNames = currentBooking.assigned_tables?.map(t => t.table_number).join(', ') || 'N/A';
 
   // Tính toán hóa đơn
-  const items = booking.order_items || [];
-  
-  // Tính tổng tiền dựa trên order_items nếu có, nếu không thì dùng field có sẵn
+  const items = currentBooking.order_items || [];
   const calculatedTotal = items.reduce((acc, item) => acc + (item.price_at_time * item.quantity), 0);
+  const totalBill = calculatedTotal > 0 ? calculatedTotal : (currentBooking.pre_order_total_amount || 0);
+  const depositPaid = currentBooking.total_deposit_paid || 0;
   
-  // Tổng bill thực tế (có thể fallback về pre_order_total_amount nếu không có items)
-  const totalBill = calculatedTotal > 0 ? calculatedTotal : (booking.pre_order_total_amount || 0);
-  const depositPaid = booking.total_deposit_paid || 0;
-  const amountToPay = Math.max(0, totalBill - depositPaid);
+  // Fake calculation if we want to show it before checkout, but ideally backend returns this in currentBooking.voucher_discount_amount
+  const voucherDiscount = currentBooking.voucher_discount_amount || 0;
+  const amountToPay = Math.max(0, totalBill - depositPaid - voucherDiscount);
+
+  const handleApplyVoucher = async () => {
+    if (!voucherCodeInput.trim()) return;
+    setIsSubmitting(true);
+    try {
+      // Gọi API apply-voucher
+      const res = await voucherService.applyVoucherToBooking(currentBooking._id, voucherCodeInput);
+      if (res.success) {
+        success('Áp dụng mã giảm giá thành công!');
+        // Cập nhật local state với data trả về
+        if (res.data) {
+           setCurrentBooking(res.data);
+           setShowVouchers(false);
+        } else {
+           // Nếu backend không trả về data, reload lại từ backend
+           const reloadRes = await http.get<{ success: boolean; data: any }>(`/bookings/${currentBooking._id}`);
+           if (reloadRes.success) setCurrentBooking(reloadRes.data);
+        }
+      } else {
+        showError(res.message || 'Mã giảm giá không hợp lệ');
+      }
+    } catch (err: any) {
+      showError(err.response?.data?.message || 'Có lỗi khi áp dụng mã giảm giá');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRemoveVoucher = async () => {
+    setIsSubmitting(true);
+    try {
+      const res = await voucherService.applyVoucherToBooking(currentBooking._id, '');
+      if (res.success) {
+        success('Đã gỡ mã giảm giá');
+        setVoucherCodeInput('');
+        if (res.data) {
+           setCurrentBooking(res.data);
+        } else {
+           const reloadRes = await http.get<{ success: boolean; data: any }>(`/bookings/${currentBooking._id}`);
+           if (reloadRes.success) setCurrentBooking(reloadRes.data);
+        }
+      }
+    } catch (err) {
+      showError('Có lỗi khi gỡ mã giảm giá');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleCheckout = async () => {
     setIsSubmitting(true);
     try {
-      const res = await http.patch<{ success: boolean }>(`/reception/bookings/${booking._id}/checkout`, {
+      const res = await http.patch<{ success: boolean }>(`/reception/bookings/${currentBooking._id}/checkout`, {
         final_bill_amount: amountToPay
       });
 
@@ -93,7 +162,7 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
         </div>
 
         {/* Body */}
-        <div className="p-6">
+        <div className="p-6 max-h-[70vh] overflow-y-auto">
           <div className="mb-6">
             <h3 className="font-bold text-gray-800 border-b pb-2 mb-3">Chi tiết gọi món</h3>
             
@@ -119,15 +188,100 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
             )}
           </div>
 
+          <div className="mb-6">
+            <h3 className="font-bold text-gray-800 border-b pb-2 mb-3 flex items-center justify-between">
+              <span className="flex items-center gap-2"><Tag className="w-4 h-4" /> Mã giảm giá</span>
+            </h3>
+            
+            {currentBooking.applied_voucher_code ? (
+              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2 text-green-800">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-bold">{currentBooking.applied_voucher_code}</span>
+                  {voucherDiscount > 0 && <span className="text-xs text-green-600">- Đã áp dụng (-{voucherDiscount.toLocaleString()}đ)</span>}
+                </div>
+                <button 
+                  onClick={handleRemoveVoucher} 
+                  disabled={isSubmitting}
+                  className="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-50"
+                >
+                  Gỡ bỏ
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex gap-2 relative">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={voucherCodeInput}
+                      onChange={(e) => setVoucherCodeInput(e.target.value.toUpperCase())}
+                      placeholder="Nhập mã voucher (VD: VIP10)..."
+                      className="w-full text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 uppercase pr-8"
+                    />
+                    {publicVouchers.length > 0 && (
+                      <button 
+                        onClick={() => setShowVouchers(!showVouchers)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        title="Chọn từ danh sách"
+                      >
+                        <ChevronDown className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                  <Button 
+                    onClick={handleApplyVoucher}
+                    disabled={isSubmitting || !voucherCodeInput.trim()}
+                    className="bg-blue-100 text-blue-700 hover:bg-blue-200 whitespace-nowrap"
+                  >
+                    Áp dụng
+                  </Button>
+                </div>
+                
+                {/* Dropdown Vouchers public */}
+                {showVouchers && publicVouchers.length > 0 && (
+                  <div className="bg-white border border-gray-200 rounded-lg shadow-sm max-h-48 overflow-y-auto">
+                    {publicVouchers.map(v => (
+                      <div 
+                        key={v._id} 
+                        className="p-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer flex justify-between items-center"
+                        onClick={() => {
+                          setVoucherCodeInput(v.code);
+                          setShowVouchers(false);
+                        }}
+                      >
+                        <div>
+                          <p className="font-bold text-sm text-gray-900">{v.code}</p>
+                          <p className="text-xs text-gray-500">{v.name}</p>
+                        </div>
+                        <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                          {v.discount_type === 'PERCENTAGE' ? `${v.discount_value}%` : `${v.discount_value.toLocaleString()}đ`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
             <div className="flex justify-between items-center mb-3 text-sm">
-              <span className="text-gray-600 font-medium">Tổng tiền hóa đơn:</span>
+              <span className="text-gray-600 font-medium">Tổng tiền món:</span>
               <span className="font-bold text-gray-900">{totalBill.toLocaleString()}đ</span>
             </div>
-            <div className="flex justify-between items-center mb-3 text-sm text-green-700 border-b border-gray-200 pb-3">
-              <span className="font-medium">Tiền cọc đã thu:</span>
-              <span className="font-bold">- {depositPaid.toLocaleString()}đ</span>
-            </div>
+            {voucherDiscount > 0 && (
+              <div className="flex justify-between items-center mb-3 text-sm text-green-700">
+                <span className="font-medium">Khuyến mãi (Voucher):</span>
+                <span className="font-bold">- {voucherDiscount.toLocaleString()}đ</span>
+              </div>
+            )}
+            {depositPaid > 0 && (
+              <div className="flex justify-between items-center mb-3 text-sm text-blue-700 border-b border-gray-200 pb-3">
+                <span className="font-medium">Tiền cọc đã thu:</span>
+                <span className="font-bold">- {depositPaid.toLocaleString()}đ</span>
+              </div>
+            )}
             
             <div className="flex justify-between items-center pt-1">
               <span className="text-gray-900 font-bold text-lg">Cần thanh toán:</span>

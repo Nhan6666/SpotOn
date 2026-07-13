@@ -6,7 +6,8 @@ const {
   getBookingById,
   updateBookingStatus,
   getMyBookings,
-  updateBookingInfo
+  updateBookingInfo,
+  applyVoucher
 } = require('../controllers/bookingController');
 
 // MỞ KHÓA MIDDLEWARE
@@ -27,5 +28,6 @@ router.route('/')
 router.get('/:id', protect, getBookingById);
 router.put('/:id/update-info', updateBookingInfo);
 router.patch('/:id/status', protect, authorize('ADMIN', 'MANAGER'), updateBookingStatus);
+router.post('/:id/apply-voucher', protect, authorize('MANAGER', 'WAITER'), applyVoucher);
 
 module.exports = router;

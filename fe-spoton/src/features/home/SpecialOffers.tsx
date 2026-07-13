@@ -9,11 +9,10 @@ import { useToast } from '@/components/ui/Toast';
 
 interface Voucher {
   _id: string;
-  name: string;
-  description: string;
-  discount_type: string;
-  discount_value: number;
   code: string;
+  discount_percentage: number;
+  max_discount_amount: number;
+  min_order_value: number;
 }
 
 const CARD_STYLES = [
@@ -33,12 +32,27 @@ export function SpecialOffers() {
   const [offers, setOffers] = useState<Voucher[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
+  const [claimedOffers, setClaimedOffers] = useState<Set<string>>(new Set());
   const { success, error } = useToast();
 
-  const handleCopyCode = (code: string) => {
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('spoton_claimed_vouchers');
+      if (saved) {
+        setClaimedOffers(new Set(JSON.parse(saved)));
+      }
+    } catch (e) {}
+  }, []);
+
+  const handleSimulateClaim = (code: string) => {
     if (code) {
       navigator.clipboard.writeText(code);
-      success(`Đã sao chép mã ưu đãi: ${code}`);
+      setClaimedOffers(prev => {
+        const next = new Set(prev).add(code);
+        localStorage.setItem('spoton_claimed_vouchers', JSON.stringify(Array.from(next)));
+        return next;
+      });
+      success(`Đã nhận thành công! Voucher ${code} đã nằm trong Ví ưu đãi của bạn.`);
     } else {
       error('Mã ưu đãi này chưa có code');
     }
@@ -105,32 +119,48 @@ export function SpecialOffers() {
           {currentOffers.map((offer, index) => {
             const style = CARD_STYLES[index % CARD_STYLES.length];
             const decoration = DECORATIONS[index % DECORATIONS.length];
-            const discountText = offer.discount_type === 'PERCENTAGE' 
-              ? `Giảm ${offer.discount_value || 0}%` 
-              : `Giảm ${(offer.discount_value || 0).toLocaleString('vi-VN')}đ`;
+            const name = `MÃ ${offer.code}`;
+            const isClaimed = claimedOffers.has(offer.code);
+            
+            let description = `Giảm ${offer.discount_percentage}%`;
+            if (offer.max_discount_amount) {
+              description += ` tối đa ${offer.max_discount_amount.toLocaleString('vi-VN')}đ`;
+            }
+            if (offer.min_order_value) {
+              description += ` cho đơn từ ${offer.min_order_value.toLocaleString('vi-VN')}đ`;
+            }
 
             return (
               <div 
                 key={offer._id} 
-                onClick={() => handleCopyCode(offer.code)}
-                className={`${style.bg} rounded-2xl p-8 text-white relative overflow-hidden group h-full min-h-[260px] flex flex-col justify-between items-start shadow-md cursor-pointer`}
+                className={`${style.bg} rounded-2xl p-8 text-white relative overflow-hidden group h-full min-h-[260px] flex flex-col justify-between items-start shadow-md`}
               >
                 <div className={`absolute ${decoration}`}></div>
                 <div className="relative z-10">
                   <div className="bg-[#F2B02A] text-[#164626] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4 inline-block">
                     Ưu Đãi
                   </div>
-                  <h3 className="text-2xl font-bold mb-2 line-clamp-2 text-[#F2B02A]" title={offer.name}>{offer.name}</h3>
+                  <h3 className="text-2xl font-bold mb-2 line-clamp-2 text-[#F2B02A]" title={name}>{name}</h3>
                   <p className="text-gray-300 text-sm mb-6 max-w-[85%] line-clamp-3">
-                    {offer.description || discountText}
+                    {description}
                   </p>
                 </div>
-                <button 
-                  onClick={() => handleCopyCode(offer.code)}
-                  className={`relative z-10 px-5 py-2 bg-[#F2B02A] ${style.text} text-sm font-bold rounded-full hover:bg-[#d99d24] transition-colors shadow-sm cursor-pointer uppercase tracking-wider`}
-                >
-                  Lấy Mã
-                </button>
+                {!isClaimed ? (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSimulateClaim(offer.code);
+                    }}
+                    className={`relative z-10 px-5 py-2 bg-[#F2B02A] ${style.text} text-sm font-bold rounded-full hover:bg-[#d99d24] transition-colors shadow-sm cursor-pointer uppercase tracking-wider`}
+                  >
+                    Nhận Voucher
+                  </button>
+                ) : (
+                  <div className="relative z-10 px-5 py-2 bg-transparent text-[#F2B02A] text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                    Đã nhận
+                  </div>
+                )}
               </div>
             );
           })}

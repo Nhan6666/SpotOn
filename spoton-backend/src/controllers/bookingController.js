@@ -319,11 +319,81 @@ const updateBookingInfo = async (req, res) => {
   }
 };
 
+// @desc   Thêm/Thay đổi voucher vào booking (Waiter thao tác tại quán)
+// @route  POST /api/v1/bookings/:id/apply-voucher
+// @access Private (WAITER, MANAGER)
+const applyVoucher = async (req, res) => {
+  try {
+    const { code } = req.body;
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt bàn.' });
+    }
+
+    // BẢO MẬT: Waiter/Manager chỉ được thao tác trên đơn của chi nhánh mình
+    if (['MANAGER', 'WAITER'].includes(req.user.role) && String(booking.branch_id) !== String(req.user.branch_id)) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền thao tác trên đơn của chi nhánh khác.' });
+    }
+
+    if (!code) {
+      // Gỡ voucher (nếu code null hoặc rỗng)
+      booking.applied_voucher_code = null;
+      await booking.save();
+      return res.status(200).json({ success: true, message: 'Đã gỡ voucher.', data: booking });
+    }
+
+    const Voucher = require('../models/Voucher');
+    const voucher = await Voucher.findOne({ code: code.toUpperCase() });
+    
+    if (!voucher) {
+      return res.status(404).json({ success: false, message: 'Mã voucher không hợp lệ.' });
+    }
+
+    if (!voucher.is_active) {
+      return res.status(400).json({ success: false, message: 'Mã voucher đã bị khóa.' });
+    }
+
+    const now = new Date();
+    if (new Date(voucher.valid_until) < now) {
+      return res.status(400).json({ success: false, message: 'Voucher đã hết hạn.' });
+    }
+
+    // Check branch
+    if (voucher.branch_id && voucher.branch_id.toString() !== booking.branch_id.toString()) {
+      return res.status(400).json({ success: false, message: 'Voucher không áp dụng cho chi nhánh này.' });
+    }
+
+    // Check guest count
+    if (voucher.min_guest_count && booking.guest_count < voucher.min_guest_count) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Voucher yêu cầu bàn từ ${voucher.min_guest_count} người.`
+      });
+    }
+
+    // Lưu voucher_code vào booking
+    booking.applied_voucher_code = voucher.code;
+    await booking.save();
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Đã cập nhật mã voucher cho đơn đặt bàn.',
+      data: booking 
+    });
+
+  } catch (error) {
+    console.error('Lỗi applyVoucher:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
 module.exports = { 
   createBooking, 
   getAllBookings, 
   getBookingById, 
   updateBookingStatus, 
   getMyBookings, 
-  updateBookingInfo
+  updateBookingInfo,
+  applyVoucher
 };

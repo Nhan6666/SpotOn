@@ -323,6 +323,38 @@ class BookingService {
         booking.final_bill_amount = finalBillAmount;
       }
 
+      // NẾU CÓ VOUCHER -> ĐÁNH DẤU LÀ ĐÃ DÙNG
+      if (booking.applied_voucher_code) {
+        const Voucher = require('../models/Voucher');
+        const UserVoucher = require('../models/UserVoucher');
+
+        const voucher = await Voucher.findOne({ code: booking.applied_voucher_code }).session(session);
+        if (voucher) {
+          // Tăng lượt dùng của Voucher gốc
+          voucher.used_count += 1;
+          await voucher.save({ session });
+
+          // Cập nhật UserVoucher (nếu có lưu trong ví)
+          if (booking.customer_id) {
+            await UserVoucher.updateOne(
+              { 
+                customer_id: booking.customer_id._id || booking.customer_id, 
+                voucher_id: voucher._id,
+                status: 'UNUSED'
+              },
+              { 
+                $set: { 
+                  status: 'USED', 
+                  used_at: new Date(), 
+                  used_in_booking: booking._id 
+                } 
+              },
+              { session }
+            );
+          }
+        }
+      }
+
       await booking.save({ session });
 
       if (booking.table_ids && booking.table_ids.length > 0) {

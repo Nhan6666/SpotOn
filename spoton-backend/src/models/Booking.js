@@ -97,6 +97,7 @@ const BookingSchema = new mongoose.Schema(
     order_items: [OrderItemSchema],
     payment_info: { type: PaymentInfoSchema, default: () => ({}) },
     refund_info: { type: RefundInfoSchema, default: undefined },
+    applied_voucher_code: { type: String, default: null }, // Mã voucher khách áp dụng lúc đặt (chưa trừ tiền)
 
     // ============================================================
     // DỮ LIỆU TÀI CHÍNH — Financial Schema Rules (Blueprint II.1)

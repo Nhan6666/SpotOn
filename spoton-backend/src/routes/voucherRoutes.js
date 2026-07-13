@@ -7,7 +7,14 @@ const { protect, authorize } = require('../middlewares/authMiddleware');
 router.get('/public/global', voucherController.getPublicGlobalVouchers);
 router.get('/public/branch/:branchId', voucherController.getPublicVouchersByBranch);
 
-// Chỉ ADMIN và MANAGER mới có quyền quản lý Voucher
+// API Validate mã voucher (Dùng khi khách chọn/nhập mã lúc đặt bàn)
+router.post('/validate', voucherController.validateVoucher);
+
+// Các route yêu cầu user đã đăng nhập (Ví dụ: CUSTOMER lưu voucher vào ví)
+router.get('/my-wallet', protect, voucherController.getMyWallet);
+router.post('/claim', protect, voucherController.claimVoucher);
+
+// Chỉ ADMIN và MANAGER mới có quyền quản lý Voucher CRUD
 router.use(protect);
 router.use(authorize('ADMIN', 'MANAGER'));
 

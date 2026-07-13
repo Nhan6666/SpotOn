@@ -42,7 +42,10 @@ require("./config/redis");
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: function (origin, callback) {
+      // Cho phép mọi origin (hỗ trợ test trên localhost và cả IP LAN như 192.168.x.x)
+      callback(null, true);
+    },
     credentials: true,
   }),
 );

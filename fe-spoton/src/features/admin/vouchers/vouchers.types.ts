@@ -1,7 +1,7 @@
 export interface VoucherItem {
     _id: string;
     code: string;
-    branch_id: string | null;
+    branch_id: string | { _id: string; name: string } | null;
     discount_percentage: number;
     max_discount_amount?: number;
     min_order_value: number;

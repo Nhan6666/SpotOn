@@ -25,6 +25,7 @@
     "react-dom": "19.2.4",
     "react-hook-form": "^7.77.0",
     "react-leaflet": "^5.0.0",
+    "recharts": "^3.9.2",
     "socket.io-client": "^4.8.3",
     "spoton-root": "file:..",
     "zod": "^4.4.3"

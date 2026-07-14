@@ -13,7 +13,14 @@ const isVoucherRunning = (voucher) => {
 // @access  Private/Admin,Manager
 exports.getAllVouchers = async (req, res) => {
   try {
-    const vouchers = await Voucher.find().sort({ created_at: -1 });
+    let query = {};
+    // Phân quyền: MANAGER chỉ lấy voucher của chi nhánh họ quản lý
+    if (req.user && req.user.role === 'MANAGER') {
+      query.branch_id = req.user.branch_id;
+    }
+    const vouchers = await Voucher.find(query)
+      .populate('branch_id', 'name')
+      .sort({ created_at: -1 });
     res.status(200).json({
       success: true,
       message: 'Lấy danh sách voucher thành công',
@@ -114,6 +121,11 @@ exports.createVoucher = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Mã voucher đã tồn tại' });
     }
 
+    // Phân quyền: MANAGER tạo voucher thì ép luôn thuộc về chi nhánh của họ
+    if (req.user && req.user.role === 'MANAGER') {
+      req.body.branch_id = req.user.branch_id;
+    }
+
     const voucher = await Voucher.create(req.body);
     res.status(201).json({
       success: true,
@@ -134,6 +146,16 @@ exports.updateVoucher = async (req, res) => {
     const voucher = await Voucher.findById(req.params.id);
     if (!voucher) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy voucher' });
+    }
+
+    // Phân quyền: MANAGER chỉ được sửa voucher của chi nhánh mình
+    if (req.user && req.user.role === 'MANAGER' && voucher.branch_id?.toString() !== req.user.branch_id?.toString()) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền chỉnh sửa voucher của chi nhánh khác' });
+    }
+
+    // MANAGER nếu cố tình gửi branch_id khác thì ghi đè lại
+    if (req.user && req.user.role === 'MANAGER') {
+      req.body.branch_id = req.user.branch_id;
     }
 
     // Business Rule: Khóa dữ liệu nhạy cảm nếu voucher đang chạy
@@ -191,6 +213,11 @@ exports.deleteVoucher = async (req, res) => {
     const voucher = await Voucher.findById(req.params.id);
     if (!voucher) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy voucher' });
+    }
+
+    // Phân quyền: MANAGER chỉ được xóa voucher của chi nhánh mình
+    if (req.user && req.user.role === 'MANAGER' && voucher.branch_id?.toString() !== req.user.branch_id?.toString()) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền xóa voucher của chi nhánh khác' });
     }
 
     // Business Rule: Không cho xóa voucher đang chạy
@@ -281,10 +308,15 @@ exports.getMyWallet = async (req, res) => {
     const UserVoucher = require('../models/UserVoucher');
 
     // Lấy tất cả voucher public
-    const publicVouchers = await Voucher.find({ is_public: true }).sort({ createdAt: -1 });
+    const publicVouchers = await Voucher.find({ is_public: true })
+      .populate('branch_id', 'name')
+      .sort({ createdAt: -1 });
     
     // Lấy trạng thái sử dụng của user này
-    const userVouchers = await UserVoucher.find({ customer_id }).populate('voucher_id');
+    const userVouchers = await UserVoucher.find({ customer_id }).populate({
+      path: 'voucher_id',
+      populate: { path: 'branch_id', select: 'name' }
+    });
 
     const wallet = publicVouchers.map(voucher => {
       // Kiểm tra xem user đã dùng voucher này chưa

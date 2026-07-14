@@ -6,6 +6,7 @@ export interface TableAssigned {
 
 export interface Booking {
   _id: string;
+  branch_id?: string;
   customer_id?: { _id: string; full_name: string; phone: string };
   walk_in_name?: string;
   walk_in_phone?: string;
@@ -18,4 +19,10 @@ export interface Booking {
   order_items?: any[];
   pre_order_total_amount?: number;
   total_deposit_paid?: number;
+  table_ids?: string[];
+  payment_info?: {
+    status?: string;
+    transaction_id?: string;
+    voucher_code?: string;
+  };
 }

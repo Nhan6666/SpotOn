@@ -18,6 +18,8 @@ router.post('/claim', protect, voucherController.claimVoucher);
 router.use(protect);
 router.use(authorize('ADMIN', 'MANAGER'));
 
+router.get('/wallet/:customerId', voucherController.getWalletByCustomerId);
+
 router.route('/')
   .get(voucherController.getAllVouchers)
   .post(voucherController.createVoucher);

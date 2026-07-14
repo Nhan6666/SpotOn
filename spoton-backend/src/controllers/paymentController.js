@@ -88,6 +88,7 @@ const createPayment = asyncHandler(async (req, res) => {
   booking.pre_order_deposit_amount = preOrderDeposit;
   booking.voucher_discount_amount = voucherDiscount;
   booking.total_deposit_paid = totalDeposit;
+  booking.applied_voucher_code = voucher_code || null;
   booking.payment_info = {
     method,
     status: 'PENDING',

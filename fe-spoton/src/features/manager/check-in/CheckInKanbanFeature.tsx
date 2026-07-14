@@ -65,16 +65,16 @@ export function CheckInKanbanFeature() {
         key={booking._id} 
         className={`p-4 rounded-xl border shadow-sm transition-all hover:shadow-md ${isLate ? 'bg-rose-50 border-rose-200' : 'bg-white border-gray-200'}`}
       >
-        <div className="flex justify-between items-start mb-3">
-          <div>
+        <div className="flex justify-between items-start mb-3 gap-2">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-bold text-gray-900 text-lg">{name}</h3>
+              <h3 className="font-bold text-gray-900 text-lg truncate" title={name}>{name}</h3>
               {isOnline ? (
-                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 px-2 py-0.5 rounded flex-shrink-0">
                   <Globe className="w-3 h-3" /> Đặt Online
                 </span>
               ) : (
-                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded flex-shrink-0">
                   <Store className="w-3 h-3" /> Tại quán
                 </span>
               )}

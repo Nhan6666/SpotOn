@@ -378,6 +378,51 @@ class BookingService {
       throw error;
     }
   }
+  static async forceReleaseBooking(bookingId) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const booking = await Booking.findById(bookingId)
+        .populate('customer_id', 'full_name')
+        .session(session);
+
+      if (!booking) {
+        const err = new Error('Không tìm thấy đơn đặt bàn.');
+        err.statusCode = 404;
+        throw err;
+      }
+
+      if (booking.status !== 'IN_USE') {
+        const err = new Error('Chỉ có thể nhả bàn khi trạng thái là IN_USE.');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      booking.status = 'PENDING_SETTLEMENT';
+      await booking.save({ session });
+
+      if (booking.table_ids && booking.table_ids.length > 0) {
+        await Branch.updateOne(
+          { _id: booking.branch_id },
+          { $set: { 'zones.$[].tables.$[tbl].status': 'EMPTY' } },
+          { 
+            arrayFilters: [{ 'tbl._id': { $in: booking.table_ids } }],
+            session 
+          }
+        );
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return booking;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
   static async createWalkInBooking(payload, branchId) {
     const session = await mongoose.startSession();
     session.startTransaction();

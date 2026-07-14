@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
-import { Store, UtensilsCrossed, BarChart3, CalendarDays, ClipboardCheck, Flame, LogOut, Ticket } from 'lucide-react';
+import { Store, UtensilsCrossed, BarChart3, CalendarDays, ClipboardCheck, LogOut, Ticket, Receipt } from 'lucide-react';
 import { Navbar } from '@/components/ui/Navbar';
 
 const MANAGER_NAV = [
@@ -12,6 +12,7 @@ const MANAGER_NAV = [
   { href: '/manager/menus', label: 'Thực đơn', icon: UtensilsCrossed },
   { href: '/manager/bookings', label: 'Sơ đồ bàn', icon: CalendarDays },
   { href: '/manager/check-in', label: 'Check-in (Kanban)', icon: ClipboardCheck },
+  { href: '/manager/invoices', label: 'Đối soát hóa đơn', icon: Receipt },
   { href: '/manager/stats', label: 'Thống kê', icon: BarChart3 },
   { href: '/manager/vouchers', label: 'Khuyến mãi', icon: Ticket },
 ];

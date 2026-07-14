@@ -26,7 +26,9 @@ export function CheckInKanbanFeature() {
     incoming,
     late,
     inUse,
+    pendingSettlement,
     handleCheckIn,
+    handleForceRelease,
     selectedBookingForCheckout,
     setSelectedBookingForCheckout,
     selectedBookingForDetails,
@@ -121,14 +123,27 @@ export function CheckInKanbanFeature() {
               <CheckCircle2 className="w-4 h-4 mr-1.5" />
               Check-in
             </Button>
+          ) : booking.status === 'IN_USE' ? (
+            <div className="flex flex-1 gap-2">
+              <Button 
+                variant="outline" 
+                className="flex-1 text-red-600 border-red-200 hover:bg-red-50 font-semibold px-2"
+                onClick={() => handleForceRelease(booking._id)}
+              >
+                Nhả bàn
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1 text-blue-600 border-blue-200 hover:bg-blue-50 font-semibold px-2"
+                onClick={() => setSelectedBookingForCheckout(booking)}
+              >
+                Thanh toán <ArrowRight className="w-4 h-4 ml-1.5" />
+              </Button>
+            </div>
           ) : (
-            <Button 
-              variant="outline" 
-              className="flex-1 text-blue-600 border-blue-200 hover:bg-blue-50 font-semibold px-2"
-              onClick={() => setSelectedBookingForCheckout(booking)}
-            >
-              Phục vụ <ArrowRight className="w-4 h-4 ml-1.5" />
-            </Button>
+            <div className="flex-1 px-2 py-2 text-center text-sm font-semibold text-amber-700 bg-amber-50 rounded-md border border-amber-200">
+              Chờ đối soát
+            </div>
           )}
         </div>
       </div>
@@ -213,7 +228,7 @@ export function CheckInKanbanFeature() {
           onClose={() => setSelectedBookingForCheckout(null)}
           onSuccess={() => {
             setSelectedBookingForCheckout(null);
-            fetchTodayBookings(); // Reload để thẻ biến mất khỏi Kanban
+            fetchBookings(); // Reload để thẻ biến mất khỏi Kanban
           }}
         />
       )}

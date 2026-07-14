@@ -45,7 +45,7 @@ export function useCheckInKanban() {
       if (branchData) setZones(branchData.zones);
 
       // Chỉ lấy những đơn quan tâm cho Kanban
-      const activeBookings = data.filter(b => ['CONFIRMED', 'IN_USE'].includes(b.status));
+      const activeBookings = data.filter(b => ['CONFIRMED', 'IN_USE', 'PENDING_SETTLEMENT'].includes(b.status));
       setBookings(activeBookings);
     } catch (err) {
       showError("Không thể tải danh sách đặt bàn.");
@@ -59,7 +59,7 @@ export function useCheckInKanban() {
   }, [fetchBookings]);
 
   // Chia cột Kanban
-  const { incoming, late, inUse } = useMemo(() => {
+  const { incoming, late, inUse, pendingSettlement } = useMemo(() => {
     const now = new Date();
     const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     const todayStr = now.toLocaleDateString('en-CA');
@@ -68,6 +68,8 @@ export function useCheckInKanban() {
       (acc, booking) => {
         if (booking.status === 'IN_USE') {
           acc.inUse.push(booking);
+        } else if (booking.status === 'PENDING_SETTLEMENT') {
+          acc.pendingSettlement.push(booking);
         } else if (booking.status === 'CONFIRMED') {
           if (selectedDate < todayStr) {
             acc.late.push(booking);
@@ -84,11 +86,13 @@ export function useCheckInKanban() {
         }
         return acc;
       },
-      { incoming: [] as Booking[], late: [] as Booking[], inUse: [] as Booking[] }
+      { incoming: [] as Booking[], late: [] as Booking[], inUse: [] as Booking[], pendingSettlement: [] as Booking[] }
     );
   }, [bookings, selectedDate]);
 
   const handleCheckIn = async (bookingId: string) => {
+    if (!window.confirm('Xác nhận khách đã đến và nhận bàn?')) return;
+
     // Optimistic UI update
     setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, status: 'IN_USE' } : b));
 
@@ -105,6 +109,25 @@ export function useCheckInKanban() {
     }
   };
 
+  const handleForceRelease = async (bookingId: string) => {
+    if (!window.confirm('CẢNH BÁO: Bạn sắp nhả bàn này mà chưa thanh toán.\nĐơn sẽ được chuyển vào danh sách chờ đối soát.\nTiếp tục?')) return;
+
+    // Optimistic UI update
+    setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, status: 'PENDING_SETTLEMENT' } : b));
+
+    try {
+      const isSuccess = await checkInService.forceReleaseBooking(bookingId);
+      if (isSuccess) {
+        success("Đã nhả bàn thành công!");
+      } else {
+        throw new Error("Lỗi từ server");
+      }
+    } catch (err) {
+      showError("Lỗi nhả bàn. Đã khôi phục trạng thái cũ.");
+      fetchBookings();
+    }
+  };
+
   return {
     isLoading,
     selectedDate,
@@ -112,7 +135,9 @@ export function useCheckInKanban() {
     incoming,
     late,
     inUse,
+    pendingSettlement,
     handleCheckIn,
+    handleForceRelease,
     selectedBookingForCheckout,
     setSelectedBookingForCheckout,
     selectedBookingForDetails,

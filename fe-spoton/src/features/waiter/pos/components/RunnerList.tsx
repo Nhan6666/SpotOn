@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Booking } from '../pos.types';
 import { posService } from '../pos.service';
 import { useToast } from '@/components/ui/Toast';
-import { ChevronDown, ChevronRight, CheckCircle2, ChefHat, Clock } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCircle2, ChefHat, Clock, AlertTriangle } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
 
 interface RunnerListProps {
   bookings: Booking[];
@@ -13,6 +14,8 @@ export function RunnerList({ bookings, onRefresh }: RunnerListProps) {
   const { success, error: showError } = useToast();
   const [expandedBookingIds, setExpandedBookingIds] = useState<string[]>([]);
 
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, bookingId: '', itemId: '', itemName: '' });
+
   // Lọc ra các booking đang được sử dụng
   const activeBookings = bookings.filter(b => b.status === 'IN_USE' || b.status === 'CONFIRMED');
 
@@ -22,8 +25,14 @@ export function RunnerList({ bookings, onRefresh }: RunnerListProps) {
     );
   };
 
-  const handleMarkServed = async (bookingId: string, itemId: string, itemName: string) => {
-    if (!window.confirm(`Xác nhận đã mang món "${itemName}" ra bàn?`)) return;
+  const handleMarkServedClick = (bookingId: string, itemId: string, itemName: string) => {
+    setConfirmModal({ isOpen: true, bookingId, itemId, itemName });
+  };
+
+  const handleConfirmServe = async () => {
+    const { bookingId, itemId, itemName } = confirmModal;
+    setConfirmModal({ ...confirmModal, isOpen: false });
+    
     try {
       await posService.markItemServed(bookingId, itemId);
       success(`Đã bưng món: ${itemName}`);
@@ -132,13 +141,13 @@ export function RunnerList({ bookings, onRefresh }: RunnerListProps) {
                             </div>
 
                             {isReady && (
-                              <button
-                                onClick={() => handleMarkServed(booking._id, item._id, item.name)}
-                                className="px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white"
-                              >
-                                <CheckCircle2 className="w-4 h-4" />
-                                Bưng món
-                              </button>
+                                <button
+                                  onClick={() => handleMarkServedClick(booking._id, item._id, item.name)}
+                                  className="px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                                >
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  Bưng món
+                                </button>
                             )}
                             {!isReady && !isServed && (
                               <div className="px-3 py-1 bg-gray-100 rounded text-xs font-medium text-gray-400 italic">
@@ -160,6 +169,33 @@ export function RunnerList({ bookings, onRefresh }: RunnerListProps) {
           })
         )}
       </div>
+
+      <Modal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}>
+        <div className="p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+            <CheckCircle2 className="text-emerald-500 w-6 h-6" />
+            Xác nhận bưng món
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Bạn có chắc chắn đã mang món <span className="font-bold text-emerald-700">"{confirmModal.itemName}"</span> ra bàn?
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors cursor-pointer"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleConfirmServe}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2 cursor-pointer"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              Đã mang ra bàn
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

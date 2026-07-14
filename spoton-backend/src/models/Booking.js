@@ -81,6 +81,8 @@ const BookingSchema = new mongoose.Schema(
         'CANCELLED_REFUND_PENDING',   // Hủy, đang chờ hoàn tiền
         'REFUND_COMPLETED',           // Đã hoàn tiền xong
         'NO_SHOW',                    // Quá giờ 30 phút không đến (System Worker UC-S02)
+        'PENDING_SETTLEMENT',         // Bàn đã nhả nhưng chưa thanh toán (Force Release)
+        'WRITE_OFF',                  // Khách ăn quỵt hoặc thất thoát
       ],
       default: 'HOLDING',
     },

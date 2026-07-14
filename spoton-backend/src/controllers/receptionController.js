@@ -230,6 +230,53 @@ const checkoutBooking = async (req, res) => {
   }
 };
 
+// @desc   Nhả bàn (Force Release) khi chưa thanh toán (chuyển sang PENDING_SETTLEMENT)
+// @route  PATCH /api/v1/reception/bookings/:id/force-release
+// @access Private (Manager/Admin)
+const forceReleaseBooking = async (req, res) => {
+  try {
+    const BookingService = require('../services/bookingService');
+    const booking = await BookingService.forceReleaseBooking(req.params.id);
+
+    const io = require('../socket').getIO();
+    
+    // Tắt iPad tại từng bàn (Reset)
+    if (booking.table_ids) {
+      booking.table_ids.forEach(tableId => {
+        io.to(`table_${tableId}`).emit('RESET_IPAD', {
+          tableId: tableId
+        });
+      });
+    }
+
+    // Báo cho các Manager khác biết
+    io.to(`branch_${booking.branch_id}`).emit('BOOKING_STATUS_CHANGED', {
+      bookingId: booking._id,
+      status: 'PENDING_SETTLEMENT'
+    });
+    
+    // Cập nhật lại UI bản đồ ngay lập tức
+    io.to(`branch_${booking.branch_id}`).emit('table_status_changed', {
+      action: 'EMPTY',
+      branch_id: booking.branch_id,
+      table_ids: booking.table_ids,
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Nhả bàn thành công. Đơn hàng được chuyển sang danh sách chờ đối soát.',
+      data: booking 
+    });
+
+  } catch (error) {
+    console.error('Lỗi forceReleaseBooking:', error);
+    res.status(error.statusCode || 500).json({ 
+      success: false, 
+      message: error.message || 'Lỗi server nội bộ trong quá trình nhả bàn.' 
+    });
+  }
+};
+
 // @desc   Mở bàn cho khách vãng lai (Tạo đơn + Check-in ngay lập tức)
 // @route  POST /api/v1/reception/walk-in
 // @access Private (Waiter/Manager)
@@ -290,5 +337,6 @@ module.exports = {
   releaseHoldingBooking,
   checkInBooking,
   checkoutBooking,
+  forceReleaseBooking,
   createWalkInBooking
 };

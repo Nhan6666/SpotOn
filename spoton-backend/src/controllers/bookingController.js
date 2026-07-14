@@ -204,13 +204,15 @@ const updateBookingStatus = async (req, res) => {
       HOLDING: ['PENDING_PAYMENT', 'CANCELLED', 'CANCELLED_TIMEOUT'],
       PENDING_PAYMENT: ['CONFIRMED', 'CANCELLED', 'CANCELLED_TIMEOUT'],
       CONFIRMED: ['IN_USE', 'CANCELLED', 'NO_SHOW'],
-      IN_USE: ['COMPLETED'],
+      IN_USE: ['COMPLETED', 'PENDING_SETTLEMENT'],
       COMPLETED: [],
       CANCELLED: [],
       CANCELLED_TIMEOUT: [],
       CANCELLED_REFUND_PENDING: ['REFUND_COMPLETED'],
       REFUND_COMPLETED: [],
-      NO_SHOW: []
+      NO_SHOW: [],
+      PENDING_SETTLEMENT: ['COMPLETED', 'WRITE_OFF'],
+      WRITE_OFF: []
     };
 
     const allowed = VALID_TRANSITIONS[booking.status] || [];

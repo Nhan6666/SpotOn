@@ -6,6 +6,7 @@ const {
   releaseHoldingBooking,
   checkInBooking,
   checkoutBooking,
+  forceReleaseBooking,
   createWalkInBooking
 } = require('../controllers/receptionController');
 
@@ -18,7 +19,8 @@ router.delete('/hold/:id', releaseHoldingBooking);
 
 // Waiter/Manager thao tác trực tiếp tại nhà hàng
 router.post('/walk-in', protect, authorize('MANAGER', 'WAITER'), createWalkInBooking);
-router.patch('/bookings/:id/check-in', protect, authorize('ADMIN', 'MANAGER'), checkInBooking);
-router.patch('/bookings/:id/checkout', protect, authorize('ADMIN', 'MANAGER'), checkoutBooking);
+router.patch('/bookings/:id/check-in', protect, authorize('ADMIN', 'MANAGER', 'WAITER'), checkInBooking);
+router.patch('/bookings/:id/checkout', protect, authorize('ADMIN', 'MANAGER', 'WAITER'), checkoutBooking);
+router.patch('/bookings/:id/force-release', protect, authorize('ADMIN', 'MANAGER'), forceReleaseBooking);
 
 module.exports = router;

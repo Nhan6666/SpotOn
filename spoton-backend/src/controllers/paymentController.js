@@ -39,6 +39,7 @@ const calculateDeposit = asyncHandler(async (req, res) => {
       total_deposit: totalDeposit,
       applied_voucher: appliedVoucher,
       order_items: booking.order_items,
+      branch_id: booking.branch_id,
     },
   });
 });

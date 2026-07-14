@@ -25,6 +25,7 @@ interface BookingDetails {
   applied_voucher_code?: string;
   voucher_discount_amount?: number;
   guest_count?: number;
+  payment_info?: { voucher_code?: string };
 }
 
 interface CheckoutModalProps {
@@ -56,12 +57,13 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
     }
     
     const customerId = booking?.customer_id?._id || booking?.customer_id;
-    if (customerId) {
-      http.get<{ success: boolean; data: any[] }>(`/vouchers/wallet/${customerId}`)
+    const lookupId = customerId || booking?.walk_in_phone;
+    if (lookupId) {
+      http.get<{ success: boolean; data: any[] }>(`/vouchers/wallet/${lookupId}`)
         .then(res => setCustomerVouchers(res?.data?.filter((v: any) => v.status === 'UNUSED') || []))
         .catch(() => {});
     }
-  }, [booking?.branch_id, booking?.customer_id]);
+  }, [booking?.branch_id, booking?.customer_id, booking?.walk_in_phone]);
 
   if (!currentBooking) return null;
 
@@ -76,6 +78,7 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
   
   // Fake calculation if we want to show it before checkout, but ideally backend returns this in currentBooking.voucher_discount_amount
   const voucherDiscount = currentBooking.voucher_discount_amount || 0;
+  const actualVoucherCode = currentBooking.applied_voucher_code || currentBooking.payment_info?.voucher_code;
   const amountToPay = Math.max(0, totalBill - depositPaid - voucherDiscount);
 
   const handleApplyVoucher = async () => {
@@ -206,11 +209,11 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
               <span className="flex items-center gap-2"><Tag className="w-4 h-4" /> Mã giảm giá</span>
             </h3>
             
-            {currentBooking.applied_voucher_code ? (
+            {actualVoucherCode ? (
               <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-center gap-2 text-green-800">
                   <CheckCircle className="w-5 h-5" />
-                  <span className="font-bold">{currentBooking.applied_voucher_code}</span>
+                  <span className="font-bold">{actualVoucherCode}</span>
                   {voucherDiscount > 0 && <span className="text-xs text-green-600">- Đã áp dụng (-{voucherDiscount.toLocaleString()}đ)</span>}
                 </div>
                 <button 
@@ -273,7 +276,7 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
                           <p className="text-xs text-gray-500">{v.voucher_id?.name}</p>
                         </div>
                         <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                          {v.voucher_id?.discount_type === 'PERCENTAGE' ? `${v.voucher_id?.discount_value}%` : `${v.voucher_id?.discount_value?.toLocaleString()}đ`}
+                          Giảm {v.voucher_id?.discount_percentage}%
                         </span>
                       </div>
                     ))}
@@ -297,7 +300,7 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
                           <p className="text-xs text-gray-500">{v.name}</p>
                         </div>
                         <span className="text-xs font-bold text-gray-600 bg-gray-200 px-2 py-1 rounded">
-                          {v.discount_type === 'PERCENTAGE' ? `${v.discount_value}%` : `${v.discount_value.toLocaleString()}đ`}
+                          Giảm {v.discount_percentage}%
                         </span>
                       </div>
                     ))}

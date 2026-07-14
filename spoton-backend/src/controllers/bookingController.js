@@ -341,6 +341,10 @@ const applyVoucher = async (req, res) => {
     if (!code) {
       // Gỡ voucher (nếu code null hoặc rỗng)
       booking.applied_voucher_code = null;
+      booking.voucher_discount_amount = 0;
+      if (booking.payment_info && booking.payment_info.voucher_code) {
+        booking.payment_info.voucher_code = undefined;
+      }
       await booking.save();
       return res.status(200).json({ success: true, message: 'Đã gỡ voucher.', data: booking });
     }
@@ -361,6 +365,10 @@ const applyVoucher = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Voucher đã hết hạn.' });
     }
 
+    if (voucher.usage_limit && voucher.used_count >= voucher.usage_limit) {
+      return res.status(400).json({ success: false, message: 'Voucher đã hết số lượt sử dụng.' });
+    }
+
     // Check branch
     if (voucher.branch_id && voucher.branch_id.toString() !== booking.branch_id.toString()) {
       return res.status(400).json({ success: false, message: 'Voucher không áp dụng cho chi nhánh này.' });
@@ -374,8 +382,33 @@ const applyVoucher = async (req, res) => {
       });
     }
 
-    // Lưu voucher_code vào booking
+    // Calculate total bill for discount
+    const items = booking.order_items || [];
+    const calculatedTotal = items.reduce((acc, item) => acc + (item.price_at_time * item.quantity), 0);
+    const totalBill = calculatedTotal > 0 ? calculatedTotal : (booking.pre_order_total_amount || 0);
+
+    // Check min order value
+    if (voucher.min_order_value && totalBill < voucher.min_order_value) {
+      return res.status(400).json({
+        success: false,
+        message: `Voucher yêu cầu hóa đơn tối thiểu ${voucher.min_order_value.toLocaleString()}đ. Hiện tại hóa đơn là ${totalBill.toLocaleString()}đ.`
+      });
+    }
+
+    let discount = 0;
+    if (voucher.discount_percentage) {
+      discount = (totalBill * voucher.discount_percentage) / 100;
+    }
+    if (voucher.max_discount_amount && discount > voucher.max_discount_amount) {
+      discount = voucher.max_discount_amount;
+    }
+
+    // Lưu voucher_code và số tiền giảm vào booking
     booking.applied_voucher_code = voucher.code;
+    booking.voucher_discount_amount = discount;
+    if (booking.payment_info && booking.payment_info.voucher_code) {
+      booking.payment_info.voucher_code = undefined;
+    }
     await booking.save();
 
     res.status(200).json({ 

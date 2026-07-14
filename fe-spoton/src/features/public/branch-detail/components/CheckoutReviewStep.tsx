@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { CreditCard, Tag, ArrowRight, ShieldCheck, Wallet, SmartphoneNfc } from 'lucide-react';
+import { CreditCard, Tag, ArrowRight, ShieldCheck, Wallet, SmartphoneNfc, ChevronDown } from 'lucide-react';
 import { branchDetailService } from '../branch-detail.service';
 import { voucherService } from '../../promotions/voucher.service';
+import { useAuth } from '@/providers/AuthProvider';
 
 interface Props {
   bookingId: string;
@@ -12,12 +13,26 @@ interface Props {
 }
 
 export function CheckoutReviewStep({ bookingId, onBack, onPaymentSuccess }: Props) {
+  const { isAuthenticated } = useAuth();
   const [depositInfo, setDepositInfo] = useState<any>(null);
   const [voucherCode, setVoucherCode] = useState('');
+  const [myWallet, setMyWallet] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isApplying, setIsApplying] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      voucherService.getMyWallet().then((res) => {
+        if (res.success) {
+          // Chỉ lấy các voucher chưa sử dụng
+          setMyWallet(res.data.filter((v: any) => v.status === 'UNUSED'));
+        }
+      }).catch(console.error);
+    }
+  }, [isAuthenticated]);
 
   const fetchDeposit = async (code?: string) => {
     try {
@@ -144,7 +159,7 @@ export function CheckoutReviewStep({ bookingId, onBack, onPaymentSuccess }: Prop
 
               {depositInfo?.voucher_discount_amount > 0 && (
                 <div className="flex justify-between items-center text-green-600 font-medium">
-                  <span>Giảm giá (Voucher)</span>
+                  <span>Giảm giá (Voucher dự kiến)</span>
                   <span>-{depositInfo?.voucher_discount_amount?.toLocaleString()}đ</span>
                 </div>
               )}
@@ -153,35 +168,79 @@ export function CheckoutReviewStep({ bookingId, onBack, onPaymentSuccess }: Prop
             <div className="mt-6 pt-6 border-t border-gray-100">
               <p className="font-bold text-gray-900 mb-3 text-sm flex items-center gap-2">
                 <Tag className="w-4 h-4 text-gray-400" />
-                Mã giảm giá
+                Mã giảm giá (Sẽ áp dụng khi thanh toán)
               </p>
               
               {depositInfo?.applied_voucher ? (
                 <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl">
                   <div>
                     <p className="text-sm font-bold text-green-800">{depositInfo.applied_voucher.code}</p>
-                    <p className="text-xs text-green-600">Đã áp dụng giảm {depositInfo.applied_voucher.discount_percentage}%</p>
+                    <p className="text-xs text-green-600">Dự kiến giảm {depositInfo.applied_voucher.discount_percentage}% hóa đơn cuối</p>
                   </div>
                   <button onClick={handleRemoveVoucher} className="text-xs text-red-500 hover:text-red-700 font-bold px-3 py-1.5 bg-white rounded-lg border border-red-100 shadow-sm transition-colors">
                     Hủy
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleApplyVoucher} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={voucherCode}
-                    onChange={(e) => setVoucherCode(e.target.value)}
-                    placeholder="Nhập mã giảm giá..."
-                    className="flex-1 text-sm border-gray-300 rounded-xl focus:ring-[#ea580c] focus:border-[#ea580c] uppercase px-4"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isApplying || !voucherCode.trim()}
-                    className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
-                  >
-                    {isApplying ? '...' : 'Áp dụng'}
-                  </button>
+                <form onSubmit={handleApplyVoucher} className="flex flex-col gap-2">
+                  {myWallet.length > 0 && (
+                    <div className="relative z-10">
+                      <div 
+                        onClick={() => setShowDropdown(!showDropdown)}
+                        className="w-full text-sm border border-gray-300 rounded-xl px-4 py-2.5 bg-gray-50 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors"
+                      >
+                        <span className={voucherCode ? "text-gray-900 font-bold" : "text-gray-500"}>
+                          {voucherCode || "-- Chọn voucher từ ví --"}
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                      </div>
+
+                      {showDropdown && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                          <div 
+                            className="px-4 py-2.5 hover:bg-orange-50 cursor-pointer text-sm text-gray-500 border-b border-gray-100"
+                            onClick={() => {
+                              setVoucherCode('');
+                              setShowDropdown(false);
+                            }}
+                          >
+                            -- Không chọn --
+                          </div>
+                          {myWallet.map((v) => (
+                            <div 
+                              key={v._id}
+                              className="px-4 py-2.5 hover:bg-orange-50 cursor-pointer text-sm border-b border-gray-50 last:border-0 flex justify-between items-center"
+                              onClick={() => {
+                                setVoucherCode(v.voucher_id.code);
+                                setShowDropdown(false);
+                              }}
+                            >
+                              <span className="font-bold text-gray-900">{v.voucher_id.code}</span>
+                              <span className="text-orange-600 bg-orange-100 px-2 py-0.5 rounded text-xs font-semibold">
+                                -{v.voucher_id.discount_percentage}%
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={voucherCode}
+                      onChange={(e) => setVoucherCode(e.target.value)}
+                      placeholder="Hoặc nhập mã giảm giá..."
+                      className="flex-1 text-sm border-gray-300 rounded-xl focus:ring-[#ea580c] focus:border-[#ea580c] uppercase px-4"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isApplying || !voucherCode.trim()}
+                      className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
+                    >
+                      {isApplying ? '...' : 'Áp dụng'}
+                    </button>
+                  </div>
                 </form>
               )}
               {errorMsg && <p className="text-red-500 text-xs mt-2">{errorMsg}</p>}

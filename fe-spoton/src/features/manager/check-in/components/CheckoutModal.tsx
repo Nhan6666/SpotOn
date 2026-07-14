@@ -14,7 +14,7 @@ interface OrderItem {
 
 interface BookingDetails {
   _id: string;
-  branch_id: string;
+  branch_id?: string;
   customer_id?: { _id: string; full_name: string; phone: string };
   walk_in_name?: string;
   walk_in_phone?: string;
@@ -41,6 +41,8 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
   const [voucherCodeInput, setVoucherCodeInput] = useState('');
   const [currentBooking, setCurrentBooking] = useState<BookingDetails | null>(booking);
 
+  const [customerVouchers, setCustomerVouchers] = useState<any[]>([]);
+
   useEffect(() => {
     setCurrentBooking(booking);
     setVoucherCodeInput(booking?.applied_voucher_code || '');
@@ -52,7 +54,14 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
         .then(res => setPublicVouchers(res?.data || []))
         .catch(() => {});
     }
-  }, [booking?.branch_id]);
+    
+    const customerId = booking?.customer_id?._id || booking?.customer_id;
+    if (customerId) {
+      http.get<{ success: boolean; data: any[] }>(`/vouchers/wallet/${customerId}`)
+        .then(res => setCustomerVouchers(res?.data?.filter((v: any) => v.status === 'UNUSED') || []))
+        .catch(() => {});
+    }
+  }, [booking?.branch_id, booking?.customer_id]);
 
   if (!currentBooking) return null;
 
@@ -238,13 +247,42 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
                   </Button>
                 </div>
                 
-                {/* Dropdown Vouchers public */}
-                {showVouchers && publicVouchers.length > 0 && (
-                  <div className="bg-white border border-gray-200 rounded-lg shadow-sm max-h-48 overflow-y-auto">
-                    {publicVouchers.map(v => (
+                {/* Dropdown Vouchers public & customer */}
+                {showVouchers && (
+                  <div className="bg-white border border-gray-200 rounded-lg shadow-sm max-h-60 overflow-y-auto">
+                    {customerVouchers.length > 0 && (
+                      <div className="px-3 py-2 bg-blue-50 border-b border-blue-100 text-xs font-bold text-blue-800">
+                        Ví Voucher Của Khách Hàng
+                      </div>
+                    )}
+                    {customerVouchers.map(v => (
                       <div 
                         key={v._id} 
                         className="p-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer flex justify-between items-center"
+                        onClick={() => {
+                          setVoucherCodeInput(v.voucher_id?.code);
+                          setShowVouchers(false);
+                        }}
+                      >
+                        <div>
+                          <p className="font-bold text-sm text-gray-900">{v.voucher_id?.code}</p>
+                          <p className="text-xs text-gray-500">{v.voucher_id?.name}</p>
+                        </div>
+                        <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                          {v.voucher_id?.discount_type === 'PERCENTAGE' ? `${v.voucher_id?.discount_value}%` : `${v.voucher_id?.discount_value?.toLocaleString()}đ`}
+                        </span>
+                      </div>
+                    ))}
+
+                    {publicVouchers.length > 0 && (
+                      <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-600">
+                        Voucher Chung Toàn Hệ Thống
+                      </div>
+                    )}
+                    {publicVouchers.map(v => (
+                      <div 
+                        key={v._id} 
+                        className="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex justify-between items-center"
                         onClick={() => {
                           setVoucherCodeInput(v.code);
                           setShowVouchers(false);
@@ -254,11 +292,17 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
                           <p className="font-bold text-sm text-gray-900">{v.code}</p>
                           <p className="text-xs text-gray-500">{v.name}</p>
                         </div>
-                        <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                        <span className="text-xs font-bold text-gray-600 bg-gray-200 px-2 py-1 rounded">
                           {v.discount_type === 'PERCENTAGE' ? `${v.discount_value}%` : `${v.discount_value.toLocaleString()}đ`}
                         </span>
                       </div>
                     ))}
+                    
+                    {customerVouchers.length === 0 && publicVouchers.length === 0 && (
+                      <div className="p-3 text-center text-sm text-gray-500">
+                        Không có voucher nào.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

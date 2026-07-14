@@ -41,73 +41,53 @@ class PaymentService {
         valid_until: { $gte: new Date() },
       };
 
-      if (applyVoucherUsage) {
-        // Atomic update nếu cờ applyVoucherUsage = true (khi thực sự tạo link thanh toán)
-        query.$expr = { $lt: ["$used_count", "$usage_limit"] };
-        const voucher = await Voucher.findOneAndUpdate(
-          query,
-          { $inc: { used_count: 1 } },
-          { new: true }
-        );
+      // Chỉ read để tính toán preview (calculate-deposit) và lưu thông tin
+      const voucher = await Voucher.findOne(query);
 
-        if (!voucher) {
-          const err = new Error('Mã giảm giá không hợp lệ hoặc đã hết lượt sử dụng.');
-          err.statusCode = 400;
-          throw err;
-        }
-
-        voucherDiscount = Math.ceil(preOrderTotal * (voucher.discount_percentage / 100));
-        if (voucher.max_discount_amount && voucherDiscount > voucher.max_discount_amount) {
-          voucherDiscount = voucher.max_discount_amount;
-        }
-      } else {
-        // Chỉ read để tính toán preview (calculate-deposit)
-        const voucher = await Voucher.findOne(query);
-
-        if (!voucher) {
-          const err = new Error('Mã giảm giá không hợp lệ hoặc đã hết hạn.');
-          err.statusCode = 400;
-          throw err;
-        }
-
-        if (voucher.usage_limit && voucher.used_count >= voucher.usage_limit) {
-          const err = new Error('Mã giảm giá đã hết lượt sử dụng.');
-          err.statusCode = 400;
-          throw err;
-        }
-
-        if (voucher.branch_id && String(voucher.branch_id) !== String(booking.branch_id)) {
-          const err = new Error('Mã giảm giá không áp dụng cho chi nhánh này.');
-          err.statusCode = 400;
-          throw err;
-        }
-
-        if (preOrderTotal < voucher.min_order_value) {
-          const err = new Error(`Đơn hàng tối thiểu ${voucher.min_order_value.toLocaleString()}đ để sử dụng mã này.`);
-          err.statusCode = 400;
-          throw err;
-        }
-
-        voucherDiscount = Math.ceil(preOrderTotal * (voucher.discount_percentage / 100));
-        if (voucher.max_discount_amount && voucherDiscount > voucher.max_discount_amount) {
-          voucherDiscount = voucher.max_discount_amount;
-        }
-
-        appliedVoucher = {
-          code: voucher.code,
-          discount_percentage: voucher.discount_percentage,
-          discount_amount: voucherDiscount,
-        };
+      if (!voucher) {
+        const err = new Error('Mã giảm giá không hợp lệ hoặc đã hết hạn.');
+        err.statusCode = 400;
+        throw err;
       }
+
+      if (voucher.usage_limit && voucher.used_count >= voucher.usage_limit) {
+        const err = new Error('Mã giảm giá đã hết lượt sử dụng.');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      if (voucher.branch_id && String(voucher.branch_id) !== String(booking.branch_id)) {
+        const err = new Error('Mã giảm giá không áp dụng cho chi nhánh này.');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      if (preOrderTotal < voucher.min_order_value) {
+        const err = new Error(`Đơn hàng tối thiểu ${voucher.min_order_value.toLocaleString()}đ để sử dụng mã này.`);
+        err.statusCode = 400;
+        throw err;
+      }
+
+      voucherDiscount = Math.ceil(preOrderTotal * (voucher.discount_percentage / 100));
+      if (voucher.max_discount_amount && voucherDiscount > voucher.max_discount_amount) {
+        voucherDiscount = voucher.max_discount_amount;
+      }
+
+      appliedVoucher = {
+        code: voucher.code,
+        discount_percentage: voucher.discount_percentage,
+        discount_amount: voucherDiscount,
+      };
     }
 
-    const totalDeposit = Math.max(0, tableDeposit + preOrderDeposit - voucherDiscount);
+    // Thay đổi luồng: Voucher KHÔNG trừ vào tiền cọc, chỉ ghi nhận để trừ vào hóa đơn cuối cùng
+    const totalDeposit = tableDeposit + preOrderDeposit;
 
     return {
       tableDeposit,
       preOrderTotal,
       preOrderDeposit,
-      voucherDiscount,
+      voucherDiscount, // Trả về để frontend hiển thị số tiền sẽ được giảm, nhưng không trừ vào cọc
       totalDeposit,
       appliedVoucher,
       booking

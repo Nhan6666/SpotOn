@@ -349,12 +349,61 @@ exports.getMyWallet = async (req, res) => {
   }
 };
 
+// @desc    Lấy ví voucher của user theo ID (dành cho Manager)
+// @route   GET /api/v1/vouchers/wallet/:customerId
+// @access  Private (Manager/Admin)
+exports.getWalletByCustomerId = async (req, res) => {
+  try {
+    const customer_id = req.params.customerId;
+    const UserVoucher = require('../models/UserVoucher');
+
+    // Lấy tất cả voucher public
+    const publicVouchers = await Voucher.find({ is_public: true })
+      .populate('branch_id', 'name')
+      .sort({ createdAt: -1 });
+    
+    // Lấy trạng thái sử dụng của user này
+    const userVouchers = await UserVoucher.find({ customer_id }).populate({
+      path: 'voucher_id',
+      populate: { path: 'branch_id', select: 'name' }
+    });
+
+    const wallet = publicVouchers.map(voucher => {
+      // Kiểm tra xem user đã dùng voucher này chưa
+      const userV = userVouchers.find(uv => uv.voucher_id && uv.voucher_id._id.toString() === voucher._id.toString());
+      
+      return {
+        _id: userV ? userV._id : `virtual_${voucher._id}`,
+        status: userV ? userV.status : 'UNUSED',
+        voucher_id: voucher
+      };
+    });
+
+    // Thêm các voucher private mà user đã lưu (nếu có lỡ lưu trước đó)
+    userVouchers.forEach(uv => {
+      if (uv.voucher_id && !uv.voucher_id.is_public) {
+        wallet.push(uv);
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: wallet
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi lấy ví voucher của khách hàng',
+      error: error.message
+    });
+  }
+};
 // @desc    Validate voucher (Dùng khi đặt bàn để check xem có hợp lệ không)
 // @route   POST /api/v1/vouchers/validate
 // @access  Public / Private (Khách có thể validate lúc đặt bàn chưa cần đăng nhập nếu walk-in)
 exports.validateVoucher = async (req, res) => {
   try {
-    const { code, branch_id, guest_count, pre_order_amount } = req.body;
+    const { code, branch_id, guest_count, pre_order_amount, customer_id } = req.body;
 
     if (!code) {
       return res.status(400).json({ success: false, message: 'Vui lòng cung cấp mã voucher.' });
@@ -404,6 +453,22 @@ exports.validateVoucher = async (req, res) => {
         return res.status(400).json({
           success: false,
           message: `Voucher yêu cầu đơn hàng từ ${voucher.min_order_value.toLocaleString()}đ trở lên.`
+        });
+      }
+    }
+
+    // Check customer usage
+    const customerIdToCheck = customer_id || (req.user ? req.user.id : null);
+    if (customerIdToCheck) {
+      const UserVoucher = require('../models/UserVoucher');
+      const userVoucher = await UserVoucher.findOne({
+        customer_id: customerIdToCheck,
+        voucher_id: voucher._id
+      });
+      if (userVoucher && userVoucher.status === 'USED') {
+        return res.status(400).json({
+          success: false,
+          message: 'Khách hàng này đã sử dụng mã voucher này rồi.'
         });
       }
     }

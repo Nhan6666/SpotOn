@@ -142,20 +142,20 @@ export function IpadFeature({ tableId }: IpadFeatureProps) {
   }, [isUnlocked, token, sessionData]);
 
   const addToCart = (item: any) => {
-    if (!item.is_available || item.quantity === 0) {
-      showError(`Món ${item.name} hiện đang tạm hết!`);
+    const maxStock = item.stock !== undefined ? item.stock : item.quantity;
+
+    if (!item.is_available || maxStock === 0) {
       return;
     }
     
     const existing = cart.find(c => c._id === item._id);
     if (existing) {
-      if (item.quantity !== -1 && existing.quantity >= item.quantity) {
-        showError(`Chỉ còn ${item.quantity} phần cho món này!`);
+      if (maxStock !== -1 && existing.quantity >= maxStock) {
         return;
       }
       setCart(cart.map(c => c._id === item._id ? { ...c, quantity: c.quantity + 1 } : c));
     } else {
-      setCart([...cart, { ...item, quantity: 1 }]);
+      setCart([...cart, { ...item, stock: maxStock, quantity: 1 }]);
     }
   };
 
@@ -273,7 +273,9 @@ export function IpadFeature({ tableId }: IpadFeatureProps) {
         {/* Menu Grid */}
         <main className="flex-1 overflow-y-auto p-6 relative">
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {menuItems.map(item => (
+            {menuItems.map(item => {
+              const inCart = cart.find(c => c._id === item._id)?.quantity || 0;
+              return (
               <div key={item._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow group">
                 <div className="aspect-video bg-gray-100 relative overflow-hidden">
                   {item.image_url || item.image ? (
@@ -291,7 +293,8 @@ export function IpadFeature({ tableId }: IpadFeatureProps) {
                     {(item.is_available && item.quantity !== 0) ? (
                       <button 
                         onClick={() => addToCart(item)}
-                        className="bg-blue-50 text-blue-600 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-colors"
+                        disabled={item.quantity !== -1 && inCart >= item.quantity}
+                        className="bg-blue-50 text-blue-600 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-colors disabled:opacity-50 disabled:hover:bg-blue-50 disabled:hover:text-blue-600 disabled:cursor-not-allowed"
                       >
                         <Plus className="w-5 h-5" />
                       </button>
@@ -303,7 +306,7 @@ export function IpadFeature({ tableId }: IpadFeatureProps) {
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
           
           {isLoadingMenu && (
@@ -365,7 +368,11 @@ export function IpadFeature({ tableId }: IpadFeatureProps) {
                             <Minus className="w-4 h-4" />
                           </button>
                           <span className="font-bold text-sm w-4 text-center">{item.quantity}</span>
-                          <button onClick={() => addToCart(item)} className="text-gray-500 hover:text-blue-600">
+                          <button 
+                            onClick={() => addToCart(item)} 
+                            disabled={item.stock !== -1 && item.quantity >= item.stock}
+                            className="text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-gray-500"
+                          >
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>

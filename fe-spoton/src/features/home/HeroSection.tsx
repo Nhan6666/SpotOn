@@ -8,6 +8,8 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { HOME_TEXTS } from '@/constants/texts/home';
 import { useToast } from '@/components/ui/Toast';
 
+import bgHero from '@/assets/images/bg-login.png';
+
 const CAN_THO_LOCATIONS = [
   "Quận Ninh Kiều, Cần Thơ",
   "Quận Bình Thủy, Cần Thơ",
@@ -35,7 +37,6 @@ export function HeroSection() {
   const guestsRef = useRef<HTMLDivElement>(null);
 
   const GUEST_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, '10+'];
-
 
   
   const TIME_OPTIONS = [
@@ -111,9 +112,20 @@ export function HeroSection() {
   );
 
   return (
-    <section className="relative w-full h-[600px] mb-24 bg-[#164626] flex items-center justify-center">
+    <section className="relative w-full h-[450px] md:h-[500px] mb-12 flex items-center justify-center">
+      {/* Background Image & Overlay */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <Image
+          src={bgHero}
+          alt="Restaurant Background"
+          fill
+          priority
+          className="object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#164626]/95 via-[#164626]/85 to-[#0A2A12]/95 backdrop-blur-[2px]" />
+      </div>
 
-      <div className="relative z-10 flex flex-col items-center justify-center pt-10 pb-32 px-4 container mx-auto h-full text-center">
+      <div className="relative z-10 flex flex-col items-center justify-center pt-12 pb-24 px-4 container mx-auto h-full text-center">
         {/* Title Block */}
         <h1 className="text-6xl md:text-8xl font-stencil text-[#F2B02A] mb-4 tracking-wide leading-tight uppercase" dangerouslySetInnerHTML={{ __html: HOME_TEXTS.hero.title.replace('TRONG', 'TRONG<br />') }}>
         </h1>
@@ -135,7 +147,7 @@ export function HeroSection() {
         <div className="bg-[#0A2A12] rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.3)] p-2 flex flex-col md:flex-row items-center divide-y md:divide-y-0 md:divide-x divide-[#2A5A3A] border border-[#2A5A3A] animate-fadeInUp delay-100 max-w-5xl w-full">
           
           {/* LOCATION */}
-          <div ref={locationRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-[#113a1e] rounded-full transition-colors cursor-pointer group">
+          <div ref={locationRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-[#164626] rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#F2B02A] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             <div className="ml-3 flex flex-col flex-1 overflow-hidden">
               <span className="text-[10px] md:text-xs font-bold text-[#F2B02A] uppercase tracking-wide">{HOME_TEXTS.hero.location.label}</span>
@@ -182,7 +194,7 @@ export function HeroSection() {
           </div>
           
           {/* DATE */}
-          <div className="flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-[#113a1e] rounded-full transition-colors cursor-pointer group">
+          <div className="flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-[#164626] rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#F2B02A] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             <div className="ml-3 flex flex-col flex-1 overflow-hidden">
               <span className="text-[10px] md:text-xs font-bold text-[#F2B02A] uppercase tracking-wide">{HOME_TEXTS.hero.date.label}</span>
@@ -200,7 +212,7 @@ export function HeroSection() {
           </div>
 
           {/* TIME */}
-          <div ref={timeRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-[#113a1e] rounded-full transition-colors cursor-pointer group">
+          <div ref={timeRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-[#164626] rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#F2B02A] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <div className="ml-3 flex flex-col flex-1 overflow-hidden cursor-pointer" onClick={() => setShowTimeDropdown(true)}>
               <span className="text-[10px] md:text-xs font-bold text-[#F2B02A] uppercase tracking-wide cursor-pointer">{HOME_TEXTS.hero.time.label}</span>
@@ -239,7 +251,7 @@ export function HeroSection() {
           </div>
 
           {/* GUESTS */}
-          <div ref={guestsRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-[#113a1e] rounded-full transition-colors cursor-pointer group">
+          <div ref={guestsRef} className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-[#164626] rounded-full transition-colors cursor-pointer group">
             <svg className="w-5 h-5 md:w-6 md:h-6 text-[#F2B02A] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
             <div className="ml-3 flex flex-col flex-1 overflow-hidden cursor-pointer" onClick={() => setShowGuestsDropdown(!showGuestsDropdown)}>
               <span className="text-[10px] md:text-xs font-bold text-[#F2B02A] uppercase tracking-wide cursor-pointer">{HOME_TEXTS.hero.guests.label}</span>

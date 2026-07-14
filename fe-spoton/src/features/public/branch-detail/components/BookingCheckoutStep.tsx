@@ -10,6 +10,7 @@ import { PublicBranchDetail } from '../branch-detail.types';
 import { PUBLIC_TEXTS } from '@/constants/texts/public';
 import { branchDetailService } from '../branch-detail.service';
 import { CheckoutReviewStep } from './CheckoutReviewStep';
+import { useToast } from '@/components/ui/Toast';
 
 const checkoutSchema = z.object({
   walk_in_name: z.string().min(2, PUBLIC_TEXTS.branchDetail.checkout.form.errors.nameMin).max(50, PUBLIC_TEXTS.branchDetail.checkout.form.errors.nameMax),
@@ -35,6 +36,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, selectedTabl
   const [totalPages, setTotalPages] = useState(1);
   const [isLoadingMenu, setIsLoadingMenu] = useState(false);
   const [tabOffset, setTabOffset] = useState(0);
+  const { error } = useToast();
 
   const [tables, setTables] = useState<any[]>(selectedTables);
   const [cart, setCart] = useState<Record<string, { item: any; quantity: number }>>({});
@@ -81,7 +83,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, selectedTabl
       setTimeLeft(remaining);
       if (remaining <= 0) {
         clearInterval(timer);
-        alert(PUBLIC_TEXTS.branchDetail.checkout.timer.timeoutAlert);
+        error(PUBLIC_TEXTS.branchDetail.checkout.timer.timeoutAlert);
         onCancel();
       }
     }, 1000);
@@ -127,6 +129,14 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, selectedTabl
   }, [branch._id, activeTab, currentPage]);
 
   const addToCart = (item: any) => {
+    const currentQty = cart[item._id]?.quantity || 0;
+
+    // Kiểm tra số lượng tồn (nếu có)
+    if (item.quantity !== undefined && currentQty >= item.quantity) {
+      error(`Món này hiện chỉ còn ${item.quantity} phần tại chi nhánh.`);
+      return;
+    }
+
     setCart(prev => {
       const existing = prev[item._id];
       return {
@@ -170,7 +180,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, selectedTabl
 
   const onSubmit = async (data: CheckoutFormData) => {
     if (timeLeft <= 0) {
-      alert(PUBLIC_TEXTS.branchDetail.checkout.timer.timeoutAlert);
+      error(PUBLIC_TEXTS.branchDetail.checkout.timer.timeoutAlert);
       onCancel();
       return;
     }
@@ -322,7 +332,14 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, selectedTabl
                               <div className="flex-1 flex flex-col justify-between">
                                 <div>
                                   <h5 className="font-bold text-gray-900 text-sm line-clamp-1">{item.name || PUBLIC_TEXTS.branchDetail.checkout.menu.noItemName}</h5>
-                                  <span className="font-bold text-[#ea580c] text-sm">{item.price ? `${item.price.toLocaleString()}đ` : PUBLIC_TEXTS.branchDetail.checkout.menu.priceContact}</span>
+                                  <div className="flex justify-between items-center mt-1">
+                                    <span className="font-bold text-[#ea580c] text-sm">{item.price ? `${item.price.toLocaleString()}đ` : PUBLIC_TEXTS.branchDetail.checkout.menu.priceContact}</span>
+                                    {item.quantity !== undefined && item.quantity !== -1 && (
+                                      <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                        Còn {Math.max(0, item.quantity - inCart)}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                                 
                                 {!isOutOfStock && (
@@ -331,7 +348,11 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, selectedTabl
                                       <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg p-1 w-full justify-between">
                                         <button onClick={() => removeFromCart(item._id)} className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold text-gray-700">-</button>
                                         <span className="font-bold text-sm">{inCart}</span>
-                                        <button onClick={() => addToCart(item)} className="w-6 h-6 rounded bg-[#ea580c] hover:bg-[#c2410c] text-white flex items-center justify-center font-bold">+</button>
+                                        <button 
+                                          onClick={() => addToCart(item)} 
+                                          disabled={item.quantity !== undefined && item.quantity !== -1 && inCart >= item.quantity}
+                                          className="w-6 h-6 rounded bg-[#ea580c] hover:bg-[#c2410c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white flex items-center justify-center font-bold"
+                                        >+</button>
                                       </div>
                                     ) : (
                                       <button 

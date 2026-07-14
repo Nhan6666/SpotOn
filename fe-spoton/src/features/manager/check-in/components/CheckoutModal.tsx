@@ -127,6 +127,10 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
   };
 
   const handleCheckout = async () => {
+    if (!window.confirm(`Xác nhận khách đã thanh toán đủ ${amountToPay.toLocaleString()}đ?\nHành động này sẽ ghi nhận doanh thu và không thể hoàn tác!`)) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const res = await http.patch<{ success: boolean }>(`/reception/bookings/${currentBooking._id}/checkout`, {

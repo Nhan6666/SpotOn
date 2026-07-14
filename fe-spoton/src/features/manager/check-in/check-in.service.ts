@@ -12,5 +12,10 @@ export const checkInService = {
   checkInBooking: async (bookingId: string): Promise<boolean> => {
     const res = await http.patch<{ success: boolean }>(`/reception/bookings/${bookingId}/check-in`, {});
     return res.success;
+  },
+
+  forceReleaseBooking: async (bookingId: string): Promise<boolean> => {
+    const res = await http.patch<{ success: boolean }>(`/reception/bookings/${bookingId}/force-release`, {});
+    return res.success;
   }
 };

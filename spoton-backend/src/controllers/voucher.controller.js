@@ -63,6 +63,12 @@ exports.getPublicGlobalVouchers = async (req, res) => {
       branch_id: null,
       valid_from: { $lte: now },
       valid_until: { $gte: now },
+      $expr: {
+        $or: [
+          { $eq: ["$usage_limit", null] },
+          { $lt: ["$used_count", "$usage_limit"] }
+        ]
+      }
     };
 
     const vouchers = await Voucher.find(query).sort({ valid_until: 1 });
@@ -89,7 +95,14 @@ exports.getPublicVouchersByBranch = async (req, res) => {
     let query = {
       is_active: true,
       is_public: true, // Chỉ lấy voucher được public
-      $or: [{ branch_id: null }, { branch_id: req.params.branchId }]
+      $or: [{ branch_id: null }, { branch_id: req.params.branchId }],
+      valid_until: { $gte: new Date() },
+      $expr: {
+        $or: [
+          { $eq: ["$usage_limit", null] },
+          { $lt: ["$used_count", "$usage_limit"] }
+        ]
+      }
     };
 
     if (branch && branch.disabled_vouchers && branch.disabled_vouchers.length > 0) {
@@ -170,12 +183,32 @@ exports.updateVoucher = async (req, res) => {
       ];
 
       for (const field of sensitiveFields) {
-        if (req.body[field] !== undefined && req.body[field] !== voucher[field]?.toString()) {
-          // Chỉ chặn nếu req.body truyền field mới và nó khác với data cũ (sơ bộ)
-          return res.status(400).json({ 
-            success: false, 
-            message: `Voucher đang phát hành, không thể chỉnh sửa trường ${field}` 
-          });
+        if (req.body[field] !== undefined) {
+          let bodyVal = req.body[field];
+          let dbVal = voucher[field];
+
+          if (field === 'valid_from') {
+            const bodyTime = new Date(bodyVal).getTime();
+            const dbTime = new Date(dbVal).getTime();
+            if (!isNaN(bodyTime) && !isNaN(dbTime) && bodyTime !== dbTime) {
+              return res.status(400).json({ 
+                success: false, 
+                message: `Voucher đang phát hành, không thể chỉnh sửa trường ${field}` 
+              });
+            }
+            continue;
+          }
+
+          bodyVal = bodyVal === null ? null : String(bodyVal);
+          dbVal = dbVal == null ? null : String(dbVal);
+          
+          if (bodyVal !== dbVal) {
+            // Chỉ chặn nếu req.body truyền field mới và nó khác với data cũ (sơ bộ)
+            return res.status(400).json({ 
+              success: false, 
+              message: `Voucher đang phát hành, không thể chỉnh sửa trường ${field}` 
+            });
+          }
         }
       }
     }
@@ -307,8 +340,19 @@ exports.getMyWallet = async (req, res) => {
     const customer_id = req.user.id; // User logged in
     const UserVoucher = require('../models/UserVoucher');
 
-    // Lấy tất cả voucher public
-    const publicVouchers = await Voucher.find({ is_public: true })
+    const now = new Date();
+    // Lấy tất cả voucher public còn hiệu lực
+    const publicVouchers = await Voucher.find({ 
+      is_public: true,
+      is_active: true,
+      valid_until: { $gte: now },
+      $expr: {
+        $or: [
+          { $eq: ["$usage_limit", null] },
+          { $lt: ["$used_count", "$usage_limit"] }
+        ]
+      }
+    })
       .populate('branch_id', 'name')
       .sort({ createdAt: -1 });
     
@@ -354,11 +398,34 @@ exports.getMyWallet = async (req, res) => {
 // @access  Private (Manager/Admin)
 exports.getWalletByCustomerId = async (req, res) => {
   try {
-    const customer_id = req.params.customerId;
+    let customer_id = req.params.customerId;
     const UserVoucher = require('../models/UserVoucher');
+    
+    // Nếu customer_id có dạng số điện thoại, thử tìm User
+    if (/^\d{10,11}$/.test(customer_id)) {
+      const User = require('../models/User');
+      const user = await User.findOne({ phone: customer_id });
+      if (user) {
+        customer_id = user._id;
+      } else {
+        // Khách vãng lai chưa từng đăng ký tài khoản -> không có ví
+        return res.status(200).json({ success: true, data: [] });
+      }
+    }
 
-    // Lấy tất cả voucher public
-    const publicVouchers = await Voucher.find({ is_public: true })
+    const now = new Date();
+    // Lấy tất cả voucher public còn hiệu lực
+    const publicVouchers = await Voucher.find({ 
+      is_public: true,
+      is_active: true,
+      valid_until: { $gte: now },
+      $expr: {
+        $or: [
+          { $eq: ["$usage_limit", null] },
+          { $lt: ["$used_count", "$usage_limit"] }
+        ]
+      }
+    })
       .populate('branch_id', 'name')
       .sort({ createdAt: -1 });
     

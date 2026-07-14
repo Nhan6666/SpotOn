@@ -324,33 +324,44 @@ class BookingService {
       }
 
       // NẾU CÓ VOUCHER -> ĐÁNH DẤU LÀ ĐÃ DÙNG
-      if (booking.applied_voucher_code) {
+      const actualVoucherCode = booking.applied_voucher_code || (booking.payment_info && booking.payment_info.voucher_code);
+      if (actualVoucherCode) {
         const Voucher = require('../models/Voucher');
         const UserVoucher = require('../models/UserVoucher');
 
-        const voucher = await Voucher.findOne({ code: booking.applied_voucher_code }).session(session);
+        const voucher = await Voucher.findOne({ code: actualVoucherCode }).session(session);
         if (voucher) {
           // Tăng lượt dùng của Voucher gốc
           voucher.used_count += 1;
           await voucher.save({ session });
 
-          // Cập nhật UserVoucher (nếu có lưu trong ví)
-          if (booking.customer_id) {
-            await UserVoucher.updateOne(
-              { 
-                customer_id: booking.customer_id._id || booking.customer_id, 
-                voucher_id: voucher._id,
-                status: 'UNUSED'
-              },
-              { 
-                $set: { 
-                  status: 'USED', 
-                  used_at: new Date(), 
-                  used_in_booking: booking._id 
-                } 
-              },
-              { session }
-            );
+          // Cập nhật UserVoucher (nếu có lưu trong ví VÀ là private voucher)
+          if (!voucher.is_public) {
+            let customerIdToUpdate = booking.customer_id?._id || booking.customer_id;
+            if (!customerIdToUpdate && booking.walk_in_phone) {
+              const User = require('../models/User');
+              const user = await User.findOne({ phone: booking.walk_in_phone }).session(session);
+              if (user) {
+                customerIdToUpdate = user._id;
+              }
+            }
+
+            if (customerIdToUpdate) {
+              await UserVoucher.updateOne(
+                { 
+                  customer_id: customerIdToUpdate, 
+                  voucher_id: voucher._id
+                },
+                { 
+                  $set: { 
+                    status: 'USED', 
+                    used_at: new Date(), 
+                    used_in_booking: booking._id 
+                  } 
+                },
+                { session } // Không upsert nữa, chỉ update nếu họ có trong ví
+              );
+            }
           }
         }
       }

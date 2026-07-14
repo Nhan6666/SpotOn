@@ -206,7 +206,13 @@ export function CheckoutReviewStep({ bookingId, onBack, onPaymentSuccess }: Prop
                           >
                             -- Không chọn --
                           </div>
-                          {myWallet.map((v) => (
+                          {myWallet.filter(v => {
+                            if (v.voucher_id.branch_id && depositInfo?.branch_id) {
+                              const vBranchId = typeof v.voucher_id.branch_id === 'object' ? v.voucher_id.branch_id._id : v.voucher_id.branch_id;
+                              return vBranchId === depositInfo.branch_id;
+                            }
+                            return true;
+                          }).map((v) => (
                             <div 
                               key={v._id}
                               className="px-4 py-2.5 hover:bg-orange-50 cursor-pointer text-sm border-b border-gray-50 last:border-0 flex justify-between items-center"

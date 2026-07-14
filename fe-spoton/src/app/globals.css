@@ -233,12 +233,18 @@ select:focus {
   border-color: #9ca3af;
   border-width: 2px 2px 0 0;
   top: 10px;
-}
-.spoton-datepicker-popper .react-datepicker__navigation:hover .react-datepicker__navigation-icon::before {
+}.spoton-datepicker-popper .react-datepicker__navigation:hover .react-datepicker__navigation-icon::before {
   border-color: #ea580c;
 }
 
 /* Hide the little triangle arrow */
 .spoton-datepicker-popper .react-datepicker__triangle {
   display: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

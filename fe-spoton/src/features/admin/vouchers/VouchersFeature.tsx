@@ -48,7 +48,7 @@ function StatusBadge({ status }: { status: VoucherStatus }) {
     );
 }
 
-export default function VouchersFeature() {
+export default function VouchersFeature({ basePath = '/admin/vouchers' }: { basePath?: string }) {
     const { toast } = useToast();
     const showToast = (msg: string, type: 'success' | 'error' | 'info' = 'info') => toast(msg, type);
 
@@ -88,7 +88,7 @@ export default function VouchersFeature() {
         vouchers.map((item) => ({
             item,
             status: computeStatus(item),
-            searchText: `${item.code} ${item.discount_percentage} ${item.max_discount_amount || ''} ${item.branch_id ? ADMIN_TEXTS.vouchers.branchSpecific : ADMIN_TEXTS.vouchers.branchAll}`.toLowerCase(),
+            searchText: `${item.code} ${item.discount_percentage} ${item.max_discount_amount || ''} ${item.branch_id ? (typeof item.branch_id === 'object' ? item.branch_id.name : ADMIN_TEXTS.vouchers.branchSpecific) : ADMIN_TEXTS.vouchers.branchAll}`.toLowerCase(),
         })), [vouchers, tick]);
 
     const filteredVouchers = useMemo(() => {
@@ -159,7 +159,7 @@ export default function VouchersFeature() {
                     <p className="text-sm md:text-base text-gray-500 mt-1">{ADMIN_TEXTS.vouchers.subtitle}</p>
                 </div>
                 <Link
-                    href="/admin/vouchers/add"
+                    href={`${basePath}/add`}
                 >
                     <Button className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
                         <Plus className="w-5 h-5" strokeWidth={2.5} />
@@ -227,7 +227,7 @@ export default function VouchersFeature() {
                                             <div className="flex items-center gap-2">
                                                 <code className="px-2 py-1 bg-slate-100 text-slate-700 rounded font-mono text-sm font-semibold">{promo.code}</code>
                                             </div>
-                                            <p className="text-xs text-slate-500 mt-1">{promo.branch_id ? ADMIN_TEXTS.vouchers.branchSpecific : ADMIN_TEXTS.vouchers.branchAll}</p>
+                                            <p className="text-xs text-slate-500 mt-1">{promo.branch_id ? (typeof promo.branch_id === 'object' ? `Chi nhánh ${promo.branch_id.name}` : ADMIN_TEXTS.vouchers.branchSpecific) : ADMIN_TEXTS.vouchers.branchAll}</p>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="text-sm font-semibold text-emerald-600">{promo.discount_percentage}%</span>
@@ -254,7 +254,7 @@ export default function VouchersFeature() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-1">
-                                                <Link href={`/admin/vouchers/${promo._id}`} className="p-2 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer" title={ADMIN_TEXTS.vouchers.actionEdit}>
+                                                <Link href={`${basePath}/${promo._id}`} className="p-2 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer" title={ADMIN_TEXTS.vouchers.actionEdit}>
                                                     <Edit size={18} />
                                                 </Link>
                                                 {status === 'active' ? (

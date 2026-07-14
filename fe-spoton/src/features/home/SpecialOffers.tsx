@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { HOME_TEXTS } from '@/constants/texts/home';
 import { http } from '@/lib/http';
 import { useToast } from '@/components/ui/Toast';
+import { PublicVoucherCard } from '@/components/ui/PublicVoucherCard';
 
 interface Voucher {
   _id: string;
@@ -15,25 +15,40 @@ interface Voucher {
   min_order_value: number;
 }
 
-const CARD_STYLES = [
-  { bg: 'bg-[#0A2A12] border border-[#2A5A3A]', text: 'text-[#164626]' },
-  { bg: 'bg-[#0A2A12] border border-[#2A5A3A]', text: 'text-[#164626]' },
-  { bg: 'bg-[#0A2A12] border border-[#2A5A3A]', text: 'text-[#164626]' }
-];
-
-const DECORATIONS = [
-  'top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full translate-x-12 -translate-y-12 transition-transform duration-500 group-hover:scale-150',
-  'bottom-0 right-0 w-40 h-40 bg-white opacity-5 rounded-full translate-x-10 translate-y-10 transition-transform duration-500 group-hover:scale-125',
-  'top-1/2 right-0 w-24 h-24 bg-white opacity-5 rounded-full translate-x-4 -translate-y-1/2 transition-transform duration-500 group-hover:scale-[2]'
-];
-
 export function SpecialOffers() {
   const { specialOffers } = HOME_TEXTS;
   const [offers, setOffers] = useState<Voucher[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(0);
   const [claimedOffers, setClaimedOffers] = useState<Set<string>>(new Set());
   const { success, error } = useToast();
+
+  // Drag to scroll logic
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setStartX(e.pageX - (scrollRef.current?.offsetLeft || 0));
+    setScrollLeft(scrollRef.current?.scrollLeft || 0);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // scroll-fast
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
 
   useEffect(() => {
     try {
@@ -74,14 +89,6 @@ export function SpecialOffers() {
     fetchOffers();
   }, []);
 
-  const ITEMS_PER_PAGE = 3;
-  const maxPages = 4;
-  const totalPages = Math.min(maxPages, Math.ceil(offers.length / ITEMS_PER_PAGE));
-  const currentOffers = offers.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
-
-  const handlePrev = () => setCurrentPage((p) => Math.max(0, p - 1));
-  const handleNext = () => setCurrentPage((p) => Math.min(totalPages - 1, p + 1));
-
   if (isLoading) {
     return (
       <section className="container mx-auto px-4 py-16">
@@ -91,9 +98,9 @@ export function SpecialOffers() {
             <p className="text-gray-300 text-sm">{specialOffers.subtitle}</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="flex gap-6 overflow-x-hidden">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-64 bg-[#0A2A12] border border-[#2A5A3A] rounded-2xl animate-pulse"></div>
+            <div key={i} className="min-w-[340px] h-40 bg-[#0A2A12] border border-[#2A5A3A] rounded-2xl animate-pulse"></div>
           ))}
         </div>
       </section>
@@ -115,76 +122,28 @@ export function SpecialOffers() {
       </div>
 
       <div className="relative">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {currentOffers.map((offer, index) => {
-            const style = CARD_STYLES[index % CARD_STYLES.length];
-            const decoration = DECORATIONS[index % DECORATIONS.length];
-            const name = `MÃ ${offer.code}`;
+        <div 
+          ref={scrollRef}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          className={`flex overflow-x-auto gap-6 pb-4 hide-scrollbar cursor-grab active:cursor-grabbing ${!isDragging ? 'snap-x snap-mandatory' : ''}`}
+          style={{ scrollBehavior: isDragging ? 'auto' : 'smooth' }}
+        >
+          {offers.map((offer, index) => {
             const isClaimed = claimedOffers.has(offer.code);
-            
-            let description = `Giảm ${offer.discount_percentage}%`;
-            if (offer.max_discount_amount) {
-              description += ` tối đa ${offer.max_discount_amount.toLocaleString('vi-VN')}đ`;
-            }
-            if (offer.min_order_value) {
-              description += ` cho đơn từ ${offer.min_order_value.toLocaleString('vi-VN')}đ`;
-            }
-
             return (
-              <div 
-                key={offer._id} 
-                className={`${style.bg} rounded-2xl p-8 text-white relative overflow-hidden group h-full min-h-[260px] flex flex-col justify-between items-start shadow-md`}
-              >
-                <div className={`absolute ${decoration}`}></div>
-                <div className="relative z-10">
-                  <div className="bg-[#F2B02A] text-[#164626] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4 inline-block">
-                    Ưu Đãi
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2 line-clamp-2 text-[#F2B02A]" title={name}>{name}</h3>
-                  <p className="text-gray-300 text-sm mb-6 max-w-[85%] line-clamp-3">
-                    {description}
-                  </p>
-                </div>
-                {!isClaimed ? (
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSimulateClaim(offer.code);
-                    }}
-                    className={`relative z-10 px-5 py-2 bg-[#F2B02A] ${style.text} text-sm font-bold rounded-full hover:bg-[#d99d24] transition-colors shadow-sm cursor-pointer uppercase tracking-wider`}
-                  >
-                    Nhận Voucher
-                  </button>
-                ) : (
-                  <div className="relative z-10 px-5 py-2 bg-transparent text-[#F2B02A] text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                    Đã nhận
-                  </div>
-                )}
-              </div>
+              <PublicVoucherCard
+                key={offer._id}
+                voucher={offer}
+                isClaimed={isClaimed}
+                onClaim={handleSimulateClaim}
+                className="min-w-[300px] md:min-w-[340px] max-w-[340px] flex-shrink-0 snap-start"
+              />
             );
           })}
         </div>
-
-        {/* Left/Right controls */}
-        {totalPages > 1 && (
-          <>
-            <button
-              onClick={handlePrev}
-              disabled={currentPage === 0}
-              className={`absolute -left-4 md:-left-12 top-1/2 -translate-y-1/2 transition-colors hidden lg:block ${currentPage === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-[#F2B02A] cursor-pointer'}`}
-            >
-              <ChevronLeft className="w-10 h-10" />
-            </button>
-            <button
-              onClick={handleNext}
-              disabled={currentPage >= totalPages - 1}
-              className={`absolute -right-4 md:-right-12 top-1/2 -translate-y-1/2 transition-colors hidden lg:block ${currentPage >= totalPages - 1 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-[#F2B02A] cursor-pointer'}`}
-            >
-              <ChevronRight className="w-10 h-10" />
-            </button>
-          </>
-        )}
       </div>
     </section>
   );

@@ -23,9 +23,11 @@ function Field({ label, required, children }: { label: string; required?: boolea
 interface VoucherFormProps {
     initialData?: VoucherItem;
     onSubmit: (payload: AdminVoucherCreateRequest) => Promise<void>;
+    basePath?: string;
+    role?: 'ADMIN' | 'MANAGER';
 }
 
-export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
+export function VoucherForm({ initialData, onSubmit, basePath = '/admin/vouchers', role = 'ADMIN' }: VoucherFormProps) {
     const {
         data,
         fieldErrors,
@@ -36,12 +38,13 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
         isRunning,
         isScheduled,
         nowLocalStr,
-        tableCapacities
+        tableCapacities,
+        branches
     } = useVoucherForm(initialData, onSubmit);
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             <div className="flex items-center gap-3">
-                <Link href="/admin/vouchers" className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
+                <Link href={basePath} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
                     <ArrowLeft size={20} />
                 </Link>
                 <div>
@@ -84,13 +87,20 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
                             <input disabled={isRunning} value={data.code} onChange={(e) => updateForm('code', e.target.value.toUpperCase())} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900" placeholder={ADMIN_TEXTS.vouchers.form.placeholderCode} />
                             {fieldErrors.code && <p className="text-red-500 text-xs mt-1">{fieldErrors.code}</p>}
                         </Field>
-                        <Field label={ADMIN_TEXTS.vouchers.form.lblBranch}>
-                            <select disabled={isRunning} value={data.branch_id} onChange={(e) => updateForm('branch_id', e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer">
-                                <option value="">{ADMIN_TEXTS.vouchers.form.valAllBranch}</option>
-                                <option value="6600a98f1234567890abcdef">Chi nhánh Quận 1 (Mock)</option>
-                                <option value="6600a98f1234567890abcded">Chi nhánh Quận 3 (Mock)</option>
-                            </select>
-                        </Field>
+                        {role !== 'MANAGER' ? (
+                            <Field label={ADMIN_TEXTS.vouchers.form.lblBranch}>
+                                <select disabled={isRunning} value={data.branch_id} onChange={(e) => updateForm('branch_id', e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer">
+                                    <option value="">{ADMIN_TEXTS.vouchers.form.valAllBranch}</option>
+                                    {branches.map(b => (
+                                        <option key={b._id} value={b._id}>{b.name}</option>
+                                    ))}
+                                </select>
+                            </Field>
+                        ) : (
+                            <Field label={ADMIN_TEXTS.vouchers.form.lblBranch}>
+                                <input disabled value="Chỉ áp dụng cho chi nhánh của bạn" className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500" />
+                            </Field>
+                        )}
                         <Field label={ADMIN_TEXTS.vouchers.form.lblDiscount} required>
                             <input disabled={isRunning} type="number" min="1" max="100" value={data.discount_percentage} onChange={(e) => updateForm('discount_percentage', e.target.value)} className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:ring-2 focus:ring-slate-900 focus:border-slate-900" placeholder="VD: 20" />
                             {fieldErrors.discount_percentage && <p className="text-red-500 text-xs mt-1">{fieldErrors.discount_percentage}</p>}
@@ -141,7 +151,7 @@ export function VoucherForm({ initialData, onSubmit }: VoucherFormProps) {
                     </div>
                 </div>
                 <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-                    <Link href="/admin/vouchers" className="px-5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer">
+                    <Link href={basePath} className="px-5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer">
                         {ADMIN_TEXTS.vouchers.form.btnCancel}
                     </Link>
                     <button onClick={handleSubmitClick} disabled={isSubmitting} className="px-5 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-60 inline-flex items-center gap-2 shadow-sm cursor-pointer disabled:cursor-not-allowed">

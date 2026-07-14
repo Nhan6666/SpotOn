@@ -62,9 +62,7 @@ export function MyVouchers() {
             Icon = Clock;
           }
 
-          const discountText = voucher.discount_type === 'PERCENTAGE' 
-            ? `Giảm ${voucher.discount_value}%` 
-            : `Giảm ${(voucher.discount_value || 0).toLocaleString('vi-VN')}đ`;
+          const discountText = `Giảm ${voucher.discount_percentage}% ${voucher.max_discount_amount ? `tối đa ${voucher.max_discount_amount.toLocaleString('vi-VN')}đ` : ''}`;
 
           return (
             <div key={wallet._id} className={`p-5 rounded-2xl border ${isUsed || isExpired ? 'border-gray-200 bg-gray-50 opacity-80' : 'border-orange-200 bg-white shadow-sm hover:shadow-md transition-shadow'} flex flex-col justify-between`}>
@@ -78,14 +76,14 @@ export function MyVouchers() {
                     {voucher.code}
                   </div>
                 </div>
-                <h4 className="text-lg font-bold text-gray-900 mb-1">{voucher.name}</h4>
-                <p className="text-sm text-gray-600 line-clamp-2">{voucher.description || discountText}</p>
-                {voucher.min_order_value > 0 && (
-                  <p className="text-xs text-gray-500 mt-2">Đơn tối thiểu: {voucher.min_order_value.toLocaleString()}đ</p>
-                )}
+                <h4 className="text-lg font-bold text-gray-900 mb-1">{discountText}</h4>
+                <p className="text-sm text-gray-600 line-clamp-2">Đơn tối thiểu {voucher.min_order_value?.toLocaleString('vi-VN')}đ</p>
                 {voucher.min_guest_count > 1 && (
                   <p className="text-xs text-gray-500">Bàn tối thiểu: {voucher.min_guest_count} người</p>
                 )}
+                <div className="mt-2 inline-block px-2 py-1 bg-orange-50 text-orange-600 text-[11px] font-medium rounded">
+                  {voucher.branch_id?.name ? `Chỉ áp dụng tại ${voucher.branch_id.name}` : 'Áp dụng toàn hệ thống'}
+                </div>
               </div>
               <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500">
                 HSD: {new Date(voucher.valid_until).toLocaleDateString('vi-VN')}

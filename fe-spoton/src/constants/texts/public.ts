@@ -172,11 +172,15 @@ export const PUBLIC_TEXTS = {
     },
     vouchersTab: {
       empty: "Hiện tại chưa có ưu đãi nào khả dụng.",
+      emptyTitle: "Chưa có khuyến mãi",
+      emptyDesc: "Chi nhánh hiện chưa có mã giảm giá nào. Vui lòng quay lại sau nhé!",
       title: "Ưu đãi nổi bật",
       subtitle: "Áp dụng các ưu đãi này khi bạn đặt bàn để nhận mức giá tốt nhất.",
       codeFallback: "MÃ KM",
       nameFallback: "Khuyến mãi SpotOn",
       descFallback: "Áp dụng cho mọi hóa đơn.",
+      btnClaim: "Nhận",
+      claimedStatus: "Đã nhận",
       expiry: "HSD:",
       noExpiry: "Không thời hạn",
       copyBtn: "Sao chép mã"

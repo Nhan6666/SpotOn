@@ -18,6 +18,7 @@ export function useVoucherForm(
     const [error, setError] = useState<string | null>(null);
     const [, setTick] = useState(0);
     const [tableCapacities, setTableCapacities] = useState<number[]>([]);
+    const [branches, setBranches] = useState<{_id: string, name: string}[]>([]);
 
     useEffect(() => {
         const fetchCapacities = async () => {
@@ -29,7 +30,19 @@ export function useVoucherForm(
                 }
             } catch (err) {}
         };
+        const fetchBranches = async () => {
+            try {
+                const { http } = await import('@/lib/http');
+                const res = await http.get<{success: boolean, data: any[]}>('/branches?limit=100');
+                if (res.success && res.data) {
+                    // Extract _id and name from the paginated response or direct array
+                    const branchList = Array.isArray(res.data) ? res.data : (res.data as any).branches || [];
+                    setBranches(branchList.map((b: any) => ({ _id: b._id, name: b.name })));
+                }
+            } catch (err) {}
+        };
         fetchCapacities();
+        fetchBranches();
 
         const timer = setInterval(() => setTick(t => t + 1), 10000);
         return () => clearInterval(timer);
@@ -41,7 +54,7 @@ export function useVoucherForm(
             const endLocal = initialData.valid_until ? formatDatetimeLocal(initialData.valid_until) : '';
             setData({
                 code: initialData.code,
-                branch_id: initialData.branch_id || '',
+                branch_id: initialData.branch_id ? (typeof initialData.branch_id === 'object' ? initialData.branch_id._id : initialData.branch_id) : '',
                 discount_percentage: String(initialData.discount_percentage),
                 max_discount_amount: initialData.max_discount_amount ? String(initialData.max_discount_amount) : '',
                 min_order_value: String(initialData.min_order_value),
@@ -118,6 +131,7 @@ export function useVoucherForm(
         isRunning,
         isScheduled,
         nowLocalStr,
-        tableCapacities
+        tableCapacities,
+        branches
     };
 }

@@ -7,8 +7,6 @@ import { PublicVoucherCard } from '@/components/ui/PublicVoucherCard';
 export function BranchVouchersTab({ branch }: any) {
   const [vouchers, setVouchers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [claimedOffers, setClaimedOffers] = useState<Set<string>>(new Set());
-  
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -34,28 +32,6 @@ export function BranchVouchersTab({ branch }: any) {
     const x = e.pageX - scrollRef.current.offsetLeft;
     const walk = (x - startX) * 2;
     scrollRef.current.scrollLeft = scrollLeft - walk;
-  };
-  const { success } = useToast();
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('spoton_claimed_vouchers');
-      if (saved) {
-        setClaimedOffers(new Set(JSON.parse(saved)));
-      }
-    } catch (e) {}
-  }, []);
-
-  const handleSimulateClaim = (code: string) => {
-    if (code) {
-      navigator.clipboard.writeText(code);
-      setClaimedOffers(prev => {
-        const next = new Set(prev).add(code);
-        localStorage.setItem('spoton_claimed_vouchers', JSON.stringify(Array.from(next)));
-        return next;
-      });
-      success(`Đã nhận thành công! Voucher ${code} đã nằm trong Ví ưu đãi của bạn.`);
-    }
   };
 
   useEffect(() => {
@@ -114,13 +90,10 @@ export function BranchVouchersTab({ branch }: any) {
         style={{ scrollBehavior: isDragging ? 'auto' : 'smooth' }}
       >
         {vouchers.map((voucher, idx) => {
-          const isClaimed = claimedOffers.has(voucher.code);
           return (
             <PublicVoucherCard
                 key={voucher._id || idx}
                 voucher={voucher}
-                isClaimed={isClaimed}
-                onClaim={handleSimulateClaim}
                 className="min-w-[300px] md:min-w-[340px] max-w-[340px] flex-shrink-0 snap-start"
             />
           );

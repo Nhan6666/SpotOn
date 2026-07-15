@@ -10,12 +10,10 @@ export interface VoucherCardProps {
         min_order_value?: number;
         valid_until?: string;
     };
-    isClaimed: boolean;
-    onClaim: (code: string) => void;
     className?: string;
 }
 
-export function PublicVoucherCard({ voucher, isClaimed, onClaim, className = '' }: VoucherCardProps) {
+export function PublicVoucherCard({ voucher, className = '' }: VoucherCardProps) {
     const formattedDate = voucher.valid_until ? new Date(voucher.valid_until).toLocaleDateString('vi-VN') : '';
     
     return (
@@ -46,29 +44,13 @@ export function PublicVoucherCard({ voucher, isClaimed, onClaim, className = '' 
                     Đơn tối thiểu {voucher.min_order_value?.toLocaleString('vi-VN')}đ
                 </p>
 
-                <div className="mt-auto pt-4 border-t border-gray-100 flex flex-col gap-3">
+                <div className="mt-auto pt-4 border-t border-gray-100">
                     <div className="flex items-center text-xs text-gray-500">
                         <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <span>{PUBLIC_TEXTS.branchDetail.vouchersTab.expiry} {formattedDate || PUBLIC_TEXTS.branchDetail.vouchersTab.noExpiry}</span>
                     </div>
-
-                    {!isClaimed ? (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onClaim(voucher.code); }}
-                            className="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer flex justify-center items-center"
-                        >
-                            {PUBLIC_TEXTS.branchDetail.vouchersTab.btnClaim}
-                        </button>
-                    ) : (
-                        <div className="w-full bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            {PUBLIC_TEXTS.branchDetail.vouchersTab.claimedStatus}
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 
 import { ProfileForm } from './components/ProfileForm';
 import { MyVouchers } from './components/MyVouchers';
+import { MyBookings } from './components/MyBookings';
 import { profileService } from './profile.service';
 import { UserProfile } from './profile.types';
 import { PROFILE_TEXTS } from '@/constants/texts/profile';
@@ -31,7 +32,7 @@ export function ProfileFeature() {
     fetchProfile();
   }, []);
 
-  const [activeTab, setActiveTab] = useState<'info' | 'vouchers'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'vouchers' | 'bookings'>('info');
 
   if (loading) {
     return (
@@ -65,6 +66,13 @@ export function ProfileFeature() {
             {activeTab === 'info' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-orange-600 rounded-t-md"></span>}
           </button>
           <button
+            onClick={() => setActiveTab('bookings')}
+            className={`pb-4 text-base font-bold transition-colors relative ${activeTab === 'bookings' ? 'text-orange-600' : 'text-gray-500 hover:text-gray-900'}`}
+          >
+            Lịch sử đặt bàn
+            {activeTab === 'bookings' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-orange-600 rounded-t-md"></span>}
+          </button>
+          <button
             onClick={() => setActiveTab('vouchers')}
             className={`pb-4 text-base font-bold transition-colors relative ${activeTab === 'vouchers' ? 'text-orange-600' : 'text-gray-500 hover:text-gray-900'}`}
           >
@@ -74,11 +82,9 @@ export function ProfileFeature() {
         </div>
 
         <div className="w-full">
-           {activeTab === 'info' ? (
-             <ProfileForm user={user} onUpdateSuccess={setUser} />
-           ) : (
-             <MyVouchers />
-           )}
+           {activeTab === 'info' && <ProfileForm user={user} onUpdateSuccess={setUser} />}
+           {activeTab === 'bookings' && <MyBookings />}
+           {activeTab === 'vouchers' && <MyVouchers />}
         </div>
       </div>
     </div>

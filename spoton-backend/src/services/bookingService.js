@@ -14,21 +14,28 @@ class BookingService {
     }
 
     const [h, m] = timeStr.split(':').map(Number);
-    const targetMinutes = h * 60 + m;
+    const originalTargetMinutes = h * 60 + m;
     const { lunch, dinner } = branch.service_periods || {};
 
     let shift = null;
     let shiftEnd = null;
+    let targetMinutes = originalTargetMinutes;
 
     const checkShift = (period, shiftName) => {
       if (period && period.start && period.end) {
         const [sh, sm] = period.start.split(':').map(Number);
         const [eh, em] = period.end.split(':').map(Number);
         const startMins = sh * 60 + sm;
-        const endMins = eh * 60 + em;
-        if (targetMinutes >= startMins && targetMinutes <= endMins) {
+        let endMins = eh * 60 + em;
+        let tMins = originalTargetMinutes;
+        
+        if (endMins < startMins) endMins += 24 * 60;
+        if (tMins < startMins && endMins > 24 * 60) tMins += 24 * 60;
+
+        if (tMins >= startMins && tMins <= endMins) {
           shift = shiftName;
           shiftEnd = endMins;
+          targetMinutes = tMins;
         }
       }
     };
@@ -297,7 +304,7 @@ class BookingService {
       throw error;
     }
   }
-  static async checkoutBooking(bookingId, finalBillAmount) {
+  static async checkoutBooking(bookingId, checkoutData = {}) {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -312,16 +319,24 @@ class BookingService {
         throw err;
       }
 
-      if (booking.status !== 'IN_USE') {
-        const err = new Error('Chỉ có thể thanh toán khi khách đang sử dụng (IN_USE).');
+      if (!['IN_USE', 'PENDING_SETTLEMENT'].includes(booking.status)) {
+        const err = new Error('Chỉ có thể thanh toán khi đang phục vụ hoặc chờ đối soát.');
         err.statusCode = 400;
         throw err;
       }
 
+      // === CHUẨN HÓA TÀI CHÍNH ===
+      const items = booking.order_items || [];
+      const calculatedTotal = items.reduce((acc, item) => acc + (item.price_at_time * item.quantity), 0);
+      const grossTotal = calculatedTotal > 0 ? calculatedTotal : (booking.pre_order_total_amount || 0);
+      const adjustmentsTotal = (booking.bill_adjustments || []).reduce((sum, adj) => sum + (adj.amount || 0), 0);
+      const voucherDiscount = booking.voucher_discount_amount || 0;
+      const depositPaid = booking.total_deposit_paid || 0;
+      const amountCollected = Math.max(0, grossTotal - voucherDiscount - adjustmentsTotal - depositPaid);
+
       booking.status = 'COMPLETED';
-      if (finalBillAmount !== undefined) {
-        booking.final_bill_amount = finalBillAmount;
-      }
+      booking.final_bill_amount = grossTotal - voucherDiscount - adjustmentsTotal; // Tổng bill sau điều chỉnh (GROSS)
+      booking.amount_collected = amountCollected; // Số tiền thực thu tại quầy (NET)
 
       // NẾU CÓ VOUCHER -> ĐÁNH DẤU LÀ ĐÃ DÙNG
       const actualVoucherCode = booking.applied_voucher_code || (booking.payment_info && booking.payment_info.voucher_code);
@@ -359,7 +374,7 @@ class BookingService {
                     used_in_booking: booking._id 
                   } 
                 },
-                { session } // Không upsert nữa, chỉ update nếu họ có trong ví
+                { session }
               );
             }
           }
@@ -367,6 +382,22 @@ class BookingService {
       }
 
       await booking.save({ session });
+
+      // Ghi nhận doanh thu (Revenue)
+      const Revenue = require('../models/Revenue');
+      await Revenue.create([{
+        branch_id: booking.branch_id,
+        booking_id: booking._id,
+        date: new Date(),
+        shift: booking.shift || 'LUNCH',
+        amount: booking.final_bill_amount,
+        pre_order_total: booking.pre_order_total_amount || 0,
+        deposit_paid: depositPaid,
+        voucher_discount: voucherDiscount,
+        adjustments_total: adjustmentsTotal,
+        final_paid_at_checkout: amountCollected,
+        status: 'COMPLETED'
+      }], { session });
 
       if (booking.table_ids && booking.table_ids.length > 0) {
         await Branch.updateOne(
@@ -384,6 +415,7 @@ class BookingService {
 
       return booking;
     } catch (error) {
+      console.error('Lỗi chi tiết trong BookingService.checkoutBooking:', error);
       await session.abortTransaction();
       session.endSession();
       throw error;
@@ -434,6 +466,150 @@ class BookingService {
       throw error;
     }
   }
+
+  static async addBillAdjustment(bookingId, adjustmentData, userId) {
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      const err = new Error('Không tìm thấy đơn đặt bàn.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (!['IN_USE', 'PENDING_SETTLEMENT'].includes(booking.status)) {
+      const err = new Error('Chỉ có thể thêm điều chỉnh khi đang phục vụ hoặc chờ đối soát.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    booking.bill_adjustments.push({
+      ...adjustmentData,
+      actor_id: userId
+    });
+
+    await booking.save();
+    return booking;
+  }
+
+  static async removeBillAdjustment(bookingId, adjustmentId) {
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      const err = new Error('Không tìm thấy đơn đặt bàn.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (!['IN_USE', 'PENDING_SETTLEMENT'].includes(booking.status)) {
+      const err = new Error('Chỉ có thể xóa điều chỉnh khi đang phục vụ hoặc chờ đối soát.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    booking.bill_adjustments = booking.bill_adjustments.filter(adj => adj._id.toString() !== adjustmentId.toString());
+    await booking.save();
+    return booking;
+  }
+
+  static async processRefund(bookingId, refundData, userId) {
+    const { refund_amount, reason, refund_proof_url } = refundData;
+
+    if (!refund_amount || refund_amount <= 0) {
+      const err = new Error('Số tiền hoàn phải lớn hơn 0.');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (!reason || !reason.trim()) {
+      const err = new Error('Lý do hoàn tiền là bắt buộc.');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (!refund_proof_url) {
+      const err = new Error('Vui lòng upload ảnh chứng từ hoàn tiền.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const booking = await Booking.findById(bookingId)
+        .populate('customer_id', 'full_name phone')
+        .session(session);
+
+      if (!booking) {
+        const err = new Error('Không tìm thấy đơn đặt bàn.');
+        err.statusCode = 404;
+        throw err;
+      }
+
+      if (!['COMPLETED', 'PENDING_SETTLEMENT', 'CANCELLED_REFUND_PENDING'].includes(booking.status)) {
+        const err = new Error('Chỉ có thể hoàn tiền cho đơn đã hoàn thành, chờ đối soát hoặc hủy chờ hoàn tiền.');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      // ============================================================
+      // KIẾN TRÚC TÀI CHÍNH: Tính trần hoàn tiền theo loại đơn
+      // - CANCELLED_REFUND_PENDING: Khách chỉ mới đóng cọc, chưa checkout
+      //   → maxRefundable = total_deposit_paid (tiền cọc đã thu)
+      // - COMPLETED / PENDING_SETTLEMENT: Khách đã ăn xong, đã thanh toán
+      //   → maxRefundable = total_deposit_paid + amount_collected (tổng tiền đã thu)
+      // ============================================================
+      const maxRefundable = booking.status === 'CANCELLED_REFUND_PENDING'
+        ? (booking.total_deposit_paid || 0)
+        : (booking.total_deposit_paid || 0) + (booking.amount_collected || 0);
+
+      // Nếu đơn đang chờ hoàn tiền do khách hủy bàn, thì refund_amount trong DB đang là "số tiền khách YÊU CẦU hoàn", chứ chưa phải tiền ĐÃ HOÀN.
+      const existingRefund = booking.status === 'REFUND_COMPLETED' ? (booking.refund_info?.refund_amount || 0) : 0;
+      
+      if (maxRefundable > 0 && refund_amount > maxRefundable - existingRefund) {
+        const err = new Error(`Số tiền hoàn (${refund_amount.toLocaleString()}đ) vượt quá số tiền có thể hoàn (${(maxRefundable - existingRefund).toLocaleString()}đ).`);
+        err.statusCode = 400;
+        throw err;
+      }
+
+      // Cập nhật refund_info
+      booking.refund_info = {
+        refund_amount: refund_amount,
+        refund_percentage: maxRefundable > 0 ? Math.round((refund_amount / maxRefundable) * 100) : 100,
+        refund_proof_url: refund_proof_url,
+        refund_completed_at: new Date(),
+      };
+
+      // Cập nhật trạng thái booking
+      if (booking.status === 'COMPLETED' || booking.status === 'CANCELLED_REFUND_PENDING') {
+        booking.status = 'REFUND_COMPLETED';
+      }
+      booking.cancellation_reason = `REFUND: ${reason} (Bởi Manager ID: ${userId})`;
+
+      await booking.save({ session });
+
+      // Trừ doanh thu: Tạo Revenue entry âm
+      const Revenue = require('../models/Revenue');
+      await Revenue.create([{
+        branch_id: booking.branch_id,
+        booking_id: booking._id,
+        date: new Date(),
+        shift: booking.shift || 'LUNCH',
+        amount: -refund_amount,
+        pre_order_total: 0,
+        deposit_paid: 0,
+        voucher_discount: 0,
+        adjustments_total: 0,
+        final_paid_at_checkout: -refund_amount,
+        status: 'REFUNDED'
+      }], { session });
+
+      await session.commitTransaction();
+      session.endSession();
+      return booking;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
+
   static async createWalkInBooking(payload, branchId) {
     const session = await mongoose.startSession();
     session.startTransaction();

@@ -40,5 +40,15 @@ export const profileService = {
 
     const data: UploadAvatarResponse = await response.json();
     return data.data.url;
+  },
+
+  getMyBookings: async () => {
+    const res = await http.get<{ success: boolean; data: any[] }>('/bookings/my-bookings');
+    return res.data;
+  },
+
+  cancelBooking: async (bookingId: string, payload?: { bank_name?: string; bank_account_number?: string; account_holder_name?: string; reason?: string }) => {
+    const res = await http.post<{ success: boolean; message: string; data: any }>(`/bookings/${bookingId}/cancel-refund`, payload || {});
+    return res;
   }
 };

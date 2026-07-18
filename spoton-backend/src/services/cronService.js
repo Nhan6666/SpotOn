@@ -43,6 +43,7 @@ class CronService {
     try {
       await this._autoUnlockExpiredPayments();
       await this._autoCancelNoShow();
+      await this._autoSweepEndShift();
     } catch (error) {
       console.error('❌ CronService error:', error.message);
     }
@@ -172,6 +173,51 @@ class CronService {
 
         console.log(`⏰ UC-S02: Booking ${booking._id} → NO_SHOW (quá giờ check-in 30 phút)`);
       }
+    }
+  }
+
+  /**
+   * UC-S03: Auto-sweep cuối ca (Chuyển bàn quên checkout sang PENDING_SETTLEMENT)
+   * Quét các bàn IN_USE quá 5 tiếng (300 phút)
+   */
+  async _autoSweepEndShift() {
+    const cutoffTime = new Date(Date.now() - 5 * 60 * 60 * 1000); // 5 hours ago
+    const stuckBookings = await Booking.find({
+      status: 'IN_USE',
+      updated_at: { $lt: cutoffTime }
+    });
+
+    for (const booking of stuckBookings) {
+      await Booking.updateOne(
+        { _id: booking._id },
+        { $set: { status: 'PENDING_SETTLEMENT' } }
+      );
+
+      // Giải phóng trạng thái bàn trong Branch
+      if (booking.table_ids && booking.table_ids.length > 0) {
+        const Branch = require('../models/Branch');
+        await Branch.updateOne(
+          { _id: booking.branch_id },
+          { $set: { 'zones.$[].tables.$[tbl].status': 'EMPTY' } },
+          { arrayFilters: [{ 'tbl._id': { $in: booking.table_ids } }] }
+        );
+      }
+
+      try {
+        const io = require('../socket').getIO();
+        io.to(`branch_${booking.branch_id}`).emit('table_status_changed', {
+          action: 'FORCE_RELEASED', // Giống hành động manager tự nhả bàn
+          branch_id: booking.branch_id,
+          booking_id: booking._id,
+          table_ids: booking.table_ids,
+        });
+        io.to(`branch_${booking.branch_id}`).emit('BOOKING_STATUS_CHANGED', {
+          bookingId: booking._id,
+          status: 'PENDING_SETTLEMENT'
+        });
+      } catch (e) {}
+
+      console.log(`⏰ UC-S03: Booking ${booking._id} → PENDING_SETTLEMENT (Auto-sweep cuối ca sau 5 giờ)`);
     }
   }
 }

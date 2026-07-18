@@ -1,9 +1,10 @@
 "use client";
 
 import React from 'react';
-import { Receipt, Search, Filter, AlertCircle, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
+import { Receipt, Search, Filter, AlertCircle, CheckCircle2, Clock, ArrowRight, Undo2 } from 'lucide-react';
 import { useInvoices } from './useInvoices';
 import { CheckoutModal } from '../check-in/components/CheckoutModal';
+import { RefundModal } from '../check-in/components/RefundModal';
 import { Button } from '@/components/ui/Button';
 
 export function InvoicesFeature() {
@@ -21,6 +22,8 @@ export function InvoicesFeature() {
     setSelectedBookingForCheckout,
     fetchInvoices
   } = useInvoices();
+
+  const [selectedBookingForRefund, setSelectedBookingForRefund] = React.useState<any>(null);
 
   return (
     <div className="p-6 md:p-8 max-w-[1200px] mx-auto w-full">
@@ -68,6 +71,14 @@ export function InvoicesFeature() {
             }`}
           >
             Chờ đối soát ({stats.pending})
+          </button>
+          <button
+            onClick={() => setActiveTab('REFUND_PENDING')}
+            className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
+              activeTab === 'REFUND_PENDING' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Yêu cầu hoàn tiền ({(stats as any).refundPending || 0})
           </button>
         </div>
         
@@ -142,6 +153,16 @@ export function InvoicesFeature() {
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             Đã thanh toán
                           </span>
+                        ) : invoice.status === 'REFUND_COMPLETED' ? (
+                          <span className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md text-xs font-bold">
+                            <Undo2 className="w-3.5 h-3.5" />
+                            Đã hoàn tiền
+                          </span>
+                        ) : invoice.status === 'CANCELLED_REFUND_PENDING' ? (
+                          <span className="inline-flex items-center gap-1.5 bg-red-50 text-red-700 px-2.5 py-1 rounded-md text-xs font-bold">
+                            <Undo2 className="w-3.5 h-3.5" />
+                            Y/c hoàn tiền
+                          </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-md text-xs font-bold">
                             <AlertCircle className="w-3.5 h-3.5" />
@@ -154,6 +175,15 @@ export function InvoicesFeature() {
                           <span className="font-bold text-gray-900 text-base">
                             {invoice.final_bill_amount?.toLocaleString() || 0}đ
                           </span>
+                        ) : invoice.status === 'REFUND_COMPLETED' ? (
+                          <div className="flex flex-col items-end">
+                            <span className="font-bold text-gray-900 text-base">
+                              {invoice.final_bill_amount?.toLocaleString() || 0}đ
+                            </span>
+                            <span className="text-xs text-red-600 font-bold">
+                              Hoàn: -{((invoice as any).refund_info?.refund_amount || 0).toLocaleString()}đ
+                            </span>
+                          </div>
                         ) : (
                           <div className="flex flex-col items-end">
                             <span className="text-xs text-gray-500 line-through">{totalBill.toLocaleString()}đ</span>
@@ -172,6 +202,27 @@ export function InvoicesFeature() {
                           >
                             Thanh toán <ArrowRight className="w-4 h-4 ml-1.5" />
                           </Button>
+                        ) : invoice.status === 'CANCELLED_REFUND_PENDING' ? (
+                          <Button 
+                            size="sm"
+                            className="bg-red-600 hover:bg-red-700 text-white font-semibold"
+                            onClick={() => setSelectedBookingForRefund(invoice)}
+                          >
+                            Xử lý hoàn tiền <ArrowRight className="w-4 h-4 ml-1.5" />
+                          </Button>
+                        ) : invoice.status === 'COMPLETED' ? (
+                          <Button 
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 border-red-200 hover:bg-red-50 font-semibold"
+                            onClick={() => setSelectedBookingForRefund(invoice)}
+                          >
+                            <Undo2 className="w-3.5 h-3.5 mr-1" /> Hoàn tiền
+                          </Button>
+                        ) : invoice.status === 'REFUND_COMPLETED' ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 px-2 py-1 rounded-md">
+                            <Undo2 className="w-3 h-3" /> Đã hoàn tiền
+                          </span>
                         ) : (
                           <span className="text-sm text-gray-400 italic">Hoàn tất</span>
                         )}
@@ -191,6 +242,17 @@ export function InvoicesFeature() {
           onClose={() => setSelectedBookingForCheckout(null)}
           onSuccess={() => {
             setSelectedBookingForCheckout(null);
+            fetchInvoices();
+          }}
+        />
+      )}
+
+      {selectedBookingForRefund && (
+        <RefundModal 
+          booking={selectedBookingForRefund}
+          onClose={() => setSelectedBookingForRefund(null)}
+          onSuccess={() => {
+            setSelectedBookingForRefund(null);
             fetchInvoices();
           }}
         />

@@ -187,8 +187,7 @@ const checkInBooking = async (req, res) => {
 const checkoutBooking = async (req, res) => {
   try {
     const BookingService = require('../services/bookingService');
-    const { final_bill_amount } = req.body;
-    const booking = await BookingService.checkoutBooking(req.params.id, final_bill_amount);
+    const booking = await BookingService.checkoutBooking(req.params.id);
 
     // 3. Hiệu ứng phụ: Emit WebSocket
     const io = require('../socket').getIO();
@@ -331,6 +330,77 @@ const createWalkInBooking = async (req, res) => {
   }
 };
 
+// @desc   Thêm điều chỉnh hóa đơn (Giảm giá phát sinh, thiếu món...)
+// @route  POST /api/v1/reception/bookings/:id/adjustments
+// @access Private (Manager/Admin)
+const addBillAdjustment = async (req, res) => {
+  try {
+    const BookingService = require('../services/bookingService');
+    const booking = await BookingService.addBillAdjustment(req.params.id, req.body, req.user._id);
+
+    const io = require('../socket').getIO();
+    io.to(`branch_${booking.branch_id}`).emit('BOOKING_UPDATED', { bookingId: booking._id });
+
+    res.status(200).json({ success: true, data: booking });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc   Xóa điều chỉnh hóa đơn
+// @route  DELETE /api/v1/reception/bookings/:id/adjustments/:adjId
+// @access Private (Manager/Admin)
+const removeBillAdjustment = async (req, res) => {
+  try {
+    const BookingService = require('../services/bookingService');
+    const booking = await BookingService.removeBillAdjustment(req.params.id, req.params.adjId);
+
+    const io = require('../socket').getIO();
+    io.to(`branch_${booking.branch_id}`).emit('BOOKING_UPDATED', { bookingId: booking._id });
+
+    res.status(200).json({ success: true, data: booking });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc   Hoàn tiền cho khách (Refund)
+// @route  POST /api/v1/reception/bookings/:id/refund
+// @access Private (Manager/Admin ONLY — Waiter KHÔNG được phép)
+const processRefund = async (req, res) => {
+  try {
+    const BookingService = require('../services/bookingService');
+    
+    // refund_proof_url đã được upload trước qua /api/v1/uploads/refund
+    const { refund_amount, reason, refund_proof_url } = req.body;
+    
+    const booking = await BookingService.processRefund(
+      req.params.id, 
+      { refund_amount: Number(refund_amount), reason, refund_proof_url },
+      req.user._id
+    );
+
+    const io = require('../socket').getIO();
+    io.to(`branch_${booking.branch_id}`).emit('BOOKING_STATUS_CHANGED', {
+      bookingId: booking._id,
+      status: booking.status
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      message: `Hoàn tiền ${Number(refund_amount).toLocaleString()}đ thành công.`,
+      data: booking 
+    });
+
+  } catch (error) {
+    console.error('Lỗi processRefund:', error);
+    res.status(error.statusCode || 500).json({ 
+      success: false, 
+      message: error.message || 'Lỗi server khi xử lý hoàn tiền.' 
+    });
+  }
+};
+
 module.exports = {
   checkAvailability,
   holdBooking,
@@ -338,5 +408,8 @@ module.exports = {
   checkInBooking,
   checkoutBooking,
   forceReleaseBooking,
-  createWalkInBooking
+  createWalkInBooking,
+  addBillAdjustment,
+  removeBillAdjustment,
+  processRefund
 };

@@ -48,6 +48,19 @@ const RefundInfoSchema = new mongoose.Schema({
   refund_completed_at: { type: Date },
 });
 
+// ---- Sub-schema: Điều chỉnh hóa đơn (Bill Adjustments) ----
+const BillAdjustmentSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ['DISCOUNT', 'ITEM_REMOVED', 'COMBO_INCOMPLETE', 'GOODWILL', 'OTHER'],
+    required: true,
+  },
+  amount: { type: Number, required: true, min: 0 }, // Số tiền giảm (luôn dương)
+  reason: { type: String, required: true },         // Chú thích bắt buộc
+  actor_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Người thực hiện
+  created_at: { type: Date, default: Date.now }
+});
+
 // ---- Schema cha: Đặt bàn (Booking) ----
 const BookingSchema = new mongoose.Schema(
   {
@@ -97,6 +110,7 @@ const BookingSchema = new mongoose.Schema(
     table_ids: [{ type: mongoose.Schema.Types.ObjectId }], // ID bàn vật lý
     assigned_tables: [AssignedTableSchema],
     order_items: [OrderItemSchema],
+    bill_adjustments: [BillAdjustmentSchema], // Các khoản giảm giá/điều chỉnh phát sinh
     payment_info: { type: PaymentInfoSchema, default: () => ({}) },
     refund_info: { type: RefundInfoSchema, default: undefined },
     applied_voucher_code: { type: String, default: null }, // Mã voucher khách áp dụng lúc đặt (chưa trừ tiền)
@@ -112,8 +126,8 @@ const BookingSchema = new mongoose.Schema(
     total_deposit_paid: { type: Number, default: 0 },         // BẤT BIẾN sau CONFIRMED
     // Formula: table_deposit + pre_order_deposit - voucher_discount
 
-    final_bill_amount: { type: Number, default: 0 },          // Bill cuối cùng khi checkout
-    // Formula: (pre_order_total + additional_order_total) - total_deposit_paid
+    final_bill_amount: { type: Number, default: 0 },          // Tổng bill sau điều chỉnh (GROSS) = grossTotal - voucher - adjustments
+    amount_collected: { type: Number, default: 0 },            // Số tiền thực thu tại quầy (NET) = final_bill - deposit
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

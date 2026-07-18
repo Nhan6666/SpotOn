@@ -124,10 +124,22 @@ const getAllBookings = async (req, res) => {
     }
 
     if (req.query.start_date && req.query.end_date) {
-      filter.reservation_date = {
-        $gte: new Date(req.query.start_date),
-        $lt: new Date(req.query.end_date)
-      };
+      if (req.query.include_refund_pending === 'true') {
+        filter.$or = [
+          { 
+            reservation_date: {
+              $gte: new Date(req.query.start_date),
+              $lt: new Date(req.query.end_date)
+            } 
+          },
+          { status: 'CANCELLED_REFUND_PENDING' }
+        ];
+      } else {
+        filter.reservation_date = {
+          $gte: new Date(req.query.start_date),
+          $lt: new Date(req.query.end_date)
+        };
+      }
     }
 
     const bookings = await Booking.find(filter)
@@ -158,14 +170,16 @@ const getBookingById = async (req, res) => {
     }
 
     // TÍNH NĂNG BẢO MẬT VÒNG TRONG:
-    // 1. Nếu là Khách, phải là người tạo đơn mới được xem
-    if (req.user.role === 'CUSTOMER') {
-      if (String(booking.customer_id?._id || booking.customer_id) !== String(req.user._id)) {
-        return res.status(403).json({ success: false, message: 'Bạn không có quyền xem đơn đặt bàn này.' });
+    // 1. Nếu là Khách, phải là người tạo đơn mới được xem (trừ khi đơn này không có customer_id - tức khách vãng lai)
+    if (req.user && req.user.role === 'CUSTOMER') {
+      if (booking.customer_id) {
+        if (String(booking.customer_id?._id || booking.customer_id) !== String(req.user._id)) {
+          return res.status(403).json({ success: false, message: 'Bạn không có quyền xem đơn đặt bàn này.' });
+        }
       }
     } 
     // 2. Nếu là Nhân sự chi nhánh, chỉ xem được đơn của chi nhánh mình
-    else if (['MANAGER', 'WAITER'].includes(req.user.role)) {
+    else if (req.user && ['MANAGER', 'WAITER'].includes(req.user.role)) {
       if (String(booking.branch_id) !== String(req.user.branch_id)) {
         return res.status(403).json({ success: false, message: 'Đơn đặt bàn này không thuộc chi nhánh của bạn.' });
       }
@@ -178,6 +192,26 @@ const getBookingById = async (req, res) => {
     });
   } catch (error) {
     console.error('Lỗi getBookingById:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+// @desc   Lấy danh sách đơn đặt bàn của khách hàng đang login
+// @route  GET /api/v1/bookings/my-bookings
+// @access Private (CUSTOMER)
+const getMyBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find({ customer_id: req.user._id })
+      .populate('branch_id', 'name address')
+      .sort({ created_at: -1 });
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Lấy danh sách đơn đặt bàn của bạn thành công.',
+      data: bookings 
+    });
+  } catch (error) {
+    console.error('Lỗi getMyBookings:', error);
     res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
   }
 };
@@ -205,7 +239,7 @@ const updateBookingStatus = async (req, res) => {
       PENDING_PAYMENT: ['CONFIRMED', 'CANCELLED', 'CANCELLED_TIMEOUT'],
       CONFIRMED: ['IN_USE', 'CANCELLED', 'NO_SHOW'],
       IN_USE: ['COMPLETED', 'PENDING_SETTLEMENT'],
-      COMPLETED: [],
+      COMPLETED: ['REFUND_COMPLETED'],
       CANCELLED: [],
       CANCELLED_TIMEOUT: [],
       CANCELLED_REFUND_PENDING: ['REFUND_COMPLETED'],
@@ -258,25 +292,7 @@ const updateBookingStatus = async (req, res) => {
   }
 };
 
-// @desc   Lấy danh sách booking của khách hàng đang đăng nhập
-// @route  GET /api/v1/bookings/my-bookings
-// @access Private (CUSTOMER)
-const getMyBookings = async (req, res) => {
-  try {
-    // Chỉ lấy đơn mà thuộc về ID của chính khách hàng này (req.user._id)
-    const bookings = await Booking.find({ customer_id: req.user._id })
-      .sort({ created_at: -1 });
 
-    res.status(200).json({ 
-      success: true, 
-      message: 'Lấy danh sách đơn đặt bàn của bạn thành công.',
-      data: bookings 
-    });
-  } catch (error) {
-    console.error('Lỗi getMyBookings:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
-  }
-};
 
 // @desc   Cập nhật thông tin đơn hàng và chốt món
 // @route  PUT /api/v1/bookings/:id/update-info
@@ -423,6 +439,127 @@ const applyVoucher = async (req, res) => {
   }
 };
 
+// @desc   Khách hàng tự hủy bàn và yêu cầu hoàn cọc
+// @route  POST /api/v1/bookings/:id/cancel-refund
+// @access Private (CUSTOMER)
+const cancelAndRequestRefund = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const booking = await Booking.findById(req.params.id).session(session);
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt bàn.' });
+    }
+
+    // Kiểm tra quyền sở hữu
+    if (String(booking.customer_id) !== String(req.user._id)) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền hủy đơn này.' });
+    }
+
+    // Kiểm tra trạng thái cho phép hủy
+    if (!['PENDING_PAYMENT', 'CONFIRMED'].includes(booking.status)) {
+      return res.status(400).json({ success: false, message: 'Đơn đặt bàn này không thể hủy được nữa.' });
+    }
+
+    // Nếu chưa thanh toán, chỉ cần hủy
+    if (booking.status === 'PENDING_PAYMENT' || booking.total_deposit_paid === 0) {
+      booking.status = 'CANCELLED';
+      booking.cancellation_reason = 'Khách hàng tự hủy (Chưa thanh toán)';
+      await booking.save({ session });
+      
+      // Nhả bàn
+      if (booking.table_ids && booking.table_ids.length > 0) {
+        const TableLockService = require('../services/tableLockService');
+        await TableLockService.unlockTables(booking.branch_id.toString(), booking.table_ids.map(id => id.toString()));
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+      return res.status(200).json({ success: true, message: 'Hủy đơn thành công.', data: booking });
+    }
+
+    // Đã thanh toán -> Tính toán hoàn cọc dựa trên thời gian
+    const now = new Date();
+    const reservationDate = new Date(booking.reservation_date);
+    const [hours, minutes] = (booking.arrival_time || '00:00').split(':').map(Number);
+    reservationDate.setHours(hours, minutes, 0, 0);
+
+    const timeDiffHours = (reservationDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    let refundPercentage = 0;
+    if (timeDiffHours >= 12) {
+      refundPercentage = 100;
+    } else if (timeDiffHours >= 6) {
+      refundPercentage = 50;
+    } else {
+      refundPercentage = 0;
+    }
+
+    const refundAmount = (booking.total_deposit_paid || 0) * (refundPercentage / 100);
+
+    const { bank_account_number, bank_name, account_holder_name, reason } = req.body;
+
+    // Cập nhật thông tin hoàn tiền
+    booking.refund_info = {
+      refund_amount: refundAmount,
+      refund_percentage: refundPercentage,
+      bank_account_number: bank_account_number || '',
+      bank_name: bank_name || '',
+      account_holder_name: account_holder_name || '',
+    };
+
+    booking.cancellation_reason = reason ? `[Khách tự hủy] ${reason}` : `Khách tự hủy trước ${timeDiffHours.toFixed(1)} tiếng. Hoàn ${refundPercentage}%.`;
+
+
+    if (refundAmount > 0) {
+      booking.status = 'CANCELLED_REFUND_PENDING';
+    } else {
+      booking.status = 'CANCELLED'; // Không hoàn tiền, hủy luôn
+    }
+
+    await booking.save({ session });
+
+    // Nhả bàn cho Booking
+    if (booking.table_ids && booking.table_ids.length > 0) {
+      const TableLockService = require('../services/tableLockService');
+      await TableLockService.unlockTables(booking.branch_id.toString(), booking.table_ids.map(id => id.toString()));
+      
+      const Branch = require('../models/Branch');
+      await Branch.updateOne(
+        { _id: booking.branch_id },
+        { $set: { 'zones.$[].tables.$[tbl].status': 'EMPTY' } },
+        { arrayFilters: [{ 'tbl._id': { $in: booking.table_ids } }], session }
+      );
+    }
+
+    // Socket io emit cho Manager
+    const io = require('../socket').getIO();
+    io.to(`branch_${booking.branch_id}`).emit('BOOKING_STATUS_CHANGED', {
+      bookingId: booking._id,
+      status: booking.status
+    });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json({ 
+      success: true, 
+      message: refundAmount > 0 
+        ? `Hủy đơn thành công. Bạn được hoàn ${refundPercentage}% (${refundAmount.toLocaleString()}đ) cọc. Vui lòng chờ nhà hàng xử lý.` 
+        : `Hủy đơn thành công. Bạn không được hoàn cọc do hủy dưới 6 tiếng.`,
+      data: booking 
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Lỗi cancelAndRequestRefund:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
 module.exports = { 
   createBooking, 
   getAllBookings, 
@@ -430,5 +567,6 @@ module.exports = {
   updateBookingStatus, 
   getMyBookings, 
   updateBookingInfo,
-  applyVoucher
+  applyVoucher,
+  cancelAndRequestRefund
 };

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Receipt, CreditCard, Banknote, Coffee, Plus, Tag, ChevronDown, CheckCircle } from 'lucide-react';
+import { X, Receipt, CreditCard, Banknote, Coffee, Plus, Tag, ChevronDown, CheckCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { http } from '@/lib/http';
 import { useToast } from '@/components/ui/Toast';
 import { voucherService } from '@/features/public/promotions/voucher.service';
+import { checkInService } from '../check-in.service';
 
 interface OrderItem {
   name: string;
@@ -26,6 +27,7 @@ interface BookingDetails {
   voucher_discount_amount?: number;
   guest_count?: number;
   payment_info?: { voucher_code?: string };
+  bill_adjustments?: { _id: string; type: string; amount: number; reason: string }[];
 }
 
 interface CheckoutModalProps {
@@ -43,6 +45,11 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
   const [currentBooking, setCurrentBooking] = useState<BookingDetails | null>(booking);
 
   const [customerVouchers, setCustomerVouchers] = useState<any[]>([]);
+
+  const [showAddAdjustment, setShowAddAdjustment] = useState(false);
+  const [adjType, setAdjType] = useState('DISCOUNT');
+  const [adjAmount, setAdjAmount] = useState('');
+  const [adjReason, setAdjReason] = useState('');
 
   useEffect(() => {
     setCurrentBooking(booking);
@@ -79,7 +86,46 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
   // Fake calculation if we want to show it before checkout, but ideally backend returns this in currentBooking.voucher_discount_amount
   const voucherDiscount = currentBooking.voucher_discount_amount || 0;
   const actualVoucherCode = currentBooking.applied_voucher_code || currentBooking.payment_info?.voucher_code;
-  const amountToPay = Math.max(0, totalBill - depositPaid - voucherDiscount);
+  
+  const adjustments = currentBooking.bill_adjustments || [];
+  const adjustmentsTotal = adjustments.reduce((sum, adj) => sum + adj.amount, 0);
+
+  const amountToPay = Math.max(0, totalBill - depositPaid - voucherDiscount - adjustmentsTotal);
+
+  const handleAddAdjustment = async () => {
+    if (!adjAmount || !adjReason.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const res = await checkInService.addBillAdjustment(currentBooking._id, {
+        type: adjType as any,
+        amount: Number(adjAmount),
+        reason: adjReason
+      });
+      setCurrentBooking(res as any);
+      setShowAddAdjustment(false);
+      setAdjAmount('');
+      setAdjReason('');
+      success('Thêm điều chỉnh thành công');
+    } catch (err: any) {
+      showError(err.message || 'Lỗi thêm điều chỉnh');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRemoveAdjustment = async (adjId: string) => {
+    if (!window.confirm('Xóa điều chỉnh này?')) return;
+    setIsSubmitting(true);
+    try {
+      const res = await checkInService.removeBillAdjustment(currentBooking._id, adjId);
+      setCurrentBooking(res as any);
+      success('Đã xóa điều chỉnh');
+    } catch (err: any) {
+      showError(err.message || 'Lỗi xóa điều chỉnh');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleApplyVoucher = async () => {
     if (!voucherCodeInput.trim()) return;
@@ -136,9 +182,7 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
 
     setIsSubmitting(true);
     try {
-      const res = await http.patch<{ success: boolean }>(`/reception/bookings/${currentBooking._id}/checkout`, {
-        final_bill_amount: amountToPay
-      });
+      const res = await http.patch<{ success: boolean }>(`/reception/bookings/${currentBooking._id}/checkout`, {});
 
       if (res.success) {
         success("Thanh toán thành công. Đã in hóa đơn và giải phóng bàn!");
@@ -200,6 +244,81 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
                     <span className="font-medium text-gray-900">{(item.price_at_time * item.quantity).toLocaleString()}đ</span>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <div className="flex items-center justify-between border-b pb-2 mb-3">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Tag className="w-4 h-4" /> Giảm giá phát sinh (Điều chỉnh)</h3>
+              <button 
+                onClick={() => setShowAddAdjustment(!showAddAdjustment)}
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" /> Thêm điều chỉnh
+              </button>
+            </div>
+            
+            {adjustments.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {adjustments.map((adj) => (
+                  <div key={adj._id} className="flex items-start justify-between bg-amber-50 p-2.5 rounded-lg border border-amber-100">
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-amber-900 text-sm flex items-center gap-1.5">
+                        ⚠️ {adj.reason}
+                      </span>
+                      <span className="text-xs text-amber-700 mt-0.5">Loại: {adj.type}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-amber-700">- {adj.amount.toLocaleString()}đ</span>
+                      <button 
+                        onClick={() => handleRemoveAdjustment(adj._id)}
+                        disabled={isSubmitting}
+                        className="text-red-400 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showAddAdjustment && (
+              <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
+                <div className="flex gap-2">
+                  <select 
+                    value={adjType} 
+                    onChange={e => setAdjType(e.target.value)}
+                    className="flex-1 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="DISCOUNT">Giảm giá (Discount)</option>
+                    <option value="COMBO_INCOMPLETE">Thiếu món Combo</option>
+                    <option value="ITEM_REMOVED">Lỗi món (Bỏ ra)</option>
+                    <option value="GOODWILL">Goodwill (Tặng khách)</option>
+                    <option value="OTHER">Khác</option>
+                  </select>
+                  <input 
+                    type="number"
+                    placeholder="Số tiền giảm (đ)"
+                    value={adjAmount}
+                    onChange={e => setAdjAmount(e.target.value)}
+                    className="flex-1 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <input 
+                  type="text"
+                  placeholder="Lý do điều chỉnh (Bắt buộc)..."
+                  value={adjReason}
+                  onChange={e => setAdjReason(e.target.value)}
+                  className="w-full text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setShowAddAdjustment(false)}>Hủy</Button>
+                  <Button size="sm" onClick={handleAddAdjustment} disabled={isSubmitting || !adjAmount || !adjReason.trim()}>
+                    Lưu điều chỉnh
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -325,6 +444,12 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
               <div className="flex justify-between items-center mb-3 text-sm text-green-700">
                 <span className="font-medium">Khuyến mãi (Voucher):</span>
                 <span className="font-bold">- {voucherDiscount.toLocaleString()}đ</span>
+              </div>
+            )}
+            {adjustmentsTotal > 0 && (
+              <div className="flex justify-between items-center mb-3 text-sm text-amber-700">
+                <span className="font-medium">Giảm giá phát sinh:</span>
+                <span className="font-bold">- {adjustmentsTotal.toLocaleString()}đ</span>
               </div>
             )}
             {depositPaid > 0 && (

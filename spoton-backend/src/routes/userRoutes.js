@@ -37,7 +37,7 @@ router.delete('/admin/:id', protect, authorize('ADMIN'), userController.deleteUs
 // @desc   Lấy danh sách managers chưa quản lý chi nhánh nào
 // @route  GET /api/v1/users/managers?currentBranchId=xxx
 // @access Public (tạm thời, sẽ thêm protect sau)
-router.get('/managers', async (req, res, next) => {
+router.get('/managers', protect, authorize('ADMIN'), async (req, res, next) => {
   try {
     const { currentBranchId } = req.query;
 

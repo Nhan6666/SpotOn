@@ -16,7 +16,7 @@ export function useInvoices() {
     return d.toLocaleDateString('en-CA');
   });
 
-  const [activeTab, setActiveTab] = useState<'ALL' | 'COMPLETED' | 'PENDING_SETTLEMENT'>('ALL');
+  const [activeTab, setActiveTab] = useState<'ALL' | 'COMPLETED' | 'PENDING_SETTLEMENT' | 'REFUND_PENDING'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   
   const [selectedBookingForCheckout, setSelectedBookingForCheckout] = useState<Booking | null>(null);
@@ -53,7 +53,13 @@ export function useInvoices() {
   const filteredInvoices = useMemo(() => {
     return invoices.filter(inv => {
       // Filter by tab
-      if (activeTab !== 'ALL' && inv.status !== activeTab) {
+      if (activeTab === 'COMPLETED' && !['COMPLETED', 'REFUND_COMPLETED'].includes(inv.status)) {
+        return false;
+      }
+      if (activeTab === 'PENDING_SETTLEMENT' && inv.status !== 'PENDING_SETTLEMENT') {
+        return false;
+      }
+      if (activeTab === 'REFUND_PENDING' && inv.status !== 'CANCELLED_REFUND_PENDING') {
         return false;
       }
       
@@ -82,8 +88,9 @@ export function useInvoices() {
     filteredInvoices,
     stats: {
       total: invoices.length,
-      completed: invoices.filter(i => i.status === 'COMPLETED').length,
+      completed: invoices.filter(i => ['COMPLETED', 'REFUND_COMPLETED'].includes(i.status)).length,
       pending: invoices.filter(i => i.status === 'PENDING_SETTLEMENT').length,
+      refundPending: invoices.filter(i => i.status === 'CANCELLED_REFUND_PENDING').length,
     },
     selectedBookingForCheckout,
     setSelectedBookingForCheckout,

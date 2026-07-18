@@ -9,13 +9,13 @@ import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 const MENU_ITEMS = [
   { href: '/admin', label: ADMIN_TEXTS.layout?.sidebar?.overview || 'Tổng quan', icon: LayoutDashboard },
+  { href: '/admin/finance', label: 'Tài chính & Kiểm toán', icon: BarChart3, matchPrefix: true },
   { href: '/admin/accounts', label: 'Tài khoản', icon: Users, matchPrefix: true },
   { href: '/admin/branches', label: ADMIN_TEXTS.layout?.sidebar?.branches || 'Chi nhánh', icon: Store, matchPrefix: true },
   { href: '/admin/map-templates', label: ADMIN_TEXTS.layout?.sidebar?.mapTemplates || 'Mẫu sơ đồ', icon: LayoutGrid, matchPrefix: true },
   { href: '/admin/menu', label: ADMIN_TEXTS.layout?.sidebar?.menu || 'Thực đơn', icon: UtensilsCrossed, matchPrefix: true },
   { href: '/admin/categories', label: ADMIN_TEXTS.layout?.sidebar?.categories || 'Danh mục', icon: Tags, matchPrefix: true },
   { href: '/admin/vouchers', label: ADMIN_TEXTS.layout?.sidebar?.vouchers || 'Khuyến mãi', icon: TicketPercent, matchPrefix: true },
-  { href: '/admin/analytics', label: ADMIN_TEXTS.layout?.sidebar?.analytics || 'Thống kê', icon: BarChart3, matchPrefix: true },
 ];
 
 const SYSTEM_CONFIGS = [

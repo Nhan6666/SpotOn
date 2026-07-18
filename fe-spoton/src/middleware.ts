@@ -10,11 +10,11 @@ const IS_AUTH_ENABLED = true; // ← Đổi thành FALSE khi cần tắt tạm
 // Định nghĩa các route cần bảo vệ và role tương ứng
 const PROTECTED_ROUTES: { path: string; roles: string[] }[] = [
   { path: '/admin', roles: ['ADMIN'] },
-  { path: '/kitchen', roles: ['KITCHEN', 'ADMIN'] },
-  { path: '/manager', roles: ['MANAGER', 'ADMIN'] },
-  { path: '/waiter', roles: ['WAITER', 'MANAGER', 'ADMIN'] },
-  { path: '/profile', roles: ['CUSTOMER', 'WAITER', 'MANAGER', 'ADMIN', 'KITCHEN'] },
-  { path: '/my-bookings', roles: ['CUSTOMER', 'WAITER', 'MANAGER', 'ADMIN'] },
+  { path: '/kitchen', roles: ['KITCHEN'] },
+  { path: '/manager', roles: ['MANAGER'] },
+  { path: '/waiter', roles: ['WAITER'] },
+  { path: '/profile', roles: ['CUSTOMER'] },
+  { path: '/my-bookings', roles: ['CUSTOMER'] },
 ];
 
 // Route chỉ dành cho người chưa đăng nhập
@@ -22,6 +22,7 @@ const AUTH_ROUTES = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  console.log(`[Middleware] pathname: ${pathname}`);
 
   // ---- Nếu Auth chưa bật, bỏ qua tất cả ----
   if (!IS_AUTH_ENABLED) {
@@ -52,10 +53,10 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Đã có token nhưng không đủ quyền
-    if (userRole && !protectedRoute.roles.includes(userRole.toUpperCase())) {
+    // Đã có token nhưng không đủ quyền hoặc bị mất role trong cookie
+    if (!userRole || !protectedRoute.roles.includes(userRole.toUpperCase())) {
       // Nếu MANAGER truy cập /admin → chuyển sang /manager tương ứng
-      if (pathname.startsWith('/admin') && userRole.toUpperCase() === 'MANAGER') {
+      if (pathname.startsWith('/admin') && userRole?.toUpperCase() === 'MANAGER') {
         const newPath = pathname.replace('/admin', '/manager');
         return NextResponse.redirect(new URL(newPath, request.url));
       }
@@ -66,15 +67,9 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Cấu hình: Middleware chỉ chạy trên các route này (bỏ qua static files, api proxy...)
+// Cấu hình: Middleware chạy trên tất cả các route, trừ API và Next.js static files
 export const config = {
   matcher: [
-    '/admin/:path*',
-    '/manager/:path*',
-    '/waiter/:path*',
-    '/profile/:path*',
-    '/my-bookings/:path*',
-    '/login',
-    '/register',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$).*)',
   ],
 };

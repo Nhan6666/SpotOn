@@ -24,6 +24,7 @@ const statsRoutes = require("./routes/statsRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const receptionRoutes = require("./routes/receptionRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const financeRoutes = require("./routes/financeRoutes");
 
 // =============================================
 // KHỞI TẠO APP
@@ -84,6 +85,7 @@ app.use("/api/v1/stats", statsRoutes);
 app.use("/api/v1/payment", paymentRoutes);
 app.use("/api/v1/reception", receptionRoutes);
 app.use("/api/v1/orders", orderRoutes);
+app.use("/api/v1/finance", financeRoutes);
 
 // =============================================
 // GLOBAL ERROR HANDLERS

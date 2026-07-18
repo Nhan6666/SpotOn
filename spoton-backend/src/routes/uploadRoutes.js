@@ -162,4 +162,38 @@ router.put(
   uploadBranchImages
 );
 
+// ============================================================
+// REFUND PROOF STORAGE (Cloudinary)
+// ============================================================
+const refundStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'SpotOn/refunds',
+    allowed_formats: ['jpeg', 'jpg', 'png', 'webp', 'avif'],
+    public_id: (req, file) => `refund_${Date.now()}`,
+  },
+});
+
+const uploadRefundProof = multer({
+  storage: refundStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Max 5MB
+});
+
+// POST /api/v1/uploads/refund — Upload ảnh chứng từ hoàn tiền (chỉ Manager)
+router.post(
+  '/refund',
+  protect,
+  authorize('ADMIN', 'MANAGER'),
+  uploadRefundProof.single('image'),
+  (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Không có file ảnh nào được upload.' });
+    }
+    res.status(200).json({
+      success: true,
+      data: { url: req.file.path || req.file.secure_url || req.file.url }
+    });
+  }
+);
+
 module.exports = router;

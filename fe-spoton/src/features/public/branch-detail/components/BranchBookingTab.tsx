@@ -7,6 +7,16 @@ import { BookingCheckoutStep } from './BookingCheckoutStep';
 import { socket } from '@/lib/socket';
 import { PUBLIC_TEXTS } from '@/constants/texts/public';
 
+const generateTimeSlots = () => {
+  const slots = [];
+  for (let i = 0; i < 24; i++) {
+    const hour = i.toString().padStart(2, '0');
+    slots.push(`${hour}:00`);
+    slots.push(`${hour}:30`);
+  }
+  return slots;
+};
+
 export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
   const searchParams = useSearchParams();
   const urlDate = searchParams.get('date');
@@ -81,8 +91,28 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
     // Kiểm tra giờ đóng cửa dựa trên service_periods của chi nhánh
     if (branch.service_periods) {
       const { lunch, dinner } = branch.service_periods;
-      const inLunch = time >= lunch.start && time <= lunch.end;
-      const inDinner = time >= dinner.start && time <= dinner.end;
+      
+      const toMins = (t: string) => {
+        if (!t) return 0;
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + (m || 0);
+      };
+
+      const checkShift = (start: string, end: string, t: string) => {
+        if (!start || !end) return false;
+        const sMins = toMins(start);
+        let eMins = toMins(end);
+        let tMins = toMins(t);
+        if (eMins < sMins) eMins += 24 * 60; // Qua đêm
+        if (tMins < sMins && eMins > 24 * 60) tMins += 24 * 60; // Thời gian t nằm ở rạng sáng hsau
+        return { isIn: tMins >= sMins && tMins <= eMins, tMins, sMins };
+      };
+
+      const lunchShift = checkShift(lunch?.start, lunch?.end, time);
+      const dinnerShift = checkShift(dinner?.start, dinner?.end, time);
+
+      const inLunch = lunchShift.isIn;
+      const inDinner = dinnerShift.isIn;
 
       if (!inLunch && !inDinner) {
         if (!keepError) setErrorMsg(`Nhà hàng chỉ mở cửa ca Trưa (${lunch.start}-${lunch.end}) và ca Tối (${dinner.start}-${dinner.end}).`);
@@ -90,17 +120,25 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
         return;
       }
 
-      // Kiểm tra last_booking (thường admin đã cấu hình trước 2 tiếng so với giờ đóng)
-      if (inLunch && time > lunch.last_booking) {
-        if (!keepError) setErrorMsg(`Ca trưa chỉ nhận đặt bàn muộn nhất đến ${lunch.last_booking}. Vui lòng chọn giờ sớm hơn.`);
-        setHasChecked(false);
-        return;
+      // Kiểm tra last_booking
+      if (inLunch && lunch.last_booking) {
+        let lMins = toMins(lunch.last_booking);
+        if (lMins < lunchShift.sMins) lMins += 24 * 60;
+        if (lunchShift.tMins > lMins) {
+          if (!keepError) setErrorMsg(`Ca trưa chỉ nhận đặt bàn muộn nhất đến ${lunch.last_booking}. Vui lòng chọn giờ sớm hơn.`);
+          setHasChecked(false);
+          return;
+        }
       }
 
-      if (inDinner && time > dinner.last_booking) {
-        if (!keepError) setErrorMsg(`Ca tối chỉ nhận đặt bàn muộn nhất đến ${dinner.last_booking}. Vui lòng chọn giờ sớm hơn.`);
-        setHasChecked(false);
-        return;
+      if (inDinner && dinner.last_booking) {
+        let lMins = toMins(dinner.last_booking);
+        if (lMins < dinnerShift.sMins) lMins += 24 * 60;
+        if (dinnerShift.tMins > lMins) {
+          if (!keepError) setErrorMsg(`Ca tối chỉ nhận đặt bàn muộn nhất đến ${dinner.last_booking}. Vui lòng chọn giờ sớm hơn.`);
+          setHasChecked(false);
+          return;
+        }
       }
     }
 
@@ -283,15 +321,18 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
             <Clock className="w-5 h-5 md:w-6 md:h-6 text-[#ea580c] flex-shrink-0" />
             <div className="ml-3 flex flex-col flex-1 overflow-hidden">
               <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wide">{PUBLIC_TEXTS.branchDetail.bookingTab.time}</span>
-              <input 
-                type="time" 
+              <select 
                 value={time}
                 onChange={e => {
                   setTime(e.target.value);
                   setHasChecked(false);
                 }}
-                className="w-full bg-transparent border-none p-0 outline-none text-gray-600 font-medium text-sm md:text-base focus:ring-0 mt-0.5 cursor-pointer"
-              />
+                className="w-full bg-transparent border-none p-0 outline-none text-gray-600 font-medium text-sm md:text-base focus:ring-0 mt-0.5 cursor-pointer appearance-none"
+              >
+                {generateTimeSlots().map(slot => (
+                  <option key={slot} value={slot}>{slot}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="relative flex items-center flex-1 px-4 md:px-6 py-3 md:py-1 w-full hover:bg-gray-50 rounded-full transition-colors cursor-pointer">

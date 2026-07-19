@@ -33,3 +33,22 @@ export interface PublicBranchDetail {
     }[];
   }[];
 }
+
+export interface BranchReview {
+  _id: string;
+  branch_id: any;
+  user_id: {
+    _id: string;
+    full_name: string;
+    avatar?: string;
+    email?: string;
+    phone?: string;
+  };
+  rating: number;
+  comment: string;
+  is_deleted?: boolean;
+  deleted_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+

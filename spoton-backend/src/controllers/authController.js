@@ -129,7 +129,7 @@ const login = async (req, res) => {
     }
 
     // Kiểm tra mật khẩu
-    const isMatch = (password === user.password_hash) || (await bcrypt.compare(password, user.password_hash));
+    const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       return res
         .status(401)

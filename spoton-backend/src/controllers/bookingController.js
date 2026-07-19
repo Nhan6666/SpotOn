@@ -22,13 +22,18 @@ const createBooking = async (req, res) => {
     const bookingData = { ...req.body };
 
     // TÍNH NĂNG BẢO MẬT: Nếu là Customer tự đặt, ép cứng customer_id là ID của họ (tránh giả mạo truyền ID người khác lên)
-    if (req.user.role === 'CUSTOMER') {
+    if (req.user && req.user.role === 'CUSTOMER') {
       bookingData.customer_id = req.user._id;
     }
 
     // Tự động gán branch_id hiện tại nếu Manager/Waiter tạo đơn cho khách walk-in
-    if (['MANAGER', 'WAITER'].includes(req.user.role)) {
+    if (req.user && ['MANAGER', 'WAITER'].includes(req.user.role)) {
       bookingData.branch_id = req.user.branch_id;
+    }
+
+    // Tự động tính shift nếu không truyền
+    if (!bookingData.shift && bookingData.branch_id && bookingData.arrival_time) {
+      bookingData.shift = await require('../services/bookingService').validateAndGetShift(bookingData.branch_id, bookingData.arrival_time);
     }
 
     const newBooking = await Booking.create(bookingData);
@@ -247,11 +252,102 @@ const updateBookingInfo = async (req, res) => {
   }
 };
 
+// @desc   Khách hàng hủy bàn & yêu cầu hoàn tiền
+// @route  POST /api/v1/bookings/:id/cancel
+// @access Private (CUSTOMER)
+const cancelBookingByCustomer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { bank_account_number, bank_name, account_holder_name, cancellation_reason } = req.body;
+    
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt bàn.' });
+    }
+
+    if (String(booking.customer_id) !== String(req.user._id)) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền thao tác trên đơn này.' });
+    }
+
+    if (!['CONFIRMED', 'PENDING_PAYMENT'].includes(booking.status)) {
+      return res.status(400).json({ success: false, message: `Không thể hủy đơn khi đang ở trạng thái ${booking.status}` });
+    }
+
+    // Logic tính toán hoàn tiền
+    const now = new Date();
+    const arrivalDate = new Date(booking.reservation_date);
+    const [hours, minutes] = (booking.arrival_time || '00:00').split(':').map(Number);
+    // Assuming Vietnam Timezone (UTC+7)
+    arrivalDate.setUTCHours(hours - 7, minutes, 0, 0);
+
+    const diffMs = arrivalDate.getTime() - now.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+
+    let refund_percentage = 0;
+    if (diffHours >= 12) {
+      refund_percentage = 100;
+    } else if (diffHours >= 6) {
+      refund_percentage = 50;
+    } else {
+      refund_percentage = 0;
+    }
+
+    const deposit_paid = booking.total_deposit_paid || 0;
+    const refund_amount = (deposit_paid * refund_percentage) / 100;
+
+    // Update booking refund info
+    booking.refund_info = {
+      refund_amount,
+      refund_percentage,
+      bank_account_number,
+      bank_name,
+      account_holder_name
+    };
+    booking.cancellation_reason = cancellation_reason;
+
+    if (refund_amount > 0) {
+      booking.status = 'CANCELLED_REFUND_PENDING';
+    } else {
+      booking.status = 'CANCELLED';
+    }
+
+    // Unlock tables
+    if (booking.table_ids && booking.table_ids.length > 0) {
+      const TableLockService = require('../services/tableLockService');
+      await TableLockService.unlockTables(
+        booking.branch_id.toString(),
+        booking.table_ids.map(id => id.toString())
+      );
+    }
+
+    await booking.save();
+
+    // Emit socket event
+    const io = require('../socket').getIO();
+    io.to(`branch_${booking.branch_id}`).emit('table_status_changed', {
+      action: booking.status,
+      branch_id: booking.branch_id,
+      booking_id: booking._id,
+      table_ids: booking.table_ids
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Hủy đơn thành công.',
+      data: booking
+    });
+  } catch (error) {
+    console.error('Lỗi cancelBookingByCustomer:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
 module.exports = { 
   createBooking, 
   getAllBookings, 
   getBookingById, 
   updateBookingStatus, 
   getMyBookings, 
-  updateBookingInfo
+  updateBookingInfo,
+  cancelBookingByCustomer
 };

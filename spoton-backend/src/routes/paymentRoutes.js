@@ -9,6 +9,7 @@ const {
   handleVNPayIPN,
   handleMoMoIPN,
   handleVNPayReturn,
+  mockPayment
 } = require('../controllers/paymentController');
 
 // ============================================================
@@ -20,6 +21,9 @@ router.post('/calculate-deposit', calculateDeposit);
 
 // POST /api/v1/payment/create-payment → Tạo URL thanh toán VNPay/MoMo (Bước 2)
 router.post('/create-payment', createPayment);
+
+// POST /api/v1/payment/mock-payment → API giả lập VNPay trả về thành công (Dành cho App)
+router.post('/mock-payment', mockPayment);
 
 // ============================================================
 // WEBHOOK ROUTES (VNPay/MoMo gọi ngầm — Tuyệt đối KHÔNG đặt middleware auth)

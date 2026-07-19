@@ -37,7 +37,19 @@ class BookingService {
     if (!shift) checkShift(dinner, 'DINNER');
 
     if (!shift) {
-      const err = new Error('Thời gian chọn không nằm trong ca hoạt động của nhà hàng.');
+      // Fallback: use open_time and close_time if service_periods are missing or time doesn't match
+      const [oh, om] = (branch.open_time || '08:00').split(':').map(Number);
+      const [ch, cm] = (branch.close_time || '23:00').split(':').map(Number);
+      const openMins = oh * 60 + om;
+      const closeMins = ch * 60 + cm;
+      if (targetMinutes >= openMins && targetMinutes <= closeMins) {
+        shift = targetMinutes < 15 * 60 ? 'LUNCH' : 'DINNER';
+        shiftEnd = closeMins;
+      }
+    }
+
+    if (!shift) {
+      const err = new Error(`Thời gian chọn (${timeStr}) không nằm trong ca hoạt động của nhà hàng.`);
       err.statusCode = 400;
       throw err;
     }

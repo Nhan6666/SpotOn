@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getAllBranches,
   getBranchById,
+  getMyBranch,
   createBranch,
   updateBranch,
   deleteBranch,
@@ -23,6 +24,9 @@ const { protect, authorize } = require('../middlewares/authMiddleware');
 router.route('/')
   .get(getAllBranches)
   .post(protect, authorize('ADMIN'), createBranch);
+
+// GET    /api/v1/branches/my/branch -> Chi nhánh của tôi (Private)
+router.get('/my/branch', protect, authorize('ADMIN', 'MANAGER', 'WAITER', 'KITCHEN'), getMyBranch);
 
 // GET    /api/v1/branches/:id -> Chi tiết chi nhánh (Public)
 // PUT    /api/v1/branches/:id -> Cập nhật chi nhánh (ADMIN hoặc MANAGER)

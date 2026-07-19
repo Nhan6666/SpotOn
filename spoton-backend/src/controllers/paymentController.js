@@ -316,6 +316,54 @@ const handleVNPayReturn = asyncHandler(async (req, res) => {
 
   res.redirect(redirectUrl);
 });
+// ============================================================
+// @desc   API Giả lập thanh toán thành công (Dành cho App)
+// @route  POST /api/v1/payment/mock-payment
+// @access Public
+// ============================================================
+const mockPayment = asyncHandler(async (req, res) => {
+  const { booking_id } = req.body;
+  const booking = await Booking.findById(booking_id);
+
+  if (!booking) {
+    return res.status(404).json({ success: false, message: 'Booking not found' });
+  }
+
+  if (booking.status !== 'PENDING_PAYMENT') {
+    return res.status(400).json({ success: false, message: 'Booking already processed or not in pending payment state' });
+  }
+
+  // === THANH TOÁN THÀNH CÔNG ===
+  booking.status = 'CONFIRMED';
+  if (!booking.payment_info) {
+    booking.payment_info = {};
+  }
+  booking.payment_info.status = 'PAID';
+  booking.payment_info.transaction_id = `MOCK_TXN_${Date.now()}`;
+  booking.payment_info.paid_at = new Date();
+  booking.expires_at = undefined;
+
+  await booking.save();
+
+  await TableLockService.unlockTables(
+    booking.branch_id.toString(),
+    booking.table_ids.map(id => id.toString())
+  );
+
+  const io = require('../socket').getIO();
+  io.to(`branch_${booking.branch_id}`).emit('table_status_changed', {
+    action: 'CONFIRMED',
+    branch_id: booking.branch_id,
+    booking_id: booking._id,
+    table_ids: booking.table_ids,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Thanh toán giả lập thành công!',
+    data: booking
+  });
+});
 
 module.exports = {
   calculateDeposit,
@@ -323,4 +371,5 @@ module.exports = {
   handleVNPayIPN,
   handleMoMoIPN,
   handleVNPayReturn,
+  mockPayment
 };

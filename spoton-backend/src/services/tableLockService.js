@@ -29,10 +29,14 @@ class TableLockService {
    * @returns {boolean} true nếu khóa thành công, false nếu bàn đã bị giữ
    */
   static async lockTable(branchId, tableId, customerId) {
-    const key = this._buildKey(branchId, tableId);
-    // SET key value EX ttl NX → Trả về 'OK' nếu thành công, null nếu key đã tồn tại
-    const result = await redis.set(key, customerId, 'EX', HOLD_TTL, 'NX');
-    return result === 'OK';
+    try {
+      const key = this._buildKey(branchId, tableId);
+      const result = await redis.set(key, customerId, 'EX', HOLD_TTL, 'NX');
+      return result === 'OK';
+    } catch (error) {
+      console.warn(`⚠️ TableLockService.lockTable failed (Redis offline?). Bypassing lock for table ${tableId}.`, error.message);
+      return true;
+    }
   }
 
   /**
@@ -47,19 +51,23 @@ class TableLockService {
   static async lockMultipleTables(branchId, tableIds, customerId) {
     const lockedKeys = [];
 
-    for (const tableId of tableIds) {
-      const success = await this.lockTable(branchId, tableId, customerId);
-      if (!success) {
-        // Rollback: Xóa tất cả các key đã lock thành công trước đó
-        for (const lockedKey of lockedKeys) {
-          await redis.del(lockedKey);
+    try {
+      for (const tableId of tableIds) {
+        const success = await this.lockTable(branchId, tableId, customerId);
+        if (!success) {
+          // Rollback: Xóa tất cả các key đã lock thành công trước đó
+          for (const lockedKey of lockedKeys) {
+            await redis.del(lockedKey).catch(() => {});
+          }
+          return { success: false, failedTableId: tableId };
         }
-        return { success: false, failedTableId: tableId };
+        lockedKeys.push(this._buildKey(branchId, tableId));
       }
-      lockedKeys.push(this._buildKey(branchId, tableId));
+      return { success: true };
+    } catch (error) {
+      console.warn('⚠️ TableLockService.lockMultipleTables failed (Redis offline?). Bypassing lock.', error.message);
+      return { success: true };
     }
-
-    return { success: true };
   }
 
   /**
@@ -71,15 +79,20 @@ class TableLockService {
    * @returns {boolean}
    */
   static async extendLockForPayment(branchId, tableIds) {
-    for (const tableId of tableIds) {
-      const key = this._buildKey(branchId, tableId);
-      const exists = await redis.exists(key);
-      if (!exists) {
-        return false; // Lock đã hết hạn trước khi khách kịp thanh toán
+    try {
+      for (const tableId of tableIds) {
+        const key = this._buildKey(branchId, tableId);
+        const exists = await redis.exists(key);
+        if (!exists) {
+          return false; // Lock đã hết hạn trước khi khách kịp thanh toán
+        }
+        await redis.expire(key, PAYMENT_TTL);
       }
-      await redis.expire(key, PAYMENT_TTL);
+      return true;
+    } catch (error) {
+      console.warn('⚠️ TableLockService.extendLockForPayment failed (Redis offline?). Bypassing lock.', error.message);
+      return true;
     }
-    return true;
   }
 
   /**
@@ -90,11 +103,15 @@ class TableLockService {
    * @param {string[]} tableIds
    */
   static async unlockTables(branchId, tableIds) {
-    const pipeline = redis.pipeline();
-    for (const tableId of tableIds) {
-      pipeline.del(this._buildKey(branchId, tableId));
+    try {
+      const pipeline = redis.pipeline();
+      for (const tableId of tableIds) {
+        pipeline.del(this._buildKey(branchId, tableId));
+      }
+      await pipeline.exec();
+    } catch (error) {
+      console.warn('⚠️ TableLockService.unlockTables failed (Redis offline?).', error.message);
     }
-    await pipeline.exec();
   }
 
   /**

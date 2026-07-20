@@ -88,6 +88,11 @@ app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/finance", financeRoutes);
 
 // =============================================
+// SWAGGER API DOCS
+// =============================================
+require("./config/swagger")(app);
+
+// =============================================
 // GLOBAL ERROR HANDLERS
 // =============================================
 // 404 Handler

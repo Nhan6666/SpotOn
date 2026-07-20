@@ -123,33 +123,73 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ===== MANAGER/ADMIN: Quản lý ===== */}
+      {/* ===== MANAGER: Quản lý (Chi nhánh đơn lẻ) ===== */}
       <Tabs.Screen
         name="branch-manage"
         options={{
           title: 'Quản lý',
           tabBarIcon: ({ color }) => <TabBarIcon name="building" color={color as string} />,
-          href: isManager ? '/branch-manage' : null,
+          href: (isManager && !isAdmin) ? '/branch-manage' : null,
         }}
       />
 
-      {/* ===== MANAGER/ADMIN: Check-in (Kanban) ===== */}
+      {/* ===== ADMIN: CRUD Chi nhánh (Tất cả chi nhánh) ===== */}
+      <Tabs.Screen
+        name="admin-branches"
+        options={{
+          title: 'Chi nhánh',
+          tabBarIcon: ({ color }) => <TabBarIcon name="building-o" color={color as string} />,
+          href: isAdmin ? '/admin-branches' : null,
+        }}
+      />
+
+      {/* ===== ADMIN: CRUD Thực đơn ===== */}
+      <Tabs.Screen
+        name="admin-menu"
+        options={{
+          title: 'Thực đơn',
+          tabBarIcon: ({ color }) => <TabBarIcon name="book" color={color as string} />,
+          href: isAdmin ? '/admin-menu' : null,
+        }}
+      />
+
+      {/* ===== ADMIN: CRUD Khuyến mãi ===== */}
+      <Tabs.Screen
+        name="admin-vouchers"
+        options={{
+          title: 'Khuyến mãi',
+          tabBarIcon: ({ color }) => <TabBarIcon name="ticket" color={color as string} />,
+          href: isAdmin ? '/admin-vouchers' : null,
+        }}
+      />
+
+      {/* ===== ADMIN: Tài chính ===== */}
+      <Tabs.Screen
+        name="admin-finance"
+        options={{
+          title: 'Tài chính',
+          tabBarIcon: ({ color }) => <TabBarIcon name="line-chart" color={color as string} />,
+          href: isAdmin ? '/admin-finance' : null,
+        }}
+      />
+
+      {/* ===== MANAGER: Check-in (Kanban) ===== */}
       <Tabs.Screen
         name="kanban"
         options={{
           title: 'Check-in',
           tabBarIcon: ({ color }) => <TabBarIcon name="columns" color={color as string} />,
-          href: isManager ? '/kanban' : null,
+          href: (isManager && !isAdmin) ? '/kanban' : null,
         }}
       />
 
-      {/* ===== MANAGER/ADMIN: Sơ đồ bàn ===== */}
+      {/* ===== MANAGER: Sơ đồ bàn ===== */}
       <Tabs.Screen
         name="tables"
         options={{
           title: 'Sơ đồ bàn',
           tabBarIcon: ({ color }) => <TabBarIcon name="th" color={color as string} />,
-          href: isManager ? '/tables' : null,
+          href: (isManager && !isAdmin) ? '/tables' : null,
         }}
       />
 

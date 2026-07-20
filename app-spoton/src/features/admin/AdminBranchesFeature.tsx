@@ -5,12 +5,15 @@ import { useRouter } from 'expo-router';
 import apiClient from '@/lib/http';
 import { Colors } from '@/constants/Colors';
 import { Branch } from '@/types/branch.types';
+import { BranchFormModal } from './components/BranchFormModal';
 
 export function AdminBranchesFeature() {
   const router = useRouter();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isFormVisible, setFormVisible] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
 
   const fetchBranches = useCallback(async () => {
     try {
@@ -39,7 +42,7 @@ export function AdminBranchesFeature() {
   const handleToggleStatus = async (branch: Branch) => {
     try {
       const newStatus = branch.status === 'OPEN' || branch.status === 'FULL' ? 'CLOSED' : 'OPEN';
-      const res = await apiClient.patch(`/branches/${branch._id}`, { status: newStatus });
+      const res = await apiClient.put(`/branches/${branch._id}`, { status: newStatus });
       if (res.data?.success) {
         Alert.alert('Thành công', newStatus === 'OPEN' ? 'Đã mở cửa chi nhánh' : 'Đã đóng cửa chi nhánh');
         fetchBranches();
@@ -48,6 +51,41 @@ export function AdminBranchesFeature() {
       console.error('Failed to toggle branch status:', error);
       Alert.alert('Lỗi', 'Không thể đổi trạng thái chi nhánh');
     }
+  };
+
+  const handleDelete = (branch: Branch) => {
+    Alert.alert(
+      "Xóa chi nhánh",
+      `Bạn có chắc muốn xóa chi nhánh "${branch.name}" không? Thao tác này không thể hoàn tác.`,
+      [
+        { text: "Hủy", style: "cancel" },
+        { 
+          text: "Xóa", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const res = await apiClient.delete(`/branches/${branch._id}`);
+              if (res.data?.success) {
+                Alert.alert('Thành công', 'Đã xóa chi nhánh');
+                fetchBranches();
+              }
+            } catch (error: any) {
+              Alert.alert('Lỗi', error.response?.data?.message || 'Không thể xóa chi nhánh');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const openCreateForm = () => {
+    setSelectedBranch(null);
+    setFormVisible(true);
+  };
+
+  const openEditForm = (branch: Branch) => {
+    setSelectedBranch(branch);
+    setFormVisible(true);
   };
 
   const renderBranchItem = ({ item }: { item: Branch }) => {
@@ -113,11 +151,18 @@ export function AdminBranchesFeature() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            className="flex-1 py-3 items-center justify-center flex-row gap-2"
-            onPress={() => Alert.alert('Sắp ra mắt', 'Tính năng sửa chi nhánh sẽ sớm có trên mobile!')}
+            className="flex-1 py-3 items-center justify-center border-r border-gray-50 flex-row gap-2"
+            onPress={() => openEditForm(item)}
           >
             <FontAwesome name="edit" size={14} color={Colors.text} />
             <Text className="font-lexend text-sm text-gray-700">Chỉnh sửa</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            className="flex-1 py-3 items-center justify-center flex-row gap-2"
+            onPress={() => handleDelete(item)}
+          >
+            <FontAwesome name="trash" size={14} color="#ef4444" />
+            <Text className="font-lexend text-sm text-red-500">Xóa</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -154,10 +199,20 @@ export function AdminBranchesFeature() {
       <TouchableOpacity 
         className="absolute bottom-6 right-6 w-14 h-14 bg-amber-600 rounded-full items-center justify-center shadow-lg"
         style={{ elevation: 4 }}
-        onPress={() => Alert.alert('Sắp ra mắt', 'Tính năng thêm chi nhánh sẽ sớm có trên mobile!')}
+        onPress={openCreateForm}
       >
         <FontAwesome name="plus" size={20} color="#fff" />
       </TouchableOpacity>
+
+      <BranchFormModal 
+        visible={isFormVisible}
+        branch={selectedBranch}
+        onClose={() => setFormVisible(false)}
+        onSuccess={() => {
+          setFormVisible(false);
+          fetchBranches();
+        }}
+      />
     </View>
   );
 }

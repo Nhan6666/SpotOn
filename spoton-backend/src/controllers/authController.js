@@ -508,6 +508,44 @@ const verifyForgotPasswordOtp = async (req, res) => {
   }
 };
 
+// GET /api/v1/auth/make-admin
+// LƯU Ý: ĐÂY LÀ ROUTE TẠM THỜI ĐỂ TEST, SẼ ĐƯỢC XÓA TRÊN PRODUCTION
+const makeAdmin = async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Vui lòng cung cấp email (?email=...)" });
+    }
+
+    const normalized = normalizeEmail(email);
+    let user = await User.findOne({ email: normalized });
+    
+    if (!user) {
+      const bcrypt = require("bcryptjs");
+      const salt = await bcrypt.genSalt(10);
+      const password_hash = await bcrypt.hash("123456", salt);
+      user = new User({
+        email: normalized,
+        full_name: "Super Admin",
+        password_hash,
+        auth_provider: "LOCAL",
+        is_email_verified: true, // auto verify
+        role: "ADMIN"
+      });
+      await user.save();
+      return res.status(200).json({ success: true, message: `Tạo tài khoản ADMIN thành công! Email: ${email} | Pass: 123456` });
+    }
+
+    user.role = 'ADMIN';
+    user.is_email_verified = true;
+    await user.save();
+
+    res.status(200).json({ success: true, message: `Thành công! User ${email} đã trở thành ADMIN. Vui lòng đăng xuất và đăng nhập lại.` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -517,4 +555,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyForgotPasswordOtp,
+  makeAdmin,
 };

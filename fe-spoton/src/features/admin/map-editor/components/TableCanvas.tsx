@@ -392,7 +392,7 @@ export function TableCanvas({
               </div>
             ) : (
               tables.map((table) => {
-                const statusConfig = TABLE_STATUS_CONFIG[table.status];
+                const statusConfig = TABLE_STATUS_CONFIG[table.status] || TABLE_STATUS_CONFIG['EMPTY'];
                 const isCircle = table.shape === "CIRCLE";
 
                 // Tính toán ca đã được đặt cho bàn này
@@ -407,7 +407,7 @@ export function TableCanvas({
                     if (booking.status === 'PENDING_PAYMENT' || booking.status === 'PENDING_DEPOSIT') return TABLE_STATUS_CONFIG['LOCKED'];
                     if (booking.status === 'HOLDING') return TABLE_STATUS_CONFIG['HOLDING'];
                   }
-                  if (manualStatus && manualStatus !== 'EMPTY') return TABLE_STATUS_CONFIG[manualStatus];
+                  if (manualStatus && manualStatus !== 'EMPTY') return TABLE_STATUS_CONFIG[manualStatus] || TABLE_STATUS_CONFIG['EMPTY'];
                   return TABLE_STATUS_CONFIG['EMPTY'];
                 };
 

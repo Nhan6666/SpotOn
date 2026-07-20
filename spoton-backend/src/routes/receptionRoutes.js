@@ -17,8 +17,8 @@ const { protect, authorize, optionalAuth } = require('../middlewares/authMiddlew
 
 // Public API cho Đặt Bàn (Lễ tân/Khách)
 router.get('/availability', checkAvailability);
-router.post('/hold', optionalAuth, holdBooking);
-router.delete('/hold/:id', optionalAuth, releaseHoldingBooking);
+router.post('/hold', protect, holdBooking);
+router.delete('/hold/:id', protect, releaseHoldingBooking);
 
 // Waiter/Manager thao tác trực tiếp tại nhà hàng
 router.post('/walk-in', protect, authorize('MANAGER', 'WAITER'), createWalkInBooking);

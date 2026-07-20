@@ -12,6 +12,7 @@ export function useKds() {
   const [tickets, setTickets] = useState<BookingTicket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // Timer để tính thời gian cảnh báo
   useEffect(() => {
@@ -23,20 +24,20 @@ export function useKds() {
     if (!user?.branch_id) return;
     
     setIsLoading(true);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const start = new Date(selectedDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
 
     const activeTickets = await kdsService.getActiveTickets(
       user.branch_id,
-      today.toISOString(),
-      tomorrow.toISOString()
+      start.toISOString(),
+      end.toISOString()
     );
 
     setTickets(activeTickets);
     setIsLoading(false);
-  }, [user?.branch_id]);
+  }, [user?.branch_id, selectedDate]);
 
   useEffect(() => {
     fetchActiveTickets();
@@ -104,6 +105,8 @@ export function useKds() {
     tickets,
     isLoading,
     updateItemStatus,
-    getTicketColor
+    getTicketColor,
+    selectedDate,
+    setSelectedDate
   };
 }

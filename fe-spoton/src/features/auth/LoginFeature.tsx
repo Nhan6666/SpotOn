@@ -32,13 +32,13 @@ export function LoginFeature() {
       setSuccessMessage(login.messages.success);
       setTimeout(() => {
         if (user?.role === 'ADMIN') {
-          router.push('/admin');
+          window.location.href = '/admin';
         } else if (user?.role === 'MANAGER') {
-          router.push('/manager/branch');
+          window.location.href = '/manager/branch';
         } else if (user?.role === 'KITCHEN') {
-          router.push('/kitchen');
+          window.location.href = '/kitchen';
         } else {
-          router.push('/');
+          window.location.href = '/';
         }
       }, 1000);
     }
@@ -95,13 +95,13 @@ export function LoginFeature() {
       setTimeout(() => {
         const userRole = result.data.user.role;
         if (userRole === 'ADMIN') {
-          router.push('/admin');
+          window.location.href = '/admin';
         } else if (userRole === 'MANAGER') {
-          router.push('/manager/branch');
+          window.location.href = '/manager/branch';
         } else if (userRole === 'KITCHEN') {
-          router.push('/kitchen');
+          window.location.href = '/kitchen';
         } else {
-          router.push('/');
+          window.location.href = '/';
         }
       }, 1000);
     } catch (error) {

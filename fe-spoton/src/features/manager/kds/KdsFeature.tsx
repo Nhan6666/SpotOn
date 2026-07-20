@@ -5,7 +5,7 @@ import { Clock, ChefHat, CheckCircle2, RotateCcw, Flame } from 'lucide-react';
 import { useKds } from './useKds';
 
 export function KdsFeature() {
-  const { tickets, isLoading, updateItemStatus, getTicketColor } = useKds();
+  const { tickets, isLoading, updateItemStatus, getTicketColor, selectedDate, setSelectedDate } = useKds();
 
   if (isLoading) return <div className="p-8 text-center text-slate-400">Đang tải hệ thống Bếp...</div>;
 
@@ -18,7 +18,17 @@ export function KdsFeature() {
           </h1>
           <p className="text-slate-500 text-sm mt-1">Chế độ hiển thị: Vé từng Bàn (Ticket View)</p>
         </div>
-        <div className="flex gap-4 text-sm font-medium">
+        <div className="flex gap-4 text-sm font-medium items-center">
+          <input 
+            type="date" 
+            value={selectedDate.toISOString().split('T')[0]} 
+            onChange={(e) => {
+              if (e.target.value) {
+                setSelectedDate(new Date(e.target.value));
+              }
+            }} 
+            className="border rounded px-3 py-1.5 text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ea580c]" 
+          />
           <div className="flex items-center gap-1 text-slate-600"><span className="w-3 h-3 rounded-full bg-white border border-gray-300 shadow-sm"></span> Bình thường</div>
           <div className="flex items-center gap-1 text-slate-600"><span className="w-3 h-3 rounded-full bg-amber-400 shadow-sm"></span> Chờ &gt; 10p</div>
           <div className="flex items-center gap-1 text-slate-600"><span className="w-3 h-3 rounded-full bg-red-500 shadow-sm animate-pulse"></span> Chờ &gt; 20p</div>

@@ -145,9 +145,9 @@ const createUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ họ tên, email, mật khẩu và vai trò.' });
     }
 
-    // Chỉ cho tạo MANAGER hoặc WAITER
-    if (!['MANAGER', 'WAITER'].includes(role)) {
-      return res.status(400).json({ success: false, message: 'Chỉ được phép tạo tài khoản Quản lý (MANAGER) hoặc Nhân viên (WAITER).' });
+    // Chỉ cho tạo MANAGER, WAITER, hoặc KITCHEN
+    if (!['MANAGER', 'WAITER', 'KITCHEN'].includes(role)) {
+      return res.status(400).json({ success: false, message: 'Chỉ được phép tạo tài khoản Quản lý (MANAGER), Nhân viên (WAITER) hoặc Bếp (KITCHEN).' });
     }
 
     // MANAGER/WAITER phải có chi nhánh

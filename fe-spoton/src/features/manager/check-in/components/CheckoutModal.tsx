@@ -182,16 +182,16 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
 
     setIsSubmitting(true);
     try {
-      const res = await http.patch<{ success: boolean }>(`/reception/bookings/${currentBooking._id}/checkout`, {});
+      const res = await http.patch<{ success: boolean; message?: string }>(`/reception/bookings/${currentBooking._id}/checkout`, {});
 
       if (res.success) {
         success("Thanh toán thành công. Đã in hóa đơn và giải phóng bàn!");
         onSuccess();
       } else {
-        throw new Error("Server error");
+        throw new Error(res.message || "Server error");
       }
-    } catch (err) {
-      showError("Lỗi khi thanh toán. Vui lòng thử lại.");
+    } catch (err: any) {
+      showError(err.response?.data?.message || err.message || "Lỗi khi thanh toán. Vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);
     }

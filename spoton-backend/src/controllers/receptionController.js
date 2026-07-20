@@ -93,7 +93,7 @@ const releaseHoldingBooking = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy thông tin giữ bàn.' });
     }
 
-    if (booking.status === 'HOLDING') {
+    if (['HOLDING', 'PENDING_DEPOSIT', 'PENDING_PAYMENT'].includes(booking.status)) {
       booking.status = 'CANCELLED';
       await booking.save();
 
@@ -120,7 +120,7 @@ const releaseHoldingBooking = async (req, res) => {
     }
 
     // Nếu không ở trạng thái HOLDING thì báo lỗi
-    return res.status(400).json({ success: false, message: 'Chỉ có thể hủy đơn đang giữ chỗ.' });
+    return res.status(400).json({ success: false, message: 'Chỉ có thể hủy đơn chưa thanh toán cọc.' });
   } catch (error) {
     console.error('Lỗi releaseHoldingBooking:', error);
     res.status(500).json({ success: false, message: 'Lỗi server khi nhả bàn.' });

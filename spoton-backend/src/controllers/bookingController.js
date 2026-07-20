@@ -372,22 +372,25 @@ const updateBookingInfo = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt bàn.' });
     }
 
-    if (!walk_in_name || walk_in_name.trim().length < 2) {
-      return res.status(400).json({ success: false, message: 'Vui lòng nhập họ tên hợp lệ (ít nhất 2 ký tự).' });
+    if (walk_in_name !== undefined) {
+      if (!walk_in_name || walk_in_name.trim().length < 2) {
+        return res.status(400).json({ success: false, message: 'Vui lòng nhập họ tên hợp lệ (ít nhất 2 ký tự).' });
+      }
+      booking.walk_in_name = walk_in_name.trim();
     }
     
-    const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
-    if (!walk_in_phone || !phoneRegex.test(walk_in_phone)) {
-      return res.status(400).json({ success: false, message: 'Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng Việt Nam.' });
+    if (walk_in_phone !== undefined) {
+      const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
+      if (!walk_in_phone || !phoneRegex.test(walk_in_phone)) {
+        return res.status(400).json({ success: false, message: 'Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng Việt Nam.' });
+      }
+      booking.walk_in_phone = walk_in_phone.trim();
     }
 
     if (order_items) booking.order_items = order_items;
     if (notes !== undefined) booking.notes = notes;
     if (note !== undefined) booking.notes = note; // frontend sends 'note'
     if (meal_type) booking.meal_type = meal_type;
-    
-    booking.walk_in_name = walk_in_name.trim();
-    booking.walk_in_phone = walk_in_phone.trim();
 
     await booking.save();
 

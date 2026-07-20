@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Store, UtensilsCrossed, TicketPercent, BarChart3, Settings, Tags, LayoutGrid, Map, Users } from 'lucide-react';
+import { LayoutDashboard, Store, UtensilsCrossed, TicketPercent, BarChart3, Settings, Tags, LayoutGrid, Map, Users, Star } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
@@ -16,6 +16,7 @@ const MENU_ITEMS = [
   { href: '/admin/menu', label: ADMIN_TEXTS.layout?.sidebar?.menu || 'Thực đơn', icon: UtensilsCrossed, matchPrefix: true },
   { href: '/admin/categories', label: ADMIN_TEXTS.layout?.sidebar?.categories || 'Danh mục', icon: Tags, matchPrefix: true },
   { href: '/admin/vouchers', label: ADMIN_TEXTS.layout?.sidebar?.vouchers || 'Khuyến mãi', icon: TicketPercent, matchPrefix: true },
+  { href: '/admin/reviews', label: 'Đánh giá', icon: Star, matchPrefix: true },
 ];
 
 const SYSTEM_CONFIGS = [
@@ -31,7 +32,7 @@ export function AdminSidebar() {
     let items = [...MENU_ITEMS];
     
     if (user?.role === 'MANAGER') {
-      items = items.filter(item => item.href !== '/admin/map-templates');
+      items = items.filter(item => item.href !== '/admin/map-templates' && item.href !== '/admin/reviews');
       const branchItem = items.find(i => i.href === '/admin/branches');
       if (branchItem) {
         branchItem.label = ADMIN_TEXTS.layout.sidebar.myBranch;

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useAuth } from '@/providers/AuthProvider';
+import { LoginModal } from '@/features/auth/LoginModal';
 import { PublicBranchDetail } from '../branch-detail.types';
 import { branchDetailService } from '../branch-detail.service';
 import { Calendar, Clock, Users, AlertCircle, CheckCircle2, Info } from 'lucide-react';
@@ -19,6 +21,9 @@ const generateTimeSlots = () => {
 
 export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
   const searchParams = useSearchParams();
+  const { isAuthenticated } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  
   const urlDate = searchParams.get('date');
   const urlTime = searchParams.get('time');
   const urlGuests = searchParams.get('guests');
@@ -226,6 +231,11 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
   const totalCapacity = selectedTables.reduce((sum, table) => sum + table.capacity, 0);
 
   const handleHoldBooking = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+
     if (selectedTables.length === 0) return;
 
     // --- CHỐT CHẶN 2: Bắt lỗi bàn quá nhỏ (dung sai cho phép ghép thêm tối đa 2 ghế) ---
@@ -483,6 +493,14 @@ export function BranchBookingTab({ branch }: { branch: PublicBranchDetail }) {
           )}
         </div>
       )}
+
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)}
+        onSuccess={() => {
+          setShowLoginModal(false);
+        }}
+      />
     </div>
   );
 }

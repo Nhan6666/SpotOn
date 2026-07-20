@@ -91,6 +91,7 @@ const BookingSchema = new mongoose.Schema(
         'COMPLETED',                  // Đã thanh toán xong, khách ra về
         'CANCELLED',                  // Hủy (mất cọc / chưa cọc)
         'CANCELLED_TIMEOUT',          // Hết thời gian thanh toán (System Worker UC-S01)
+        'CANCELLED_PAYMENT_FAILED',   // Thanh toán thất bại hoặc khách chủ động hủy thanh toán
         'CANCELLED_REFUND_PENDING',   // Hủy, đang chờ hoàn tiền
         'REFUND_COMPLETED',           // Đã hoàn tiền xong
         'NO_SHOW',                    // Quá giờ 30 phút không đến (System Worker UC-S02)

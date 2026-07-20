@@ -177,6 +177,12 @@ const handleVNPayIPN = asyncHandler(async (req, res) => {
     booking.expires_at = undefined; // Xóa TTL, booking sống vĩnh viễn
 
     await booking.save();
+    
+    // === TRỪ TỒN KHO MÓN ĂN KHI THANH TOÁN THÀNH CÔNG ===
+    if (booking.order_items && booking.order_items.length > 0) {
+      const BookingService = require('../services/bookingService');
+      await BookingService.syncInventory(booking.order_items, booking.branch_id, true);
+    }
 
     // Xóa Redis lock (bàn đã chính thức được đặt)
     await TableLockService.unlockTables(
@@ -196,10 +202,26 @@ const handleVNPayIPN = asyncHandler(async (req, res) => {
     console.log(`✅ VNPay: Booking ${bookingId} CONFIRMED. TxnID: ${result.transactionId}`);
   } else {
     // === THANH TOÁN THẤT BẠI ===
-    // Không làm gì, để System Worker (UC-S01) tự xử lý sau 15 phút
+    booking.status = 'CANCELLED_PAYMENT_FAILED';
     booking.payment_info.status = 'FAILED';
+    booking.expires_at = undefined;
     await booking.save();
-    console.log(`❌ VNPay: Booking ${bookingId} payment failed. Code: ${result.responseCode}`);
+    
+    // Nhả bàn ngay lập tức (giải quyết rủi ro D)
+    await TableLockService.unlockTables(
+      booking.branch_id.toString(),
+      booking.table_ids.map(id => id.toString())
+    );
+
+    const io = require('../socket').getIO();
+    io.to(`branch_${booking.branch_id}`).emit('table_status_changed', {
+      action: 'CANCELLED_PAYMENT_FAILED',
+      branch_id: booking.branch_id,
+      booking_id: booking._id,
+      table_ids: booking.table_ids,
+    });
+
+    console.log(`❌ VNPay: Booking ${bookingId} payment failed and tables released. Code: ${result.responseCode}`);
   }
 
   // VNPay yêu cầu trả về format chuẩn
@@ -247,6 +269,12 @@ const handleMoMoIPN = asyncHandler(async (req, res) => {
 
     await booking.save();
 
+    // === TRỪ TỒN KHO MÓN ĂN KHI THANH TOÁN THÀNH CÔNG ===
+    if (booking.order_items && booking.order_items.length > 0) {
+      const BookingService = require('../services/bookingService');
+      await BookingService.syncInventory(booking.order_items, booking.branch_id, true);
+    }
+
     await TableLockService.unlockTables(
       booking.branch_id.toString(),
       booking.table_ids.map(id => id.toString())
@@ -262,9 +290,27 @@ const handleMoMoIPN = asyncHandler(async (req, res) => {
 
     console.log(`✅ MoMo: Booking ${bookingId} CONFIRMED. TxnID: ${result.transactionId}`);
   } else {
+    // === THANH TOÁN THẤT BẠI ===
+    booking.status = 'CANCELLED_PAYMENT_FAILED';
     booking.payment_info.status = 'FAILED';
+    booking.expires_at = undefined;
     await booking.save();
-    console.log(`❌ MoMo: Booking ${bookingId} payment failed. Code: ${result.resultCode}`);
+    
+    // Nhả bàn ngay lập tức (giải quyết rủi ro D)
+    await TableLockService.unlockTables(
+      booking.branch_id.toString(),
+      booking.table_ids.map(id => id.toString())
+    );
+
+    const io = require('../socket').getIO();
+    io.to(`branch_${booking.branch_id}`).emit('table_status_changed', {
+      action: 'CANCELLED_PAYMENT_FAILED',
+      branch_id: booking.branch_id,
+      booking_id: booking._id,
+      table_ids: booking.table_ids,
+    });
+
+    console.log(`❌ MoMo: Booking ${bookingId} payment failed and tables released. Code: ${result.resultCode}`);
   }
 
   res.status(200).json({ message: 'OK' });
@@ -291,6 +337,12 @@ const handleVNPayReturn = asyncHandler(async (req, res) => {
         booking.expires_at = undefined;
         await booking.save();
 
+        // === TRỪ TỒN KHO MÓN ĂN KHI THANH TOÁN THÀNH CÔNG ===
+        if (booking.order_items && booking.order_items.length > 0) {
+          const BookingService = require('../services/bookingService');
+          await BookingService.syncInventory(booking.order_items, booking.branch_id, true);
+        }
+
         await TableLockService.unlockTables(
           booking.branch_id.toString(),
           booking.table_ids.map(id => id.toString())
@@ -305,9 +357,25 @@ const handleVNPayReturn = asyncHandler(async (req, res) => {
         });
         console.log(`✅ VNPay Return: Booking ${bookingId} CONFIRMED`);
       } else {
+        booking.status = 'CANCELLED_PAYMENT_FAILED';
         booking.payment_info.status = 'FAILED';
+        booking.expires_at = undefined;
         await booking.save();
-        console.log(`❌ VNPay Return: Booking ${bookingId} FAILED`);
+
+        await TableLockService.unlockTables(
+          booking.branch_id.toString(),
+          booking.table_ids.map(id => id.toString())
+        );
+
+        const io = require('../socket').getIO();
+        io.to(`branch_${booking.branch_id}`).emit('table_status_changed', {
+          action: 'CANCELLED_PAYMENT_FAILED',
+          branch_id: booking.branch_id,
+          booking_id: booking._id,
+          table_ids: booking.table_ids,
+        });
+
+        console.log(`❌ VNPay Return: Booking ${bookingId} FAILED and tables released`);
       }
     }
   }

@@ -24,7 +24,7 @@ interface UserAccount {
   full_name: string;
   email: string;
   phone: string;
-  role: 'ADMIN' | 'MANAGER' | 'WAITER' | 'CUSTOMER';
+  role: 'ADMIN' | 'MANAGER' | 'WAITER' | 'CUSTOMER' | 'KITCHEN';
   avatar?: string;
   auth_provider: string;
   branch_id?: Branch;
@@ -45,7 +45,7 @@ export function AccountsFeature() {
   // Edit Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
-  const [editRole, setEditRole] = useState<'ADMIN' | 'MANAGER' | 'WAITER' | 'CUSTOMER'>('CUSTOMER');
+  const [editRole, setEditRole] = useState<'ADMIN' | 'MANAGER' | 'WAITER' | 'CUSTOMER' | 'KITCHEN'>('CUSTOMER');
   const [editBranchId, setEditBranchId] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -56,7 +56,7 @@ export function AccountsFeature() {
   const [createPhone, setCreatePhone] = useState('');
   const [createPassword, setCreatePassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [createRole, setCreateRole] = useState<'MANAGER' | 'WAITER'>('WAITER');
+  const [createRole, setCreateRole] = useState<'MANAGER' | 'WAITER' | 'CUSTOMER' | 'KITCHEN'>('WAITER');
   const [createBranchId, setCreateBranchId] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
@@ -101,7 +101,7 @@ export function AccountsFeature() {
     
     try {
       const payload: any = { role: editRole };
-      if (editRole === 'MANAGER' || editRole === 'WAITER') {
+      if (editRole === 'MANAGER' || editRole === 'WAITER' || editRole === 'KITCHEN') {
         if (!editBranchId) {
           toastError('Vui lòng chọn chi nhánh phân công cho nhân viên này.');
           setIsUpdating(false);
@@ -129,7 +129,7 @@ export function AccountsFeature() {
       toastError('Vui lòng nhập đầy đủ họ tên, email và mật khẩu.');
       return;
     }
-    if (!createBranchId) {
+    if ((createRole === 'MANAGER' || createRole === 'WAITER' || createRole === 'KITCHEN') && !createBranchId) {
       toastError('Vui lòng chọn chi nhánh phân công.');
       return;
     }
@@ -197,6 +197,7 @@ export function AccountsFeature() {
       case 'ADMIN': return 'bg-red-100 text-red-700 border-red-200';
       case 'MANAGER': return 'bg-purple-100 text-purple-700 border-purple-200';
       case 'WAITER': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'KITCHEN': return 'bg-orange-100 text-orange-700 border-orange-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
@@ -242,6 +243,7 @@ export function AccountsFeature() {
             <option value="ADMIN">Quản trị viên (ADMIN)</option>
             <option value="MANAGER">Quản lý (MANAGER)</option>
             <option value="WAITER">Nhân viên (WAITER)</option>
+            <option value="KITCHEN">Bếp (KITCHEN)</option>
             <option value="CUSTOMER">Khách hàng (CUSTOMER)</option>
           </select>
         </div>
@@ -303,7 +305,7 @@ export function AccountsFeature() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      {(user.role === 'MANAGER' || user.role === 'WAITER') ? (
+                      {(user.role === 'MANAGER' || user.role === 'WAITER' || user.role === 'KITCHEN') ? (
                         user.branch_id ? (
                           <div className="text-sm">
                             <p className="font-medium text-gray-900">{user.branch_id.name}</p>
@@ -427,6 +429,7 @@ export function AccountsFeature() {
                 >
                   <option value="CUSTOMER">Khách hàng (CUSTOMER)</option>
                   <option value="WAITER">Nhân viên phục vụ (WAITER)</option>
+                  <option value="KITCHEN">Nhân viên bếp (KITCHEN)</option>
                   <option value="MANAGER">Quản lý chi nhánh (MANAGER)</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-1.5">
@@ -434,7 +437,7 @@ export function AccountsFeature() {
                 </p>
               </div>
 
-              {(editRole === 'MANAGER' || editRole === 'WAITER') && (
+              {(editRole === 'MANAGER' || editRole === 'WAITER' || editRole === 'KITCHEN') && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Chi nhánh phân công</label>
                   <select 
@@ -465,7 +468,7 @@ export function AccountsFeature() {
                 <Button 
                   className="flex-1 bg-[#ea580c] hover:bg-[#c2410c] text-white"
                   onClick={handleUpdateRole}
-                  disabled={isUpdating || ((editRole === 'MANAGER' || editRole === 'WAITER') && !editBranchId)}
+                  disabled={isUpdating || ((editRole === 'MANAGER' || editRole === 'WAITER' || editRole === 'KITCHEN') && !editBranchId)}
                 >
                   {isUpdating ? 'Đang lưu...' : 'Lưu cập nhật'}
                 </Button>
@@ -540,26 +543,30 @@ export function AccountsFeature() {
               <select
                 className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ea580c] focus:border-transparent"
                 value={createRole}
-                onChange={(e) => setCreateRole(e.target.value as 'MANAGER' | 'WAITER')}
+                onChange={(e) => setCreateRole(e.target.value as 'MANAGER' | 'WAITER' | 'CUSTOMER' | 'KITCHEN')}
               >
                 <option value="WAITER">Nhân viên phục vụ (WAITER)</option>
+                <option value="KITCHEN">Nhân viên bếp (KITCHEN)</option>
                 <option value="MANAGER">Quản lý chi nhánh (MANAGER)</option>
+                <option value="CUSTOMER">Khách hàng (CUSTOMER)</option>
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Chi nhánh phân công <span className="text-red-500">*</span></label>
-              <select
-                className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ea580c] focus:border-transparent"
-                value={createBranchId}
-                onChange={(e) => setCreateBranchId(e.target.value)}
-              >
-                <option value="" disabled>-- Chọn chi nhánh --</option>
-                {branches.map(b => (
-                  <option key={b._id} value={b._id}>{b.name}</option>
-                ))}
-              </select>
-            </div>
+            {(createRole === 'MANAGER' || createRole === 'WAITER' || createRole === 'KITCHEN') && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Chi nhánh phân công <span className="text-red-500">*</span></label>
+                <select
+                  className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ea580c] focus:border-transparent"
+                  value={createBranchId}
+                  onChange={(e) => setCreateBranchId(e.target.value)}
+                >
+                  <option value="" disabled>-- Chọn chi nhánh --</option>
+                  {branches.map(b => (
+                    <option key={b._id} value={b._id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-4 border-t border-gray-100">
               <Button
@@ -573,7 +580,7 @@ export function AccountsFeature() {
               <Button
                 className="flex-1 bg-[#ea580c] hover:bg-[#c2410c] text-white"
                 onClick={handleCreateUser}
-                disabled={isCreating || !createFullName.trim() || !createEmail.trim() || !createPassword.trim() || !createBranchId}
+                disabled={isCreating || !createFullName.trim() || !createEmail.trim() || !createPassword.trim() || ((createRole === 'MANAGER' || createRole === 'WAITER' || createRole === 'KITCHEN') && !createBranchId)}
               >
                 {isCreating ? 'Đang tạo...' : 'Tạo tài khoản'}
               </Button>

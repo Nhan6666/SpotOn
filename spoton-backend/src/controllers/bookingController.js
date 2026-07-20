@@ -45,6 +45,33 @@ const createBooking = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Chi nhánh hiện đang đóng cửa.' });
     }
 
+    // Xóa đơn HOLDING cũ trùng lặp trên cùng bàn (do quá trình chọn bàn tạo ra trước khi chốt đơn)
+    if (bookingData.table_ids && bookingData.table_ids.length > 0) {
+      const targetDate = new Date(bookingData.reservation_date);
+      targetDate.setHours(0,0,0,0);
+      const nextDate = new Date(targetDate);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      let holdQuery = {
+        branch_id: bookingData.branch_id,
+        table_ids: { $in: bookingData.table_ids },
+        status: 'HOLDING',
+        reservation_date: { $gte: targetDate, $lt: nextDate }
+      };
+
+      // Khách hàng chỉ được xóa hold của chính họ. Nhân viên được xóa hold bất kỳ để đè đơn mới.
+      if (req.user.role === 'CUSTOMER') {
+        holdQuery.customer_id = req.user._id;
+      }
+
+      const oldHoldings = await Booking.find(holdQuery);
+      for (const holding of oldHoldings) {
+        await Booking.findByIdAndDelete(holding._id);
+        const TableLockService = require('../services/tableLockService');
+        await TableLockService.unlockTables(bookingData.branch_id.toString(), holding.table_ids.map(id => id.toString()));
+      }
+    }
+
     const newBooking = await Booking.create(bookingData);
 
     // UC-6.1: Check capacity and trigger overload alert
@@ -257,15 +284,53 @@ const updateBookingStatus = async (req, res) => {
       });
     }
 
+    const oldStatus = booking.status;
     booking.status = status;
     
-    // Nếu là hủy thì nhả bàn
-    if (['CANCELLED', 'CANCELLED_TIMEOUT', 'NO_SHOW', 'COMPLETED'].includes(status)) {
-      if (booking.table_ids && booking.table_ids.length > 0) {
+    // === XỬ LÝ TỒN KHO MÓN ĂN (INVENTORY) ===
+    const BookingService = require('../services/bookingService');
+    
+    // 1. Trừ kho khi đơn chốt thành công (CONFIRMED)
+    if (oldStatus === 'PENDING_PAYMENT' && status === 'CONFIRMED') {
+      if (booking.order_items && booking.order_items.length > 0) {
+        await BookingService.syncInventory(booking.order_items, booking.branch_id, true);
+      }
+    }
+    
+    // 2. Hoàn kho khi Hủy bàn
+    if (['CANCELLED', 'CANCELLED_TIMEOUT'].includes(status) && !['CANCELLED', 'CANCELLED_TIMEOUT'].includes(oldStatus)) {
+      if (booking.order_items && booking.order_items.length > 0) {
+        // Chỉ hoàn kho những món chưa nấu (PENDING)
+        const pendingItems = booking.order_items.filter(item => item.prep_status === 'PENDING');
+        if (pendingItems.length > 0) {
+          await BookingService.syncInventory(pendingItems, booking.branch_id, false);
+        }
+      }
+    }
+    // Đồng bộ trạng thái bàn vật lý trong Branch
+    if (booking.table_ids && booking.table_ids.length > 0) {
+      if (['CANCELLED', 'CANCELLED_TIMEOUT', 'NO_SHOW', 'COMPLETED'].includes(status)) {
+        // Hủy hoặc Xong -> Nhả bàn
         const TableLockService = require('../services/tableLockService');
         await TableLockService.unlockTables(
           booking.branch_id.toString(),
           booking.table_ids.map(id => id.toString())
+        );
+      } else if (status === 'IN_USE') {
+        // Đang dùng bữa -> Đỏ (OCCUPIED)
+        const Branch = require('../models/Branch');
+        await Branch.updateOne(
+          { _id: booking.branch_id },
+          { $set: { 'zones.$[].tables.$[tbl].status': 'OCCUPIED' } },
+          { arrayFilters: [{ 'tbl._id': { $in: booking.table_ids } }] }
+        );
+      } else if (status === 'CONFIRMED') {
+        // Đã xác nhận -> Vàng (RESERVED)
+        const Branch = require('../models/Branch');
+        await Branch.updateOne(
+          { _id: booking.branch_id },
+          { $set: { 'zones.$[].tables.$[tbl].status': 'RESERVED' } },
+          { arrayFilters: [{ 'tbl._id': { $in: booking.table_ids } }] }
         );
       }
     }
@@ -475,6 +540,15 @@ const cancelAndRequestRefund = async (req, res) => {
         await TableLockService.unlockTables(booking.branch_id.toString(), booking.table_ids.map(id => id.toString()));
       }
 
+      // === XỬ LÝ HOÀN KHO (INVENTORY ROLLBACK) ===
+      if (booking.order_items && booking.order_items.length > 0) {
+        const BookingService = require('../services/bookingService');
+        const pendingItems = booking.order_items.filter(item => item.prep_status === 'PENDING');
+        if (pendingItems.length > 0) {
+          await BookingService.syncInventory(pendingItems, booking.branch_id, false, session);
+        }
+      }
+
       await session.commitTransaction();
       session.endSession();
       return res.status(200).json({ success: true, message: 'Hủy đơn thành công.', data: booking });
@@ -532,6 +606,15 @@ const cancelAndRequestRefund = async (req, res) => {
         { $set: { 'zones.$[].tables.$[tbl].status': 'EMPTY' } },
         { arrayFilters: [{ 'tbl._id': { $in: booking.table_ids } }], session }
       );
+    }
+
+    // === XỬ LÝ HOÀN KHO (INVENTORY ROLLBACK) ===
+    if (booking.order_items && booking.order_items.length > 0) {
+      const BookingService = require('../services/bookingService');
+      const pendingItems = booking.order_items.filter(item => item.prep_status === 'PENDING');
+      if (pendingItems.length > 0) {
+        await BookingService.syncInventory(pendingItems, booking.branch_id, false, session);
+      }
     }
 
     // Socket io emit cho Manager

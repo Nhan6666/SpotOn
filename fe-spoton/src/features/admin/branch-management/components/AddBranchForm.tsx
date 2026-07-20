@@ -27,7 +27,12 @@ export function AddBranchForm({ formData, updateFormData, currentBranchId, disab
         const url = currentBranchId
           ? `/api/v1/users/managers?currentBranchId=${currentBranchId}`
           : '/api/v1/users/managers';
-        const res = await fetch(url);
+        const token = typeof window !== 'undefined' ? localStorage.getItem('spoton_token') : null;
+        const res = await fetch(url, {
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : ''
+          }
+        });
         const result = await res.json();
         if (result.success && result.data.length > 0) {
           setManagers(result.data.map((m: any) => ({

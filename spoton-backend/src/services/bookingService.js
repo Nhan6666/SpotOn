@@ -1,9 +1,23 @@
 const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const Branch = require('../models/Branch');
+const User = require('../models/User'); // Required for populate('customer_id')
 const TableLockService = require('./tableLockService');
 
 class BookingService {
+  static isTimeOverlap(time1, time2, durationMins = 120) {
+    if (!time1 || !time2) return false;
+    const [h1, m1] = time1.split(':').map(Number);
+    const start1 = h1 * 60 + m1;
+    const end1 = start1 + durationMins;
+
+    const [h2, m2] = time2.split(':').map(Number);
+    const start2 = h2 * 60 + m2;
+    const end2 = start2 + durationMins;
+
+    return Math.max(start1, start2) < Math.min(end1, end2);
+  }
+
   // Logic dùng chung: Quy đổi giờ và tìm Ca làm việc
   static async validateAndGetShift(branchId, timeStr) {
     const branch = await Branch.findById(branchId);
@@ -85,10 +99,9 @@ class BookingService {
     session.startTransaction();
 
     try {
-      // Tìm xem có bàn nào đang bận trong DB không (Double-check)
-      const conflictingBookings = await Booking.find({
+      // Tìm xem có bàn nào đang bận trong DB không (Double-check) dựa trên Time-slot (120 phút)
+      const activeBookings = await Booking.find({
         branch_id,
-        shift,
         reservation_date: { $gte: targetDate, $lt: nextDate },
         table_ids: { $in: table_ids },
         $or: [
@@ -96,6 +109,9 @@ class BookingService {
           { status: 'HOLDING', expires_at: { $gt: new Date() } }
         ]
       }).session(session);
+
+      // Lọc các booking bị chồng lấp thời gian
+      const conflictingBookings = activeBookings.filter(b => this.isTimeOverlap(b.arrival_time, time));
 
       if (conflictingBookings.length > 0) {
         // Rollback Redis lock
@@ -257,6 +273,52 @@ class BookingService {
       throw error;
     }
   }
+
+  // Phương thức dùng chung để đồng bộ Kho nguyên liệu (Tăng/Giảm quantity)
+  static async syncInventory(items, branchId, isDeduct, session) {
+    if (!items || items.length === 0) return;
+    const Menu = require('../models/Menu');
+    
+    // Lấy tất cả menu của các items
+    const menuItemIds = items.map(i => i.menu_item_id);
+    const menus = await Menu.find({ "items._id": { $in: menuItemIds } }).session(session);
+    
+    const menuMap = new Map();
+    menus.forEach(menu => {
+      menu.items.forEach(item => {
+        menuMap.set(item._id.toString(), { menu, item });
+      });
+    });
+
+    for (const item of items) {
+      const data = menuMap.get(item.menu_item_id?.toString());
+      if (!data) continue;
+      const { menu, item: menuItem } = data;
+      const change = isDeduct ? -item.quantity : item.quantity;
+      
+      if (menu.branch_id === null) {
+        // Master Menu -> Trừ ở branch_overrides
+        const override = menuItem.branch_overrides.find(o => String(o.branch_id) === String(branchId));
+        if (override && override.quantity !== -1) {
+          await Menu.updateOne(
+            { "items._id": item.menu_item_id, "items.branch_overrides.branch_id": branchId },
+            { $inc: { "items.$[itm].branch_overrides.$[ovr].quantity": change } },
+            { arrayFilters: [{ "itm._id": item.menu_item_id }, { "ovr.branch_id": branchId }], session }
+          );
+        }
+      } else {
+        // Branch Menu -> Trừ thẳng quantity
+        if (menuItem.quantity !== undefined && menuItem.quantity !== -1) {
+          await Menu.updateOne(
+            { "items._id": item.menu_item_id },
+            { $inc: { "items.$[itm].quantity": change } },
+            { arrayFilters: [{ "itm._id": item.menu_item_id }], session }
+          );
+        }
+      }
+    }
+  }
+
   static async checkInBooking(bookingId) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -321,6 +383,14 @@ class BookingService {
 
       if (!['IN_USE', 'PENDING_SETTLEMENT'].includes(booking.status)) {
         const err = new Error('Chỉ có thể thanh toán khi đang phục vụ hoặc chờ đối soát.');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      // KIỂM TRA TOÀN BỘ MÓN ĐÃ SERVED (Bao gồm order online và gọi tại bàn)
+      const hasUnservedItems = booking.order_items && booking.order_items.some(item => item.prep_status !== 'SERVED');
+      if (hasUnservedItems) {
+        const err = new Error('Không thể thanh toán. Bàn này vẫn còn món chưa phục vụ xong (Chưa bưng món).');
         err.statusCode = 400;
         throw err;
       }
@@ -443,6 +513,23 @@ class BookingService {
       }
 
       booking.status = 'PENDING_SETTLEMENT';
+
+      // Xử lý món ăn (Force Serve) để không bị kẹt luồng Checkout
+      let hasForceServedItems = false;
+      if (booking.order_items && booking.order_items.length > 0) {
+        booking.order_items.forEach(item => {
+          if (item.prep_status !== 'SERVED') {
+            item.prep_status = 'SERVED';
+            hasForceServedItems = true;
+          }
+        });
+      }
+
+      // Thêm log/ghi chú nếu có món bị ép hoàn thành
+      if (hasForceServedItems) {
+        booking.note = booking.note ? `${booking.note}\n[Hệ thống]: Đã tự động chuyển các món chưa lên thành ĐÃ PHỤC VỤ do thao tác Nhả bàn.` : `[Hệ thống]: Đã tự động chuyển các món chưa lên thành ĐÃ PHỤC VỤ do thao tác Nhả bàn.`;
+      }
+
       await booking.save({ session });
 
       if (booking.table_ids && booking.table_ids.length > 0) {

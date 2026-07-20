@@ -20,16 +20,20 @@ const checkAvailability = asyncHandler(async (req, res) => {
   const nextDate = new Date(targetDate);
   nextDate.setDate(nextDate.getDate() + 1);
 
-  // Tìm các bàn đang được giữ hoặc đã xác nhận trong cùng ca + ngày
-  const existingBookings = await Booking.find({
+  // Tìm các bàn đang được giữ hoặc đã xác nhận trong ngày
+  const activeBookings = await Booking.find({
     branch_id,
-    shift,
     reservation_date: { $gte: targetDate, $lt: nextDate },
     $or: [
       { status: { $in: ['PENDING_PAYMENT', 'PENDING_DEPOSIT', 'CONFIRMED', 'IN_USE', 'OCCUPIED', 'RESERVED'] } },
       { status: 'HOLDING', expires_at: { $gt: new Date() } }
     ]
   });
+
+  const { isTimeOverlap } = require('../services/bookingService');
+
+  // Lọc các booking bị chồng lấp thời gian (120 phút)
+  const existingBookings = activeBookings.filter(b => isTimeOverlap(b.arrival_time, time));
 
   const bookedTableIds = [];
   existingBookings.forEach(b => {
@@ -112,9 +116,11 @@ const releaseHoldingBooking = async (req, res) => {
           table_ids: booking.table_ids
         });
       } catch (e) {}
+      return res.status(200).json({ success: true, message: 'Đã hủy giữ bàn.' });
     }
 
-    res.status(200).json({ success: true, message: 'Đã nhả bàn thành công.' });
+    // Nếu không ở trạng thái HOLDING thì báo lỗi
+    return res.status(400).json({ success: false, message: 'Chỉ có thể hủy đơn đang giữ chỗ.' });
   } catch (error) {
     console.error('Lỗi releaseHoldingBooking:', error);
     res.status(500).json({ success: false, message: 'Lỗi server khi nhả bàn.' });

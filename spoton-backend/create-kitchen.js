@@ -29,7 +29,8 @@ const createKitchenAccount = async () => {
       password_hash,
       full_name: 'Trưởng Bếp',
       role: 'KITCHEN',
-      branch_id: branch._id
+      branch_id: branch._id,
+      is_email_verified: true
     });
 
     await kitchenStaff.save();

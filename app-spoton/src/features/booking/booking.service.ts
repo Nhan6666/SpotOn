@@ -140,6 +140,12 @@ export const BookingService = {
     return response.data;
   },
 
+  /** Force release a booking (cancel without checkout) */
+  async forceReleaseBooking(bookingId: string) {
+    const response = await apiClient.patch(`/reception/bookings/${bookingId}/force-release`);
+    return response.data;
+  },
+
   /** Create walk-in booking (WAITER/MANAGER) */
   async createWalkIn(data: {
     table_ids: string[];

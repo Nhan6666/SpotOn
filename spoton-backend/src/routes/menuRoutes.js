@@ -12,7 +12,8 @@ const {
 const {
   getPublicBranchMenu,
   getPublicCategories,
-  getPublicMenuItems
+  getPublicMenuItems,
+  getPublicBestSellers
 } = require('../controllers/publicMenuController');
 
 const { protect, authorize } = require('../middlewares/authMiddleware');
@@ -20,6 +21,9 @@ const { protect, authorize } = require('../middlewares/authMiddleware');
 // ============================================================
 // PUBLIC ROUTES
 // ============================================================
+// GET /api/v1/menus/public/best-sellers -> Lấy món best seller
+router.get('/public/best-sellers', getPublicBestSellers);
+
 // GET /api/v1/menus/public/:branchId/categories -> Lấy danh sách category cho tab menu
 router.get('/public/:branchId/categories', getPublicCategories);
 

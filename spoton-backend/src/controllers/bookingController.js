@@ -23,12 +23,12 @@ const createBooking = async (req, res) => {
     const bookingData = { ...req.body };
 
     // TÍNH NĂNG BẢO MẬT: Nếu là Customer tự đặt, ép cứng customer_id là ID của họ (tránh giả mạo truyền ID người khác lên)
-    if (req.user.role === 'CUSTOMER') {
+    if (req.user && req.user.role === 'CUSTOMER') {
       bookingData.customer_id = req.user._id;
     }
 
     // Tự động gán branch_id hiện tại nếu Manager/Waiter tạo đơn cho khách walk-in
-    if (['MANAGER', 'WAITER'].includes(req.user.role)) {
+    if (req.user && ['MANAGER', 'WAITER'].includes(req.user.role)) {
       bookingData.branch_id = req.user.branch_id;
     }
 

@@ -46,6 +46,44 @@ const getBranchById = async (req, res) => {
   }
 };
 
+// @desc   Lấy chi nhánh của người dùng hiện tại (cho Manager/Admin)
+// @route  GET /api/v1/branches/my/branch
+// @access Private
+const getMyBranch = async (req, res) => {
+  try {
+    let branchId = req.user.branch_id;
+    
+    // Nếu là ADMIN mà không có branch_id, lấy chi nhánh đầu tiên làm mặc định để quản lý
+    if (req.user.role === 'ADMIN' && !branchId) {
+      const firstBranch = await Branch.findOne();
+      if (firstBranch) {
+        branchId = firstBranch._id;
+      }
+    }
+
+    if (!branchId) {
+      return res.status(404).json({ success: false, message: 'Bạn chưa được phân công chi nhánh nào.' });
+    }
+
+    const branch = await Branch.findById(branchId)
+      .populate('manager_id', 'full_name email phone')
+      .populate('amenities');
+      
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'Lấy thông tin chi nhánh thành công.',
+      data: branch 
+    });
+  } catch (error) {
+    console.error('Lỗi getMyBranch:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
 // @desc   Tạo chi nhánh mới
 // @route  POST /api/v1/branches
 // @access Private (ADMIN)
@@ -191,6 +229,7 @@ const getTableCapacities = async (req, res) => {
 module.exports = {
   getAllBranches,
   getBranchById,
+  getMyBranch,
   createBranch,
   updateBranch,
   deleteBranch,

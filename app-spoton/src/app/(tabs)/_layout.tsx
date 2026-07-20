@@ -93,6 +93,16 @@ export default function TabLayout() {
         }}
       />
 
+      {/* ===== ALL: Thực đơn ===== */}
+      <Tabs.Screen
+        name="menu"
+        options={{
+          title: 'Thực đơn',
+          tabBarIcon: ({ color }) => <TabBarIcon name="book" color={color as string} />,
+          href: (isGuest || isCustomer) ? '/menu' : null,
+        }}
+      />
+
       {/* ===== WAITER: POS ===== */}
       <Tabs.Screen
         name="pos"

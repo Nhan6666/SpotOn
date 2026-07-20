@@ -7,12 +7,27 @@ interface ConfirmationStepProps {
 }
 
 export function ConfirmationStep({ state, actions }: ConfirmationStepProps) {
-  const { branch, selectedDate, selectedTime, guests, selectedTableIds, isAuthenticated, user, cart, note } = state;
-  const { getPreOrderTotal } = actions;
+  const { branch, selectedDate, selectedTime, guests, note, cart, holdTimeLeft, selectedTableIds, zones, isAuthenticated, user } = state;
+  const { getPreOrderTotal, setNote } = actions;
+
+  const m = Math.floor(holdTimeLeft / 60);
+  const s = holdTimeLeft % 60;
+  const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+  const allTables = zones.flatMap((z: any) => z.tables || []);
+  const selectedTableNames = allTables.filter((t: any) => selectedTableIds.includes(t._id)).map((t: any) => t.table_number).join(', ');
 
   return (
-    <ScrollView className="flex-1 p-4">
-      <View className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+    <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
+      <View className="bg-orange-50 border border-orange-200 rounded-xl p-3 mb-4 flex-row justify-between items-center shadow-sm">
+        <View className="flex-row items-center">
+          <Text className="text-orange-500 mr-2 text-lg">⏱️</Text>
+          <Text className="font-lexend text-orange-800 text-sm">Thời gian giữ bàn còn lại</Text>
+        </View>
+        <Text className="font-lexend font-bold text-orange-600 text-lg">{timeStr}</Text>
+      </View>
+
+      <View className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-4">
         <Text className="font-lexend font-bold text-lg mb-4">Tóm tắt đặt bàn</Text>
         <InfoRow label="Chi nhánh" value={branch?.name || ''} />
         <InfoRow label="Ngày" value={selectedDate} />

@@ -105,9 +105,17 @@ export function AdminDashboardFeature() {
         }
       >
         {/* Header */}
-        <View className="bg-white px-5 pt-6 pb-4 border-b border-gray-100 shadow-sm z-10 mb-4">
-          <Text className="font-lexend font-bold text-2xl text-gray-900 mb-1">Tổng quan toàn chuỗi</Text>
-          <Text className="font-lexend text-xs text-gray-500">Xin chào {user?.full_name}, hệ thống báo cáo SpotOn.</Text>
+        <View className="bg-white px-5 pt-6 pb-4 border-b border-gray-100 shadow-sm z-10 mb-4 flex-row justify-between items-center">
+          <View className="flex-1">
+            <Text className="font-lexend font-bold text-2xl text-gray-900 mb-1">Tổng quan toàn chuỗi</Text>
+            <Text className="font-lexend text-xs text-gray-500">Xin chào {user?.full_name}, hệ thống báo cáo.</Text>
+          </View>
+          <TouchableOpacity 
+            onPress={() => router.push('/')}
+            className="w-10 h-10 bg-orange-50 rounded-full items-center justify-center border border-orange-100 ml-2"
+          >
+            <FontAwesome name="home" size={20} color="#ea580c" />
+          </TouchableOpacity>
         </View>
 
         {stats && (
@@ -190,24 +198,7 @@ export function AdminDashboardFeature() {
               </View>
             </View>
 
-            {/* Grid Menu */}
-            <View className="mb-6">
-              <Text className="font-lexend font-bold text-lg text-gray-900 mb-3">Quản lý phân hệ</Text>
-              <View className="flex-row flex-wrap justify-between">
-                {gridItems.map((item) => (
-                  <TouchableOpacity 
-                    key={item.id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4 items-center justify-center w-[31%]"
-                    onPress={() => router.push(item.route as any)}
-                  >
-                    <View className="w-12 h-12 rounded-full items-center justify-center mb-2" style={{ backgroundColor: `${item.color}15` }}>
-                      <FontAwesome name={item.icon as any} size={20} color={item.color} />
-                    </View>
-                    <Text className="font-lexend font-medium text-xs text-gray-700 text-center">{item.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+
 
             {/* Doanh thu Chart */}
             <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">

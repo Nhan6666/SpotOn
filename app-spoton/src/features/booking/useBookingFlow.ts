@@ -19,10 +19,12 @@ export function useBookingFlow(branchId: string) {
   const [depositAmount, setDepositAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<'VNPAY' | 'MOMO'>('VNPAY');
   const [paymentTimeLeft, setPaymentTimeLeft] = useState(900); // 15 mins
+  const [holdTimeLeft, setHoldTimeLeft] = useState(600); // 10 mins
 
   const [branch, setBranch] = useState<Branch | null>(null);
   const [menuCategories, setMenuCategories] = useState<any[]>([]);
   const [holdingBookingId, setHoldingBookingId] = useState<string | null>(null);
+  const [myVouchers, setMyVouchers] = useState<any[]>([]);
 
   const allMenuItems = useMemo(() => {
     return menuCategories.flatMap((category: any) => 
@@ -92,6 +94,23 @@ export function useBookingFlow(branchId: string) {
     return () => clearInterval(timer);
   }, [step, paymentTimeLeft]);
 
+  useEffect(() => {
+    let timer: any;
+    if ((step === 3 || step === 4) && holdTimeLeft > 0) {
+      timer = setInterval(() => {
+        setHoldTimeLeft(p => p - 1);
+      }, 1000);
+    } else if ((step === 3 || step === 4) && holdTimeLeft <= 0) {
+      Alert.alert('Hết giờ', 'Thời gian giữ bàn đã hết. Vui lòng thử lại.', [
+        { text: 'OK', onPress: () => {
+          BookingService.releaseHold(holdingBookingId || '');
+          router.back();
+        }}
+      ]);
+    }
+    return () => clearInterval(timer);
+  }, [step, holdTimeLeft, holdingBookingId]);
+
   const fetchInitData = async () => {
     try {
       const branchRes = await CustomerService.getBranchById(branchId);
@@ -105,6 +124,15 @@ export function useBookingFlow(branchId: string) {
           setMenuCategories(menuRes.data || []);
         }
       } catch {}
+      
+      if (isAuthenticated) {
+        try {
+          const walletRes = await CustomerService.getMyWallet();
+          if (walletRes.success) {
+            setMyVouchers(walletRes.data || []);
+          }
+        } catch {}
+      }
     } catch (error) {
       Alert.alert('Lỗi', 'Không thể tải dữ liệu chi nhánh');
       router.back();
@@ -219,6 +247,15 @@ export function useBookingFlow(branchId: string) {
       });
       if (res.success) {
         setHoldingBookingId(res.data._id);
+        
+        // Cập nhật timer nếu có expires_at từ server
+        if (res.data.expires_at) {
+          const diffSeconds = Math.floor((new Date(res.data.expires_at).getTime() - Date.now()) / 1000);
+          setHoldTimeLeft(diffSeconds > 0 ? diffSeconds : 600);
+        } else {
+          setHoldTimeLeft(600);
+        }
+
         setStep(3);
         setLoading(false);
         return;
@@ -243,7 +280,22 @@ export function useBookingFlow(branchId: string) {
 
   const getPreOrderTotal = () => cart.reduce((t, i) => t + (i.item.price * i.quantity), 0);
 
-  const handleConfirm = async () => {
+  // State for Payment (Step 5)
+  const [voucherCode, setVoucherCode] = useState('');
+  const [paymentDetails, setPaymentDetails] = useState<any>(null);
+  
+  const calculateDepositInfo = async (bId: string, vCode: string = '') => {
+    try {
+      const res = await BookingService.calculateDeposit(bId, vCode);
+      if (res.success) {
+        setPaymentDetails(res.data);
+      }
+    } catch (error) {
+      // ignore or alert
+    }
+  };
+
+  const handleConfirmBooking = async () => {
     if (!isAuthenticated) {
        Alert.alert("Yêu cầu đăng nhập", "Vui lòng đăng nhập để tiếp tục đặt bàn. Thông tin của bạn sẽ được dùng để xác nhận đơn.", [
          { text: "Hủy", style: "cancel" },
@@ -290,14 +342,9 @@ export function useBookingFlow(branchId: string) {
       }
       
       if (bId) {
-        const paymentData = await BookingService.createPayment(bId, paymentMethod);
-        if (paymentData.success) {
-          setDepositAmount(paymentData.data.total_deposit);
-          setPaymentTimeLeft(paymentData.data.expires_in_seconds || 900);
-          setStep(5);
-        } else {
-          Alert.alert('Lỗi', 'Không thể tính toán thanh toán.');
-        }
+        // Just calculate deposit and move to step 5
+        await calculateDepositInfo(bId, voucherCode);
+        setStep(5);
       }
     } catch (error: any) {
       Alert.alert('Lỗi', error.response?.data?.message || 'Không thể xác nhận đặt bàn');
@@ -306,19 +353,43 @@ export function useBookingFlow(branchId: string) {
     }
   };
 
-  const handleMockPayment = async () => {
+  const handleApplyVoucher = async () => {
     if (!holdingBookingId) return;
     setLoading(true);
     try {
-      const res = await BookingService.mockConfirmPayment(holdingBookingId);
+      const res = await BookingService.calculateDeposit(holdingBookingId, voucherCode);
       if (res.success) {
-        Alert.alert('Thành công', 'Thanh toán thành công! Bàn của bạn đã được xác nhận.', [
-          { text: 'OK', onPress: () => router.replace('/(tabs)/bookings') }
-        ]);
+        setPaymentDetails(res.data);
+        if (voucherCode && res.data.applied_voucher) {
+          Alert.alert('Thành công', 'Đã áp dụng mã giảm giá!');
+        }
       }
     } catch (error: any) {
-      Alert.alert('Lỗi', error.response?.data?.message || 'Lỗi thanh toán giả lập');
+      Alert.alert('Lỗi', error.response?.data?.message || 'Mã giảm giá không hợp lệ');
+      setVoucherCode('');
+      await calculateDepositInfo(holdingBookingId, ''); // reset
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleProcessPayment = async () => {
+    if (!holdingBookingId) return;
+    setLoading(true);
+    try {
+      const paymentData = await BookingService.createPayment(holdingBookingId, paymentMethod, voucherCode);
+      if (paymentData.success) {
+        setLoading(false); // Stop loading before opening browser
+        const WebBrowser = await import('expo-web-browser');
+        await WebBrowser.openBrowserAsync(paymentData.data.payment_url);
+        // After they close the in-app browser, redirect to bookings
+        router.replace('/(tabs)/bookings');
+      } else {
+        Alert.alert('Lỗi', 'Không thể tạo thanh toán.');
+        setLoading(false);
+      }
+    } catch (error: any) {
+      Alert.alert('Lỗi', error.response?.data?.message || 'Không thể thanh toán');
       setLoading(false);
     }
   };
@@ -327,13 +398,15 @@ export function useBookingFlow(branchId: string) {
     state: {
       step, initLoading, loading, branch, zones, guests, note, cart, canPreOrder,
       selectedDateIdx, selectedTimeIdx, selectedZoneIdx, selectedTableIds, bookedTableIds,
-      dateOptions, timeOptions, selectedDate, selectedTime, allMenuItems,
-      isAuthenticated, user, depositAmount, paymentMethod, paymentTimeLeft
+      dateOptions, timeOptions, selectedDate, selectedTime, allMenuItems, menuCategories,
+      isAuthenticated, user, depositAmount, paymentMethod, paymentTimeLeft, holdTimeLeft,
+      voucherCode, paymentDetails, myVouchers
     },
     actions: {
       setStep, setGuests, setNote, setSelectedDateIdx, setSelectedTimeIdx, setSelectedZoneIdx,
       setPaymentMethod, handleTableToggle, handleAddToCart, getPreOrderTotal,
-      checkAvailabilityAndContinue, handleHoldAndContinue, handleConfirm, handleMockPayment,
+      checkAvailabilityAndContinue, handleHoldAndContinue, handleConfirmBooking, handleProcessPayment, handleApplyVoucher,
+      setVoucherCode,
       router
     }
   };

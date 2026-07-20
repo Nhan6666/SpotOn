@@ -19,5 +19,15 @@ export const CustomerService = {
   async getBestSellers() {
     const response = await apiClient.get('/menus/public/best-sellers');
     return response.data;
+  },
+
+  async getPublicVouchers() {
+    const response = await apiClient.get('/vouchers/public/global');
+    return response.data;
+  },
+
+  async getMyWallet() {
+    const response = await apiClient.get('/vouchers/my-wallet');
+    return response.data;
   }
 };

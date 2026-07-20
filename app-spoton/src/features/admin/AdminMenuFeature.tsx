@@ -12,6 +12,7 @@ export function AdminMenuFeature() {
   
   const [categories, setCategories] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
   // Modals state
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
@@ -52,9 +53,16 @@ export function AdminMenuFeature() {
   const sections = useMemo(() => {
     return categories.map(cat => ({
       title: cat,
-      data: items.filter(item => item.menu_id === cat._id)
+      data: collapsedSections[cat._id] ? [] : items.filter(item => item.menu_id === cat._id)
     }));
-  }, [categories, items]);
+  }, [categories, items, collapsedSections]);
+
+  const toggleSection = (categoryId: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
 
   // Actions for Category
   const openCreateCategory = () => {
@@ -142,28 +150,35 @@ export function AdminMenuFeature() {
     }
   };
 
-  const renderCategoryHeader = ({ section: { title } }: any) => (
-    <View className="flex-row items-center justify-between bg-white px-4 py-3 mt-4 mb-2 shadow-sm border-y border-gray-100">
-      <View className="flex-row items-center gap-2">
-        <FontAwesome name="bookmark" size={16} color={Colors.primary} />
-        <Text className="font-lexend font-bold text-base text-gray-800">{title.category_name}</Text>
-        <View className="bg-gray-100 rounded-full px-2 py-0.5">
-          <Text className="font-lexend text-xs text-gray-500">{title.item_count} món</Text>
+  const renderCategoryHeader = ({ section: { title } }: any) => {
+    const isCollapsed = collapsedSections[title._id];
+    return (
+      <View className="flex-row items-center justify-between bg-white px-4 py-3 mt-4 mb-2 shadow-sm border-y border-gray-100">
+        <TouchableOpacity 
+          className="flex-row items-center gap-2 flex-1 py-1"
+          onPress={() => toggleSection(title._id)}
+        >
+          <FontAwesome name={isCollapsed ? "angle-right" : "angle-down"} size={18} color={Colors.primary} style={{ width: 14, textAlign: 'center' }} />
+          <FontAwesome name="bookmark" size={16} color={Colors.primary} />
+          <Text className="font-lexend font-bold text-base text-gray-800" numberOfLines={1}>{title.category_name}</Text>
+          <View className="bg-gray-100 rounded-full px-2 py-0.5 ml-1">
+            <Text className="font-lexend text-xs text-gray-500">{title.item_count} món</Text>
+          </View>
+        </TouchableOpacity>
+        <View className="flex-row items-center gap-4 ml-2">
+          <TouchableOpacity onPress={() => openCreateItem(title._id)}>
+            <FontAwesome name="plus-circle" size={20} color={Colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => openEditCategory(title)}>
+            <FontAwesome name="edit" size={18} color={Colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDeleteCategory(title)}>
+            <FontAwesome name="trash" size={18} color="#ef4444" />
+          </TouchableOpacity>
         </View>
       </View>
-      <View className="flex-row items-center gap-3">
-        <TouchableOpacity onPress={() => openCreateItem(title._id)}>
-          <FontAwesome name="plus-circle" size={20} color={Colors.primary} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => openEditCategory(title)}>
-          <FontAwesome name="edit" size={18} color={Colors.text} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleDeleteCategory(title)}>
-          <FontAwesome name="trash" size={18} color="#ef4444" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   const renderItem = ({ item }: any) => {
     const defaultImage = 'https://placehold.co/200x200/f3f4f6/a1a1aa?text=No+Image';

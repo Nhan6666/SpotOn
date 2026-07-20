@@ -55,7 +55,7 @@ export function BookingDetailFeature({ id }: { id: string }) {
   };
 
   const handleCancelClick = () => {
-    if (user?.role === 'CUSTOMER' && ['CONFIRMED', 'PENDING_PAYMENT'].includes(booking?.status)) {
+    if (user?.role === 'CUSTOMER' && booking?.status === 'CONFIRMED') {
       setCancelModalVisible(true);
     } else {
       // Legacy cancel for Manager or HOLDING state

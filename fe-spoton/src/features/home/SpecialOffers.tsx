@@ -19,8 +19,6 @@ export function SpecialOffers() {
   const { specialOffers } = HOME_TEXTS;
   const [offers, setOffers] = useState<Voucher[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [claimedOffers, setClaimedOffers] = useState<Set<string>>(new Set());
-  const { success, error } = useToast();
 
   // Drag to scroll logic
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -50,28 +48,6 @@ export function SpecialOffers() {
     scrollRef.current.scrollLeft = scrollLeft - walk;
   };
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('spoton_claimed_vouchers');
-      if (saved) {
-        setClaimedOffers(new Set(JSON.parse(saved)));
-      }
-    } catch (e) {}
-  }, []);
-
-  const handleSimulateClaim = (code: string) => {
-    if (code) {
-      navigator.clipboard.writeText(code);
-      setClaimedOffers(prev => {
-        const next = new Set(prev).add(code);
-        localStorage.setItem('spoton_claimed_vouchers', JSON.stringify(Array.from(next)));
-        return next;
-      });
-      success(`Đã nhận thành công! Voucher ${code} đã nằm trong Ví ưu đãi của bạn.`);
-    } else {
-      error('Mã ưu đãi này chưa có code');
-    }
-  };
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -132,13 +108,10 @@ export function SpecialOffers() {
           style={{ scrollBehavior: isDragging ? 'auto' : 'smooth' }}
         >
           {offers.map((offer, index) => {
-            const isClaimed = claimedOffers.has(offer.code);
             return (
               <PublicVoucherCard
                 key={offer._id}
                 voucher={offer}
-                isClaimed={isClaimed}
-                onClaim={handleSimulateClaim}
                 className="min-w-[300px] md:min-w-[340px] max-w-[340px] flex-shrink-0 snap-start"
               />
             );

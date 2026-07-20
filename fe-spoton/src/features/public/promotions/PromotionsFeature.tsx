@@ -17,29 +17,7 @@ interface Voucher {
 export default function PromotionsFeature() {
   const [offers, setOffers] = useState<Voucher[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [claimedOffers, setClaimedOffers] = useState<Set<string>>(new Set());
-  const { success, error } = useToast();
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('spoton_claimed_vouchers');
-      if (saved) {
-        setClaimedOffers(new Set(JSON.parse(saved)));
-      }
-    } catch (e) {}
-  }, []);
-
-  const handleSimulateClaim = (code: string) => {
-    if (code) {
-      navigator.clipboard.writeText(code);
-      setClaimedOffers(prev => {
-        const next = new Set(prev).add(code);
-        localStorage.setItem('spoton_claimed_vouchers', JSON.stringify(Array.from(next)));
-        return next;
-      });
-      success(`Đã nhận thành công! Voucher ${code} đã nằm trong Ví ưu đãi của bạn.`);
-    }
-  };
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -76,14 +54,11 @@ export default function PromotionsFeature() {
         ) : offers.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 place-items-center">
             {offers.map((offer, index) => {
-              const isClaimed = claimedOffers.has(offer.code);
               
               return (
                 <PublicVoucherCard
                   key={offer._id}
                   voucher={offer}
-                  isClaimed={isClaimed}
-                  onClaim={handleSimulateClaim}
                   className="w-full max-w-[340px]"
                 />
               );

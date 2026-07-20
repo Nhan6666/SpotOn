@@ -148,7 +148,7 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
         showError(res.message || 'Mã giảm giá không hợp lệ');
       }
     } catch (err: any) {
-      showError(err.response?.data?.message || 'Có lỗi khi áp dụng mã giảm giá');
+      showError(err.message || 'Có lỗi khi áp dụng mã giảm giá');
     } finally {
       setIsSubmitting(false);
     }
@@ -367,7 +367,7 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
                   <Button 
                     onClick={handleApplyVoucher}
                     disabled={isSubmitting || !voucherCodeInput.trim()}
-                    className="bg-blue-100 text-blue-700 hover:bg-blue-200 whitespace-nowrap"
+                    className="bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap shadow-sm font-medium transition-colors"
                   >
                     Áp dụng
                   </Button>
@@ -381,48 +381,83 @@ export function CheckoutModal({ booking, onClose, onSuccess }: CheckoutModalProp
                         Ví Voucher Của Khách Hàng
                       </div>
                     )}
-                    {customerVouchers.map(v => (
-                      <div 
-                        key={v._id} 
-                        className="p-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer flex justify-between items-center"
-                        onClick={() => {
-                          setVoucherCodeInput(v.voucher_id?.code);
-                          setShowVouchers(false);
-                        }}
-                      >
-                        <div>
-                          <p className="font-bold text-sm text-gray-900">{v.voucher_id?.code}</p>
-                          <p className="text-xs text-gray-500">{v.voucher_id?.name}</p>
+                    {customerVouchers.map(v => {
+                      const vc = v.voucher_id;
+                      if (!vc) return null;
+                      
+                      const guestCount = currentBooking.guest_count || 1;
+                      const isNotEnoughGuest = vc.min_guest_count && guestCount < vc.min_guest_count;
+                      const isNotEnoughMoney = vc.min_order_value && totalBill < vc.min_order_value;
+                      const isInvalid = isNotEnoughGuest || isNotEnoughMoney;
+                      
+                      let reason = "";
+                      if (isNotEnoughGuest) reason = `Cần bàn từ ${vc.min_guest_count} người`;
+                      else if (isNotEnoughMoney) reason = `Đơn tối thiểu ${vc.min_order_value.toLocaleString()}đ`;
+
+                      return (
+                        <div 
+                          key={v._id} 
+                          className={`p-3 border-b border-gray-100 flex justify-between items-center ${isInvalid ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'hover:bg-blue-50 cursor-pointer'}`}
+                          onClick={() => {
+                            if (isInvalid) return;
+                            setVoucherCodeInput(vc.code);
+                            setShowVouchers(false);
+                          }}
+                        >
+                          <div>
+                            <p className="font-bold text-sm text-gray-900">{vc.code}</p>
+                            {reason ? (
+                              <p className="text-xs text-red-500 font-medium">{reason}</p>
+                            ) : (
+                              <p className="text-xs text-gray-500">{vc.name}</p>
+                            )}
+                          </div>
+                          <span className={`text-xs font-bold px-2 py-1 rounded ${isInvalid ? 'text-gray-500 bg-gray-200' : 'text-blue-600 bg-blue-100'}`}>
+                            Giảm {vc.discount_percentage}%
+                          </span>
                         </div>
-                        <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                          Giảm {v.voucher_id?.discount_percentage}%
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
 
                     {publicVouchers.length > 0 && (
                       <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-600">
                         Voucher Chung Toàn Hệ Thống
                       </div>
                     )}
-                    {publicVouchers.map(v => (
-                      <div 
-                        key={v._id} 
-                        className="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex justify-between items-center"
-                        onClick={() => {
-                          setVoucherCodeInput(v.code);
-                          setShowVouchers(false);
-                        }}
-                      >
-                        <div>
-                          <p className="font-bold text-sm text-gray-900">{v.code}</p>
-                          <p className="text-xs text-gray-500">{v.name}</p>
+                    {publicVouchers.map(v => {
+                      const guestCount = currentBooking.guest_count || 1;
+                      const isNotEnoughGuest = v.min_guest_count && guestCount < v.min_guest_count;
+                      const isNotEnoughMoney = v.min_order_value && totalBill < v.min_order_value;
+                      const isInvalid = isNotEnoughGuest || isNotEnoughMoney;
+                      
+                      let reason = "";
+                      if (isNotEnoughGuest) reason = `Cần bàn từ ${v.min_guest_count} người`;
+                      else if (isNotEnoughMoney) reason = `Đơn tối thiểu ${v.min_order_value.toLocaleString()}đ`;
+
+                      return (
+                        <div 
+                          key={v._id} 
+                          className={`p-3 border-b border-gray-100 flex justify-between items-center ${isInvalid ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'hover:bg-gray-50 cursor-pointer'}`}
+                          onClick={() => {
+                            if (isInvalid) return;
+                            setVoucherCodeInput(v.code);
+                            setShowVouchers(false);
+                          }}
+                        >
+                          <div>
+                            <p className="font-bold text-sm text-gray-900">{v.code}</p>
+                            {reason ? (
+                              <p className="text-xs text-red-500 font-medium">{reason}</p>
+                            ) : (
+                              <p className="text-xs text-gray-500">{v.name}</p>
+                            )}
+                          </div>
+                          <span className="text-xs font-bold text-gray-600 bg-gray-200 px-2 py-1 rounded">
+                            Giảm {v.discount_percentage}%
+                          </span>
                         </div>
-                        <span className="text-xs font-bold text-gray-600 bg-gray-200 px-2 py-1 rounded">
-                          Giảm {v.discount_percentage}%
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                     
                     {customerVouchers.length === 0 && publicVouchers.length === 0 && (
                       <div className="p-3 text-center text-sm text-gray-500">

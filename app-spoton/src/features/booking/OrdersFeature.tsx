@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { OrderService } from './order.service';
-import { useAuthStore } from '@/hooks/useAuthStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { io, Socket } from 'socket.io-client';
 
 export function OrdersFeature() {

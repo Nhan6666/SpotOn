@@ -1,4 +1,4 @@
-import apiClient from '@/lib/axios';
+import apiClient from '@/lib/http';
 
 export const BookingService = {
   // ===== CUSTOMER =====
@@ -28,7 +28,13 @@ export const BookingService = {
     account_holder_name?: string;
     cancellation_reason?: string;
   }) {
-    const response = await apiClient.post(`/bookings/${bookingId}/cancel`, data);
+    const payload = {
+      bank_account_number: data.bank_account_number,
+      bank_name: data.bank_name,
+      account_holder_name: data.account_holder_name,
+      reason: data.cancellation_reason
+    };
+    const response = await apiClient.post(`/bookings/${bookingId}/cancel-refund`, payload);
     return response.data;
   },
 

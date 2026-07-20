@@ -1,51 +1,48 @@
-import { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
-import { useAuthStore } from '@/hooks/useAuthStore';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, Vibration } from 'react-native';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { BookingService } from '@/features/booking/booking.service';
-import apiClient from '@/lib/axios';
+import apiClient from '@/lib/http';
+import { FontAwesome } from '@expo/vector-icons';
+import { getSocket } from '@/lib/socket';
 
-// prep_status colors from SCHEMA_DESIGN.md
-const ITEM_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  PENDING:   { bg: 'bg-amber-100',  text: 'text-amber-700' },
-  PREPARING: { bg: 'bg-blue-100',   text: 'text-blue-700' },
-  READY:     { bg: 'bg-green-100',  text: 'text-green-700' },
-  SERVED:    { bg: 'bg-gray-100',   text: 'text-gray-500' },
+const getTimestampFromId = (id: string) => {
+  if (!id || id.length < 8) return Date.now();
+  return parseInt(id.substring(0, 8), 16) * 1000;
 };
 
 export function RunnerFeature() {
   const { user } = useAuthStore();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
   const branchId = user?.branch_id;
 
   const fetchOrders = useCallback(async () => {
-    if (!branchId) {
-      setLoading(false);
-      return;
-    }
+    if (!branchId) return setLoading(false);
     try {
       const res = await BookingService.getAllBookings({ branch_id: branchId });
       if (res.success) {
-        const activeOrders: any[] = [];
+        const readyItems: any[] = [];
         (res.data || []).forEach((booking: any) => {
-          if (booking.order_items && booking.order_items.length > 0) {
-            // Use correct field: prep_status (from schema)
-            const readyItems = booking.order_items.filter(
-              (item: any) => item.prep_status === 'READY' || item.prep_status === 'PREPARING'
-            );
-            if (readyItems.length > 0) {
-              activeOrders.push({
-                _id: booking._id,
-                table_name: booking.assigned_tables?.map((t: any) => t.table_number).join(', ') || 'N/A',
-                customer_name: booking.customer_id?.full_name || booking.walk_in_name || 'Walk-in',
-                pendingItems: readyItems,
-              });
-            }
+          if (booking.status === 'IN_USE' && booking.order_items) {
+            booking.order_items.forEach((item: any) => {
+              if (item.prep_status === 'READY') {
+                readyItems.push({
+                  ...item,
+                  booking_id: booking._id,
+                  table_name: booking.assigned_tables?.map((t: any) => t.table_number).join(', ') || 'N/A',
+                  customer_name: booking.customer_id?.full_name || booking.walk_in_name || 'Khách vãng lai',
+                  created_at: item.created_at || getTimestampFromId(item._id)
+                });
+              }
+            });
           }
         });
-        setOrders(activeOrders);
+        readyItems.sort((a, b) => a.created_at - b.created_at);
+        setItems(readyItems);
       }
     } catch (error) {
       console.log('Error fetching runner data:', error);
@@ -57,93 +54,108 @@ export function RunnerFeature() {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 15000);
-    return () => clearInterval(interval);
-  }, [fetchOrders]);
+    const interval = setInterval(fetchOrders, 10000);
+    const timerInterval = setInterval(() => setNow(Date.now()), 60000);
+
+    const socket = getSocket();
+    if (socket && branchId) {
+      socket.on('order_status_changed', (data: any) => {
+        if (data.newStatus === 'READY') {
+          Vibration.vibrate([0, 500, 200, 500]); // Haptic feedback pattern
+          fetchOrders();
+        }
+      });
+    }
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(timerInterval);
+      if (socket) socket.off('order_status_changed');
+    };
+  }, [fetchOrders, branchId]);
 
   const markAsServed = async (bookingId: string, itemId: string) => {
     try {
+      // Optimistic UI
+      setItems(prev => prev.filter(i => i._id !== itemId));
       await apiClient.patch(`/orders/${bookingId}/items/${itemId}/status`, {
         status: 'SERVED',
       });
-      fetchOrders();
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to update');
+      Alert.alert('Lỗi', error.response?.data?.message || 'Không thể cập nhật trạng thái');
+      fetchOrders();
     }
   };
 
-  if (loading) {
+  const getWaitText = (createdAt: number) => {
+    const diffMinutes = Math.floor((now - createdAt) / 60000);
+    if (diffMinutes === 0) return 'Vừa xong';
+    return `${diffMinutes} phút`;
+  };
+
+  if (loading && !refreshing) {
     return (
-      <View className="flex-1 justify-center items-center bg-background">
-        <ActivityIndicator size="large" color="#b45309" />
+      <View className="flex-1 justify-center items-center bg-[#F9FAFB]">
+        <ActivityIndicator size="large" color="#059669" />
       </View>
     );
   }
-
-  if (!branchId) {
-    return (
-      <View className="flex-1 justify-center items-center bg-background px-6">
-        <Text className="font-lexend font-bold text-xl text-text mb-2">No Branch Assigned</Text>
-        <Text className="font-lexend text-muted text-center">Contact your manager to assign you to a branch.</Text>
-      </View>
-    );
-  }
-
-  const readyCount = orders.reduce((sum, o) => sum + o.pendingItems.filter((i: any) => i.prep_status === 'READY').length, 0);
 
   return (
-    <View className="flex-1 bg-background">
-      <View className="px-4 pt-6 pb-2">
-        <Text className="font-lexend font-bold text-2xl text-text">Food Runner</Text>
-        <Text className="font-lexend text-muted mt-1">
-          {readyCount} items ready to serve
-        </Text>
+    <View className="flex-1 bg-[#F9FAFB]">
+      <View className="bg-white px-5 pt-5 pb-4 shadow-sm z-10 border-b border-gray-100 flex-row justify-between items-center">
+        <View>
+          <Text className="font-lexend font-bold text-xl text-gray-900 mb-1">Chạy Món (Runner)</Text>
+          <Text className="font-lexend text-xs text-green-600 font-medium">
+            <FontAwesome name="bell" /> Có {items.length} món đang chờ bưng
+          </Text>
+        </View>
+        <TouchableOpacity onPress={() => fetchOrders()} className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 items-center justify-center">
+          <FontAwesome name="refresh" size={16} color="#4b5563" />
+        </TouchableOpacity>
       </View>
 
       <FlatList
-        data={orders}
+        data={items}
         keyExtractor={(item) => item._id}
         contentContainerStyle={{ padding: 16 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchOrders(); }} colors={['#b45309']} />}
-        renderItem={({ item: booking }) => (
-          <View className="bg-white rounded-md mb-4 p-4 border border-gray-100 shadow-sm">
-            <View className="flex-row justify-between items-center mb-3">
-              <Text className="font-lexend font-bold text-text">
-                Table: {booking.table_name}
-              </Text>
-              <Text className="font-lexend text-xs text-muted">
-                {booking.customer_name}
-              </Text>
-            </View>
-
-            {(booking.pendingItems || []).map((orderItem: any) => {
-              const statusInfo = ITEM_STATUS_COLORS[orderItem.prep_status] || ITEM_STATUS_COLORS.PENDING;
-              return (
-                <View key={orderItem._id} className="flex-row justify-between items-center py-2 border-t border-gray-50">
-                  <View className="flex-1">
-                    <Text className="font-lexend font-semibold text-text">{orderItem.name}</Text>
-                    <Text className="font-lexend text-xs text-muted">Qty: {orderItem.quantity}</Text>
-                  </View>
-                  <View className={`px-2 py-1 rounded-full ${statusInfo.bg} mr-2`}>
-                    <Text className={`text-xs font-lexend font-bold ${statusInfo.text}`}>{orderItem.prep_status}</Text>
-                  </View>
-                  {orderItem.prep_status === 'READY' && (
-                    <TouchableOpacity
-                      className="bg-green-600 px-3 py-1.5 rounded-md"
-                      onPress={() => markAsServed(booking._id, orderItem._id)}
-                    >
-                      <Text className="font-lexend text-white text-xs font-bold">Served ✓</Text>
-                    </TouchableOpacity>
-                  )}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchOrders(); }} />}
+        renderItem={({ item }) => (
+          <View className="bg-white rounded-xl mb-4 border border-gray-200 shadow-sm overflow-hidden flex-row">
+            <View className="w-2 h-full bg-green-500" />
+            <View className="flex-1 p-4">
+              <View className="flex-row justify-between items-start mb-3">
+                <View className="flex-1">
+                  <Text className="font-lexend font-bold text-lg text-gray-900 mb-0.5">{item.name}</Text>
+                  <Text className="font-lexend text-xs text-gray-500">Khách: {item.customer_name}</Text>
                 </View>
-              );
-            })}
+                <View className="items-center bg-gray-100 px-3 py-1 rounded-lg">
+                  <Text className="font-lexend font-bold text-xl text-gray-900">x{item.quantity}</Text>
+                </View>
+              </View>
+              
+              <View className="flex-row justify-between items-center mt-2 border-t border-gray-50 pt-3">
+                <View>
+                  <Text className="font-lexend font-bold text-sm text-blue-700 mb-1">Bàn {item.table_name}</Text>
+                  <Text className="font-lexend text-[10px] text-gray-400">
+                    <FontAwesome name="clock-o" /> Đợi: {getWaitText(item.created_at)}
+                  </Text>
+                </View>
+                
+                <TouchableOpacity
+                  className="bg-green-600 px-5 py-2.5 rounded-xl shadow-sm flex-row items-center"
+                  onPress={() => markAsServed(item.booking_id, item._id)}
+                >
+                  <FontAwesome name="check-circle" size={14} color="white" />
+                  <Text className="font-lexend text-white text-sm font-bold ml-2">Đã Phục Vụ</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         )}
         ListEmptyComponent={
           <View className="flex-1 justify-center items-center py-20">
-            <Text className="font-lexend text-muted text-lg">All clear! 🎉</Text>
-            <Text className="font-lexend text-muted text-sm mt-1">No items waiting to be served</Text>
+            <Text className="font-lexend text-gray-400 text-lg font-medium">Tuyệt vời! Đã bưng hết món. 🎉</Text>
           </View>
         }
       />

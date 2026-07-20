@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
-import { useAuthStore } from '@/hooks/useAuthStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
 
@@ -19,7 +19,7 @@ export function ProfileFeature() {
           onPress: async () => {
             await logout();
             setTimeout(() => {
-              router.replace('/(tabs)');
+              router.replace('/');
             }, 100);
           }
         }

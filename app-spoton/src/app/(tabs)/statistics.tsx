@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Dim
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import { BookingService } from '@/features/booking/booking.service';
-import { useAuthStore } from '@/hooks/useAuthStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 export default function StatisticsScreen() {
   const router = useRouter();

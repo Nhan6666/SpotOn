@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Switch, Alert, ActivityIndicator } from 'react-native';
 import { BranchService } from '../branch/branch.service';
-import apiClient from '@/lib/axios';
+import apiClient from '@/lib/http';
 
 export function ManagerDashboardFeature() {
   const [branch, setBranch] = useState<any>(null);

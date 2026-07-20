@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Tabs } from 'expo-router';
-import { useAuthStore } from '../../hooks/useAuthStore';
+import { Tabs, Redirect } from 'expo-router';
+import { useAuthStore } from '../../stores/useAuthStore';
 import { ActivityIndicator, View } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
@@ -33,6 +33,7 @@ export default function TabLayout() {
   const isCustomer = role === 'CUSTOMER';
   const isWaiter = role === 'WAITER';
   const isManager = role === 'MANAGER' || role === 'ADMIN';
+  const isAdmin = role === 'ADMIN';
   const isKitchen = role === 'KITCHEN';
 
   return (
@@ -112,6 +113,16 @@ export default function TabLayout() {
         }}
       />
 
+      {/* ===== ADMIN: Tổng quan ===== */}
+      <Tabs.Screen
+        name="admin-dashboard"
+        options={{
+          title: 'Tổng quan',
+          tabBarIcon: ({ color }) => <TabBarIcon name="pie-chart" color={color as string} />,
+          href: isAdmin ? '/admin-dashboard' : null,
+        }}
+      />
+
       {/* ===== MANAGER/ADMIN: Quản lý ===== */}
       <Tabs.Screen
         name="branch-manage"
@@ -119,6 +130,16 @@ export default function TabLayout() {
           title: 'Quản lý',
           tabBarIcon: ({ color }) => <TabBarIcon name="building" color={color as string} />,
           href: isManager ? '/branch-manage' : null,
+        }}
+      />
+
+      {/* ===== MANAGER/ADMIN: Check-in (Kanban) ===== */}
+      <Tabs.Screen
+        name="kanban"
+        options={{
+          title: 'Check-in',
+          tabBarIcon: ({ color }) => <TabBarIcon name="columns" color={color as string} />,
+          href: isManager ? '/kanban' : null,
         }}
       />
 
@@ -132,13 +153,12 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ===== MANAGER/ADMIN: Đơn hàng ===== */}
+      {/* ===== MANAGER/ADMIN: Đơn hàng (HIDDEN) ===== */}
       <Tabs.Screen
         name="orders"
         options={{
           title: 'Đơn hàng',
-          tabBarIcon: ({ color }) => <TabBarIcon name="list-alt" color={color as string} />,
-          href: isManager ? '/orders' : null,
+          href: null,
         }}
       />
 
@@ -166,10 +186,6 @@ export default function TabLayout() {
       <Tabs.Screen
         name="menu-manage"
         options={{ title: 'Thực đơn', href: null }}
-      />
-      <Tabs.Screen
-        name="kanban"
-        options={{ title: 'Check-in (Kanban)', href: null }}
       />
       <Tabs.Screen
         name="invoices"

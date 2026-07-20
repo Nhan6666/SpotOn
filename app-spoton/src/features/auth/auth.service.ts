@@ -1,6 +1,6 @@
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import apiClient from '@/lib/axios';
+import apiClient from '@/lib/http';
 
 export const AuthService = {
   async login(email: string, password: string) {

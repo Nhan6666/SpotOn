@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
-import { useBookingCartStore } from '@/hooks/useBookingCartStore';
+import { useBookingCartStore } from '@/stores/useBookingCartStore';
 
 export default function ItemDetailScreen() {
   const router = useRouter();

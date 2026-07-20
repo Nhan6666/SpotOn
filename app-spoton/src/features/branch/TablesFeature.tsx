@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, FlatList, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import { io, Socket } from 'socket.io-client';
 import { BranchService } from './branch.service';
-import { useAuthStore } from '@/hooks/useAuthStore';
-import apiClient from '@/lib/axios';
+import { useAuthStore } from '@/stores/useAuthStore';
+import apiClient from '@/lib/http';
 import { WalkInModal } from './components/WalkInModal';
 import { BookingService } from '../booking/booking.service';
 import { useRouter } from 'expo-router';
@@ -77,17 +77,17 @@ export function TablesFeature() {
     if (branch?._id) {
       fetchBookings(branch._id);
     }
-  }, [selectedDate, branch]);
+  }, [selectedDate, branch, activeShift]);
 
   const fetchBookings = async (branchId: string) => {
     try {
       const res = await BookingService.getAllBookings({ branch_id: branchId });
       if (res.success) {
-        // Lọc các đơn active trong ngày được chọn
         const targetDate = selectedDate.toLocaleDateString('vi-VN');
         const activeBookings = res.data.filter((b: any) => 
           ['HOLDING', 'PENDING_DEPOSIT', 'PENDING_PAYMENT', 'CONFIRMED', 'IN_USE'].includes(b.status) &&
-          new Date(b.reservation_date).toLocaleDateString('vi-VN') === targetDate
+          new Date(b.reservation_date).toLocaleDateString('vi-VN') === targetDate &&
+          b.shift === activeShift.toUpperCase()
         );
         setBookings(activeBookings);
       }
@@ -115,14 +115,37 @@ export function TablesFeature() {
     }
   };
 
+  const getComputedTableStatus = (table: any) => {
+    const tableBookings = bookings.filter((b: any) => b.table_ids?.includes(table._id));
+    
+    if (tableBookings.length > 0) {
+      if (tableBookings.some((b: any) => b.status === 'IN_USE')) return 'IN_USE';
+      if (tableBookings.some((b: any) => b.status === 'CLEANING')) return 'CLEANING';
+      if (tableBookings.some((b: any) => b.status === 'CONFIRMED')) return 'RESERVED';
+      if (tableBookings.some((b: any) => ['PENDING_PAYMENT', 'PENDING_DEPOSIT'].includes(b.status))) return 'LOCKED';
+      if (tableBookings.some((b: any) => b.status === 'HOLDING')) return 'HOLDING';
+    }
+
+    const todayStr = new Date().toLocaleDateString('vi-VN');
+    const selectedDateStr = selectedDate.toLocaleDateString('vi-VN');
+
+    if (todayStr === selectedDateStr) {
+      return (activeShift === 'Lunch' ? table.status_lunch : table.status_dinner) || table.status || 'EMPTY';
+    }
+
+    return 'EMPTY';
+  };
+
   const handleTablePress = (table: any) => {
     if (!branch) return;
     
+    const status = getComputedTableStatus(table);
+    
     // Role-based actions
-    if (table.status === 'EMPTY') {
+    if (status === 'EMPTY') {
       setSelectedWalkInTable(table);
       setWalkInModalVisible(true);
-    } else if (table.status === 'RESERVED' || table.status === 'HOLDING') {
+    } else if (status === 'RESERVED' || status === 'HOLDING') {
       Alert.alert(
         "Check-in Khách?",
         `Đánh dấu bàn ${table.table_number} thành ĐANG PHỤC VỤ?`,
@@ -153,10 +176,10 @@ export function TablesFeature() {
           }
         ]
       );
-    } else if (table.status === 'IN_USE' || table.status === 'OCCUPIED') {
+    } else if (status === 'IN_USE' || status === 'OCCUPIED') {
       Alert.alert(
         "Hành động",
-        `Bàn ${table.table_number} đang ở trạng thái ${table.status}.`,
+        `Bàn ${table.table_number} đang ở trạng thái ${status}.`,
         [
           { text: "Hủy", style: "cancel" },
           { 
@@ -211,7 +234,7 @@ export function TablesFeature() {
           }
         ]
       );
-    } else if (table.status === 'CLEANING') {
+    } else if (status === 'CLEANING') {
       Alert.alert(
         "Đã dọn xong?",
         `Đánh dấu bàn ${table.table_number} thành BÀN TRỐNG?`,
@@ -381,7 +404,8 @@ export function TablesFeature() {
           ) : (
             <View className="bg-gray-50 rounded-xl p-2 flex-row flex-wrap justify-center border border-gray-100 border-dashed min-h-[300px]">
               {currentZone?.tables?.map((table: any) => {
-                const colors = getTableColor(table.status);
+                const computedStatus = getComputedTableStatus(table);
+                const colors = getTableColor(computedStatus);
                 return (
                   <TouchableOpacity 
                     key={table._id || table.table_number}

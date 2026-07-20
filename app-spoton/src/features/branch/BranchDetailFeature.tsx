@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, Fla
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
 import { CustomerService } from '@/features/customer/customer.service';
-import { useAuthStore } from '@/hooks/useAuthStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 interface BranchDetailProps {
   id: string;

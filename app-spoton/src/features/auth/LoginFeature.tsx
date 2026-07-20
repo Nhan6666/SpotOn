@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuthStore } from '@/hooks/useAuthStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { AuthService } from './auth.service';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -41,7 +41,12 @@ export function LoginFeature() {
         await AsyncStorage.setItem('token', data.data.token);
         await checkAuth();
         setTimeout(() => {
-          router.replace('/(tabs)');
+          const r = data.data.user.role;
+          if (r === 'ADMIN') router.replace('/admin-dashboard');
+          else if (r === 'MANAGER') router.replace('/branch-manage');
+          else if (r === 'WAITER') router.replace('/pos');
+          else if (r === 'KITCHEN') router.replace('/kds');
+          else router.replace('/(tabs)');
         }, 100);
       } else {
         Alert.alert('Login Failed', data.message);
@@ -70,7 +75,12 @@ export function LoginFeature() {
           await AsyncStorage.setItem('token', data.data.token);
           await checkAuth();
           setTimeout(() => {
-            router.replace('/(tabs)');
+            const r = data.data.user.role;
+            if (r === 'ADMIN') router.replace('/admin-dashboard');
+            else if (r === 'MANAGER') router.replace('/branch-manage');
+            else if (r === 'WAITER') router.replace('/pos');
+            else if (r === 'KITCHEN') router.replace('/kds');
+            else router.replace('/(tabs)');
           }, 100);
         } else {
           Alert.alert('Đăng nhập Google thất bại', data.message);
@@ -102,7 +112,12 @@ export function LoginFeature() {
           await AsyncStorage.setItem('token', data.data.token);
           await checkAuth();
           setTimeout(() => {
-            router.replace('/(tabs)');
+            const r = data.data.user.role;
+            if (r === 'ADMIN') router.replace('/admin-dashboard');
+            else if (r === 'MANAGER') router.replace('/branch-manage');
+            else if (r === 'WAITER') router.replace('/pos');
+            else if (r === 'KITCHEN') router.replace('/kds');
+            else router.replace('/(tabs)');
           }, 100);
         } else {
           Alert.alert('Đăng nhập thất bại', data.message);

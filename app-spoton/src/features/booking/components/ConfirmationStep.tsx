@@ -1,0 +1,54 @@
+import { View, Text, ScrollView } from 'react-native';
+import { InfoRow } from './InfoRow';
+
+interface ConfirmationStepProps {
+  state: any;
+  actions: any;
+}
+
+export function ConfirmationStep({ state, actions }: ConfirmationStepProps) {
+  const { branch, selectedDate, selectedTime, guests, selectedTableIds, isAuthenticated, user, cart, note } = state;
+  const { getPreOrderTotal } = actions;
+
+  return (
+    <ScrollView className="flex-1 p-4">
+      <View className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <Text className="font-lexend font-bold text-lg mb-4">Tóm tắt đặt bàn</Text>
+        <InfoRow label="Chi nhánh" value={branch?.name || ''} />
+        <InfoRow label="Ngày" value={selectedDate} />
+        <InfoRow label="Giờ" value={selectedTime} />
+        <InfoRow label="Số khách" value={`${guests} khách`} />
+        <InfoRow label="Số bàn" value={`${selectedTableIds.length} bàn`} />
+      </View>
+
+      <View className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mt-4">
+        <Text className="font-lexend font-bold text-lg mb-4">Thông tin khách hàng</Text>
+        {isAuthenticated && user ? (
+          <>
+            <InfoRow label="Họ tên" value={user.full_name} />
+            <InfoRow label="Số điện thoại" value={user.phone} />
+            <InfoRow label="Email" value={user.email} />
+          </>
+        ) : (
+          <Text className="font-lexend text-red-500 text-sm">Chưa đăng nhập. Bạn sẽ được yêu cầu đăng nhập khi thanh toán.</Text>
+        )}
+        {cart.length > 0 && (
+          <View className="mt-4 pt-4 border-t border-gray-100">
+            <Text className="font-lexend font-bold text-text mb-2">Món đặt trước ({cart.reduce((a: any, b: any) => a+b.quantity, 0)} món)</Text>
+            {cart.map((i: any) => (
+              <View key={i.item._id} className="flex-row justify-between mb-1">
+                <Text className="font-lexend text-muted text-sm">{i.quantity}x {i.item.name}</Text>
+                <Text className="font-lexend text-muted text-sm">{(i.item.price * i.quantity).toLocaleString('vi-VN')}đ</Text>
+              </View>
+            ))}
+            <View className="flex-row justify-between mt-2 pt-2 border-t border-gray-50">
+              <Text className="font-lexend font-bold">Tổng món</Text>
+              <Text className="font-lexend font-bold text-primary">{getPreOrderTotal().toLocaleString('vi-VN')}đ</Text>
+            </View>
+          </View>
+        )}
+        {note ? <Text className="font-lexend text-muted text-sm mt-4">Ghi chú: {note}</Text> : null}
+      </View>
+    </ScrollView>
+  );
+}

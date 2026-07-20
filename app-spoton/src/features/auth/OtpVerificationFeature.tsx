@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, Alert, TouchableOpacity } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuthStore } from '@/hooks/useAuthStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { AuthService } from './auth.service';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';

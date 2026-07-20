@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BookingService } from './booking.service';
-import { useAuthStore } from '@/hooks/useAuthStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { CancelBookingModal } from './components/CancelBookingModal';
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {

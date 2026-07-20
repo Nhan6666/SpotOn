@@ -216,10 +216,28 @@ export function BookingDetailsModal({ booking, onClose }: BookingDetailsModalPro
                 <span className="text-gray-600">Tổng tiền tạm tính:</span>
                 <span className="font-semibold text-gray-900">{totalBill.toLocaleString()}đ</span>
               </div>
-              <div className="flex justify-between items-center text-green-700">
-                <span>Tiền cọc đã thu:</span>
-                <span className="font-semibold">- {depositPaid.toLocaleString()}đ</span>
-              </div>
+              
+              {(booking.table_deposit_amount || 0) > 0 && (
+                <div className="flex justify-between text-gray-500 font-medium pl-2">
+                  <span>- Cọc giữ bàn:</span>
+                  <span>{booking.table_deposit_amount?.toLocaleString('vi-VN')}đ</span>
+                </div>
+              )}
+              
+              {(booking.pre_order_deposit_amount || 0) > 0 && (
+                <div className="flex justify-between text-gray-500 font-medium pl-2">
+                  <span>- Cọc món ăn:</span>
+                  <span>{booking.pre_order_deposit_amount?.toLocaleString('vi-VN')}đ</span>
+                </div>
+              )}
+
+              {depositPaid > 0 && (
+                <div className="flex justify-between text-green-600 font-bold">
+                  <span>Tổng cọc đã thu:</span>
+                  <span>- {depositPaid.toLocaleString('vi-VN')}đ</span>
+                </div>
+              )}
+              
               {(actualVoucherCode || (booking.voucher_discount_amount || 0) > 0) && (
                 <div className="flex justify-between items-center text-orange-600">
                   <span>Mã giảm giá dự kiến ({actualVoucherCode || 'Đã áp dụng'}):</span>

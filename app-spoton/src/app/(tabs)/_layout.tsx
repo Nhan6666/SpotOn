@@ -202,7 +202,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ===== KITCHEN: Bếp ===== */}
+      {/* ===== KITCHEN: Bếp (KDS) ===== */}
       <Tabs.Screen
         name="kds"
         options={{

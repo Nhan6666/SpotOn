@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Alert, Switch, TextInput } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -12,6 +13,43 @@ export function BranchManageFeature() {
   const [branch, setBranch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [formData, setFormData] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<any>(null);
+  const [pickerConfig, setPickerConfig] = useState<{ show: boolean, period: 'lunch' | 'dinner', field: string, value: Date } | null>(null);
+
+  const parseTimeString = (timeStr: string) => {
+    if (!timeStr) return new Date();
+    const [hours, minutes] = timeStr.split(':');
+    const date = new Date();
+    date.setHours(parseInt(hours || '0', 10), parseInt(minutes || '0', 10), 0, 0);
+    return date;
+  };
+
+  const openPicker = (period: 'lunch' | 'dinner', field: string) => {
+    const timeStr = formData?.[period]?.[field];
+    setPickerConfig({
+      show: true,
+      period,
+      field,
+      value: parseTimeString(timeStr)
+    });
+  };
+
+  const handlePickerChange = (event: any, selectedDate?: Date) => {
+    if (event.type === 'dismissed' || !selectedDate) {
+      setPickerConfig(null);
+      return;
+    }
+    const hours = selectedDate.getHours().toString().padStart(2, '0');
+    const minutes = selectedDate.getMinutes().toString().padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
+    
+    if (pickerConfig) {
+      handleTimeChange(pickerConfig.period, pickerConfig.field, timeStr);
+    }
+    setPickerConfig(null);
+  };
 
   const branchId = user?.branch_id;
 
@@ -20,6 +58,17 @@ export function BranchManageFeature() {
       const branchRes = await BranchService.getMyBranch();
       if (branchRes.success && branchRes.data) {
         setBranch(branchRes.data);
+        const initialPeriods = branchRes.data.service_periods || {
+          lunch: { start: '08:00', end: '14:00', last_booking: '13:00', last_order: '13:30' },
+          dinner: { start: '17:00', end: '22:00', last_booking: '21:00', last_order: '21:30' }
+        };
+        const initial = {
+          ...initialPeriods,
+          status: branchRes.data.status || 'OPEN',
+          overload_threshold: branchRes.data.overload_threshold?.toString() || '85'
+        };
+        setFormData(initial);
+        setInitialFormData(initial);
         const currentBranchId = branchRes.data._id;
         // Removed bookings fetch
       }
@@ -35,6 +84,36 @@ export function BranchManageFeature() {
     fetchData();
   }, [fetchData]);
 
+  const handleTimeChange = (period: 'lunch' | 'dinner', field: string, value: string) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      [period]: {
+        ...(prev?.[period] || {}),
+        [field]: value
+      }
+    }));
+  };
+
+  const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const res = await BranchService.updateBranch(branch._id, {
+        service_periods: { lunch: formData.lunch, dinner: formData.dinner },
+        status: formData.status,
+        overload_threshold: Number(formData.overload_threshold) || 85
+      });
+      if (res.success) {
+        Alert.alert('Thành công', 'Cập nhật thành công');
+        fetchData();
+      }
+    } catch (error: any) {
+      Alert.alert('Lỗi', error?.response?.data?.message || 'Có lỗi xảy ra khi lưu');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
 
   if (loading) {
@@ -74,8 +153,19 @@ export function BranchManageFeature() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} colors={['#b45309']} />}
     >
       <View className="px-4 pt-6 pb-2">
-        <Text className="font-lexend font-bold text-2xl text-text">Chi nhánh: {branch?.name || 'SpotOn'}</Text>
-        <Text className="font-lexend text-gray-500 text-xs mt-1">Quản lý thông tin và các giới hạn vận hành của chi nhánh.</Text>
+        <View className="flex-row justify-between items-center">
+          <View className="flex-1 pr-4">
+            <Text className="font-lexend font-bold text-2xl text-text">Chi nhánh: {branch?.name || 'SpotOn'}</Text>
+            <Text className="font-lexend text-gray-500 text-xs mt-1">Quản lý thông tin và các giới hạn vận hành của chi nhánh.</Text>
+          </View>
+          <TouchableOpacity 
+            onPress={() => router.push('/manager/map-editor')}
+            className="flex-row items-center bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-sm"
+          >
+            <FontAwesome name="map" size={14} color="#374151" />
+            <Text className="font-lexend font-bold text-xs text-gray-700 ml-2">Sơ đồ bàn</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Hồ sơ chi nhánh */}
@@ -139,6 +229,49 @@ export function BranchManageFeature() {
         </View>
       </View>
 
+      {/* Giới hạn vận hành */}
+      <View className="px-4 pb-4">
+        <View className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+          <Text className="font-lexend font-bold text-base text-text mb-1">Giới hạn vận hành (Operation Limits)</Text>
+          <Text className="font-lexend text-xs text-gray-500 mb-4 leading-5">Thiết lập các ngưỡng giới hạn để hệ thống tự động chống quá tải (Overbooking).</Text>
+          
+          <View className="bg-[#f8f9fa] rounded-xl p-4 border border-gray-100 mb-1">
+            <Text className="font-lexend font-bold text-sm text-gray-700 mb-2">Ngưỡng quá tải chung (%)</Text>
+            <View className="flex-row items-center bg-white border border-gray-200 rounded-lg px-3 py-1 mb-2 h-10">
+              <TextInput
+                className="flex-1 font-lexend text-sm text-text h-full p-0 m-0"
+                keyboardType="numeric"
+                value={formData?.overload_threshold?.toString() || ''}
+                onChangeText={(val) => setFormData({ ...formData, overload_threshold: val })}
+              />
+              <Text className="font-lexend font-bold text-gray-500 text-base">%</Text>
+            </View>
+            <Text className="font-lexend text-xs text-gray-500">Hệ thống sẽ báo "Hết bàn" khi sức chứa đạt ngưỡng này.</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Trạng thái phục vụ ban đầu */}
+      <View className="px-4 pb-4">
+        <View className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+          <Text className="font-lexend font-bold text-base text-text mb-1">Trạng thái phục vụ ban đầu</Text>
+          <Text className="font-lexend text-xs text-gray-500 mb-4 leading-5">Thiết lập trạng thái hiển thị của chi nhánh với khách hàng.</Text>
+          
+          <View className="bg-white border border-gray-200 rounded-xl p-3 flex-row items-center">
+            <Switch
+              trackColor={{ false: "#d1d5db", true: "#ea580c" }}
+              thumbColor={"#fff"}
+              ios_backgroundColor="#d1d5db"
+              onValueChange={(val) => setFormData({ ...formData, status: val ? 'OPEN' : 'CLOSED' })}
+              value={formData?.status === 'OPEN'}
+            />
+            <Text className="font-lexend font-bold text-sm text-text ml-3">
+              {formData?.status === 'OPEN' ? 'Đang mở / Nhận đặt bàn' : 'Đóng cửa / Ngừng nhận khách'}
+            </Text>
+          </View>
+        </View>
+      </View>
+
       {/* Operational Rules (Ca phục vụ) */}
       <View className="px-4 pb-4">
         <View className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
@@ -156,16 +289,30 @@ export function BranchManageFeature() {
             <View className="flex-row mb-3 gap-3">
               <View className="flex-1">
                 <Text className="font-lexend text-[10px] text-gray-500 mb-1">Giờ mở cửa</Text>
-                <View className="border border-gray-200 rounded-lg px-3 py-2 flex-row justify-between items-center bg-gray-50">
-                  <Text className="font-lexend text-sm text-text">{branch?.service_periods?.lunch?.start || '08:00'}</Text>
-                  <FontAwesome name="clock-o" size={14} color="#9ca3af" />
+                <View className="border border-gray-200 rounded-lg px-3 py-1 flex-row justify-between items-center bg-white">
+                  <TouchableOpacity 
+                    className="flex-1 h-8 justify-center"
+                    onPress={() => openPicker('lunch', 'start')}
+                  >
+                    <Text className="font-lexend text-sm text-text">
+                      {formData?.lunch?.start || '08:00'}
+                    </Text>
+                  </TouchableOpacity>
+                  <FontAwesome name="clock-o" size={14} color="#ea580c" />
                 </View>
               </View>
               <View className="flex-1">
                 <Text className="font-lexend text-[10px] text-gray-500 mb-1">Đóng cửa</Text>
-                <View className="border border-gray-200 rounded-lg px-3 py-2 flex-row justify-between items-center bg-gray-50">
-                  <Text className="font-lexend text-sm text-text">{branch?.service_periods?.lunch?.end || '14:00'}</Text>
-                  <FontAwesome name="clock-o" size={14} color="#9ca3af" />
+                <View className="border border-gray-200 rounded-lg px-3 py-1 flex-row justify-between items-center bg-white">
+                  <TouchableOpacity 
+                    className="flex-1 h-8 justify-center"
+                    onPress={() => openPicker('lunch', 'end')}
+                  >
+                    <Text className="font-lexend text-sm text-text">
+                      {formData?.lunch?.end || '14:00'}
+                    </Text>
+                  </TouchableOpacity>
+                  <FontAwesome name="clock-o" size={14} color="#ea580c" />
                 </View>
               </View>
             </View>
@@ -173,23 +320,37 @@ export function BranchManageFeature() {
             <View className="flex-row gap-3">
               <View className="flex-1">
                 <Text className="font-lexend text-[10px] text-gray-500 mb-1">Nhận khách cuối</Text>
-                <View className="border border-gray-200 rounded-lg px-3 py-2 flex-row justify-between items-center bg-gray-50">
-                  <Text className="font-lexend text-sm text-text">{branch?.service_periods?.lunch?.last_booking || '13:00'}</Text>
-                  <FontAwesome name="clock-o" size={14} color="#9ca3af" />
+                <View className="border border-gray-200 rounded-lg px-3 py-1 flex-row justify-between items-center bg-white">
+                  <TouchableOpacity 
+                    className="flex-1 h-8 justify-center"
+                    onPress={() => openPicker('lunch', 'last_booking')}
+                  >
+                    <Text className="font-lexend text-sm text-text">
+                      {formData?.lunch?.last_booking || '13:00'}
+                    </Text>
+                  </TouchableOpacity>
+                  <FontAwesome name="clock-o" size={14} color="#ea580c" />
                 </View>
               </View>
               <View className="flex-1">
                 <Text className="font-lexend text-[10px] text-gray-500 mb-1">Order cuối</Text>
-                <View className="border border-gray-200 rounded-lg px-3 py-2 flex-row justify-between items-center bg-gray-50">
-                  <Text className="font-lexend text-sm text-text">{branch?.service_periods?.lunch?.last_order || '13:30'}</Text>
-                  <FontAwesome name="clock-o" size={14} color="#9ca3af" />
+                <View className="border border-gray-200 rounded-lg px-3 py-1 flex-row justify-between items-center bg-white">
+                  <TouchableOpacity 
+                    className="flex-1 h-8 justify-center"
+                    onPress={() => openPicker('lunch', 'last_order')}
+                  >
+                    <Text className="font-lexend text-sm text-text">
+                      {formData?.lunch?.last_order || '13:30'}
+                    </Text>
+                  </TouchableOpacity>
+                  <FontAwesome name="clock-o" size={14} color="#ea580c" />
                 </View>
               </View>
             </View>
           </View>
 
           {/* Ca Tối */}
-          <View>
+          <View className="mb-5">
             <View className="flex-row items-center mb-3">
               <View className="w-2 h-2 rounded-full bg-blue-500 mr-2" />
               <Text className="font-lexend font-bold text-text text-sm">Ca Tối (Dinner)</Text>
@@ -198,16 +359,30 @@ export function BranchManageFeature() {
             <View className="flex-row mb-3 gap-3">
               <View className="flex-1">
                 <Text className="font-lexend text-[10px] text-gray-500 mb-1">Giờ mở cửa</Text>
-                <View className="border border-gray-200 rounded-lg px-3 py-2 flex-row justify-between items-center bg-gray-50">
-                  <Text className="font-lexend text-sm text-text">{branch?.service_periods?.dinner?.start || '17:00'}</Text>
-                  <FontAwesome name="clock-o" size={14} color="#9ca3af" />
+                <View className="border border-gray-200 rounded-lg px-3 py-1 flex-row justify-between items-center bg-white">
+                  <TouchableOpacity 
+                    className="flex-1 h-8 justify-center"
+                    onPress={() => openPicker('dinner', 'start')}
+                  >
+                    <Text className="font-lexend text-sm text-text">
+                      {formData?.dinner?.start || '17:00'}
+                    </Text>
+                  </TouchableOpacity>
+                  <FontAwesome name="clock-o" size={14} color="#3b82f6" />
                 </View>
               </View>
               <View className="flex-1">
                 <Text className="font-lexend text-[10px] text-gray-500 mb-1">Đóng cửa</Text>
-                <View className="border border-gray-200 rounded-lg px-3 py-2 flex-row justify-between items-center bg-gray-50">
-                  <Text className="font-lexend text-sm text-text">{branch?.service_periods?.dinner?.end || '22:00'}</Text>
-                  <FontAwesome name="clock-o" size={14} color="#9ca3af" />
+                <View className="border border-gray-200 rounded-lg px-3 py-1 flex-row justify-between items-center bg-white">
+                  <TouchableOpacity 
+                    className="flex-1 h-8 justify-center"
+                    onPress={() => openPicker('dinner', 'end')}
+                  >
+                    <Text className="font-lexend text-sm text-text">
+                      {formData?.dinner?.end || '22:00'}
+                    </Text>
+                  </TouchableOpacity>
+                  <FontAwesome name="clock-o" size={14} color="#3b82f6" />
                 </View>
               </View>
             </View>
@@ -215,20 +390,46 @@ export function BranchManageFeature() {
             <View className="flex-row gap-3">
               <View className="flex-1">
                 <Text className="font-lexend text-[10px] text-gray-500 mb-1">Nhận khách cuối</Text>
-                <View className="border border-gray-200 rounded-lg px-3 py-2 flex-row justify-between items-center bg-gray-50">
-                  <Text className="font-lexend text-sm text-text">{branch?.service_periods?.dinner?.last_booking || '21:00'}</Text>
-                  <FontAwesome name="clock-o" size={14} color="#9ca3af" />
+                <View className="border border-gray-200 rounded-lg px-3 py-1 flex-row justify-between items-center bg-white">
+                  <TouchableOpacity 
+                    className="flex-1 h-8 justify-center"
+                    onPress={() => openPicker('dinner', 'last_booking')}
+                  >
+                    <Text className="font-lexend text-sm text-text">
+                      {formData?.dinner?.last_booking || '21:00'}
+                    </Text>
+                  </TouchableOpacity>
+                  <FontAwesome name="clock-o" size={14} color="#3b82f6" />
                 </View>
               </View>
               <View className="flex-1">
                 <Text className="font-lexend text-[10px] text-gray-500 mb-1">Order cuối</Text>
-                <View className="border border-gray-200 rounded-lg px-3 py-2 flex-row justify-between items-center bg-gray-50">
-                  <Text className="font-lexend text-sm text-text">{branch?.service_periods?.dinner?.last_order || '21:30'}</Text>
-                  <FontAwesome name="clock-o" size={14} color="#9ca3af" />
+                <View className="border border-gray-200 rounded-lg px-3 py-1 flex-row justify-between items-center bg-white">
+                  <TouchableOpacity 
+                    className="flex-1 h-8 justify-center"
+                    onPress={() => openPicker('dinner', 'last_order')}
+                  >
+                    <Text className="font-lexend text-sm text-text">
+                      {formData?.dinner?.last_order || '21:30'}
+                    </Text>
+                  </TouchableOpacity>
+                  <FontAwesome name="clock-o" size={14} color="#3b82f6" />
                 </View>
               </View>
             </View>
           </View>
+
+          <TouchableOpacity 
+            className={`rounded-xl py-3 items-center ${(!hasChanges || isSaving) ? 'bg-gray-300' : 'bg-orange-600'}`}
+            onPress={handleSave}
+            disabled={!hasChanges || isSaving}
+          >
+            {isSaving ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className={`font-lexend font-bold text-sm ${(!hasChanges || isSaving) ? 'text-gray-500' : 'text-white'}`}>Lưu thay đổi</Text>
+            )}
+          </TouchableOpacity>
 
         </View>
       </View>
@@ -249,30 +450,16 @@ export function BranchManageFeature() {
         </View>
       </View>
 
-      {/* Grid Menu cho các chức năng quản lý */}
-      <View className="px-4 pb-4">
-        <Text className="font-lexend font-bold text-lg text-text mb-3">Chức năng quản lý</Text>
-        <View className="flex-row flex-wrap justify-between">
-          {[
-            { name: 'Thực đơn', icon: 'book', route: '/(tabs)/menu-manage' },
-            { name: 'Đối soát hóa đơn', icon: 'file-text-o', route: '/(tabs)/invoices' },
-            { name: 'Lịch sử giao dịch', icon: 'history', route: '/(tabs)/transactions' },
-            { name: 'Thống kê', icon: 'bar-chart', route: '/(tabs)/statistics' },
-            { name: 'Khuyến mãi', icon: 'gift', route: '/(tabs)/promotions' },
-          ].map((menu, index) => (
-            <TouchableOpacity 
-              key={index}
-              className="w-[31%] bg-white rounded-lg p-3 mb-3 items-center border border-gray-100 shadow-sm"
-              onPress={() => router.push(menu.route as any)}
-            >
-              <View className="w-10 h-10 bg-orange-50 rounded-full items-center justify-center mb-2">
-                <FontAwesome name={menu.icon as any} size={18} color="#ea580c" />
-              </View>
-              <Text className="font-lexend text-xs text-center text-text">{menu.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+
+      {pickerConfig && pickerConfig.show && (
+        <DateTimePicker
+          value={pickerConfig.value}
+          mode="time"
+          is24Hour={false}
+          display="spinner"
+          onChange={handlePickerChange}
+        />
+      )}
     </ScrollView>
   );
 }

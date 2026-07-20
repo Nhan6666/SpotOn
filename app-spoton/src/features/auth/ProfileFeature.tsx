@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
+import { FontAwesome } from '@expo/vector-icons';
 
 export function ProfileFeature() {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -97,6 +98,32 @@ export function ProfileFeature() {
           </View>
         )}
       </View>
+
+      {(user.role === 'MANAGER' || user.role === 'ADMIN') && (
+        <View className="mb-6">
+          <Text className="font-lexend font-bold text-lg text-text mb-3">Chức năng quản lý</Text>
+          <View className="flex-row flex-wrap justify-between">
+            {[
+              { name: 'Thực đơn', icon: 'book', route: '/(tabs)/menu-manage' },
+              { name: 'Đối soát hóa đơn', icon: 'file-text-o', route: '/(tabs)/invoices' },
+              { name: 'Lịch sử giao dịch', icon: 'history', route: '/(tabs)/transactions' },
+              { name: 'Thống kê', icon: 'bar-chart', route: '/(tabs)/statistics' },
+              { name: 'Khuyến mãi', icon: 'gift', route: '/(tabs)/promotions' },
+            ].map((menu, index) => (
+              <TouchableOpacity 
+                key={index}
+                className="w-[31%] bg-white rounded-lg p-3 mb-3 items-center border border-gray-100 shadow-sm"
+                onPress={() => router.push(menu.route as any)}
+              >
+                <View className="w-10 h-10 bg-orange-50 rounded-full items-center justify-center mb-2">
+                  <FontAwesome name={menu.icon as any} size={18} color="#ea580c" />
+                </View>
+                <Text className="font-lexend text-xs text-center text-text">{menu.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
 
       <Button 
         title="Đăng xuất"

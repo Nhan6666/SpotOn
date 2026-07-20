@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ADMIN_TEXTS } from "@/constants/texts/admin";
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
@@ -55,7 +56,7 @@ export function DeleteConfirmModal({ isOpen, onClose, onConfirm, title, descript
               onClick={onClose}
               disabled={isDeleting}
             >
-              Hủy
+              {ADMIN_TEXTS.mapEditor.deleteModalBtnCancel}
             </Button>
             <Button
               variant="primary"
@@ -63,7 +64,7 @@ export function DeleteConfirmModal({ isOpen, onClose, onConfirm, title, descript
               onClick={handleConfirm}
               disabled={isDeleting}
             >
-              {isDeleting ? "Đang xóa..." : "Xác nhận xóa"}
+              {isDeleting ? ADMIN_TEXTS.mapEditor.deleteModalBtnDeleting : ADMIN_TEXTS.mapEditor.deleteModalBtnConfirm}
             </Button>
           </div>
         </div>

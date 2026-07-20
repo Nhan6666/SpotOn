@@ -1,6 +1,6 @@
 // ============================================================
 // REDIS CONNECTION — Two-Stage Table Locking (UC-C11)
-// Sử dụng Docker Redis tại localhost:6379
+// Sử dụng Redis tại localhost:6379
 // ============================================================
 const Redis = require('ioredis');
 

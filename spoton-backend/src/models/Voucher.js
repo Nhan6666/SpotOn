@@ -15,7 +15,9 @@ const VoucherSchema = new mongoose.Schema(
     valid_until: { type: Date },
     usage_limit: { type: Number }, // undefined = không giới hạn
     used_count: { type: Number, default: 0 },
-    is_active: { type: Boolean, default: true },
+    min_guest_count: { type: Number, default: 1 }, // Yêu cầu bàn tối thiểu mấy người
+    is_public: { type: Boolean, default: true }, // Mở rèm (true) hay Đóng rèm VIP (false)
+    is_active: { type: Boolean, default: true }, // Bật/Tắt hoàn toàn
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

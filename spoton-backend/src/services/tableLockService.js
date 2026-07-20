@@ -11,7 +11,7 @@ const PAYMENT_TTL = 900; // 15 phút (Giai đoạn 2)
 
 class TableLockService {
   /**
-   * Tạo key lock cho bàn
+   * Tạo key lock cho bàn (Lưu ý: Redis class tự động thêm prefix spoton:)
    * @returns {string} Ví dụ: table_lock:64abc123:64def456
    */
   static _buildKey(branchId, tableId) {
@@ -21,65 +21,75 @@ class TableLockService {
   /**
    * Giai đoạn 1: Khóa bàn khi khách chọn trên sơ đồ (TTL 10 phút)
    * Lệnh Redis: SET table_lock_{branch}_{table} {customerId} EX 600 NX
-   * NX = chỉ set nếu key chưa tồn tại (tránh ghi đè lock của người khác)
-   * 
-   * @param {string} branchId
-   * @param {string} tableId
-   * @param {string} customerId - ID người giữ bàn
-   * @returns {boolean} true nếu khóa thành công, false nếu bàn đã bị giữ
    */
   static async lockTable(branchId, tableId, customerId) {
+    if (redis.status !== 'ready') {
+      console.warn('⚠️ Redis is not ready. Bypassing lockTable.');
+      return true;
+    }
     try {
       const key = this._buildKey(branchId, tableId);
       const result = await redis.set(key, customerId, 'EX', HOLD_TTL, 'NX');
       return result === 'OK';
     } catch (error) {
-      console.warn(`⚠️ TableLockService.lockTable failed (Redis offline?). Bypassing lock for table ${tableId}.`, error.message);
+      console.warn(`⚠️ Redis error in lockTable: ${error.message}. Bypassing.`);
       return true;
     }
   }
 
   /**
    * Khóa nhiều bàn cùng lúc (Atomic — All or Nothing)
-   * Nếu 1 trong các bàn đã bị lock → Rollback tất cả
-   * 
-   * @param {string} branchId
-   * @param {string[]} tableIds
-   * @param {string} customerId
-   * @returns {{ success: boolean, failedTableId?: string }}
+   * Sử dụng Lua Script để đảm bảo tính nguyên tử 100% không bị Context Switch
    */
   static async lockMultipleTables(branchId, tableIds, customerId) {
-    const lockedKeys = [];
+    if (redis.status !== 'ready') {
+      console.warn('⚠️ Redis is not ready. Bypassing lockMultipleTables.');
+      return { success: true };
+    }
+    
+    // Tạo danh sách keys
+    const keys = tableIds.map(id => this._buildKey(branchId, id));
+    
+    // Lua script: 
+    // - Vòng lặp 1: Kiểm tra xem có bất kỳ key nào đã tồn tại chưa (bàn đã bị khóa chưa)
+    // - Nếu có, trả về key đó ngay lập tức (thất bại).
+    // - Nếu không có key nào tồn tại, lặp lại và SET tất cả với TTL (thành công).
+    const luaScript = `
+      for i = 1, #KEYS do
+        if redis.call("EXISTS", KEYS[i]) == 1 then
+          return KEYS[i]
+        end
+      end
+      for i = 1, #KEYS do
+        redis.call("SET", KEYS[i], ARGV[1], "EX", tonumber(ARGV[2]))
+      end
+      return "OK"
+    `;
 
     try {
-      for (const tableId of tableIds) {
-        const success = await this.lockTable(branchId, tableId, customerId);
-        if (!success) {
-          // Rollback: Xóa tất cả các key đã lock thành công trước đó
-          for (const lockedKey of lockedKeys) {
-            await redis.del(lockedKey).catch(() => {});
-          }
-          return { success: false, failedTableId: tableId };
-        }
-        lockedKeys.push(this._buildKey(branchId, tableId));
+      const result = await redis.eval(luaScript, keys.length, ...keys, customerId, HOLD_TTL);
+      if (result === 'OK') {
+        return { success: true };
+      } else {
+        // Trả về failedTableId dựa trên key bị trùng
+        const failedTableId = result.split(':').pop();
+        return { success: false, failedTableId };
       }
-      return { success: true };
     } catch (error) {
-      console.warn('⚠️ TableLockService.lockMultipleTables failed (Redis offline?). Bypassing lock.', error.message);
-      return { success: true };
+      console.warn(`⚠️ Redis error in Lua lockMultipleTables: ${error.message}`);
+      return { success: false };
     }
   }
 
   /**
    * Giai đoạn 2: Gia hạn khóa lên 15 phút khi khách bấm "Thanh toán"
-   * Lệnh Redis: EXPIRE table_lock_{branch}_{table} 900
-   * 
-   * @param {string} branchId
-   * @param {string[]} tableIds
-   * @returns {boolean}
    */
   static async extendLockForPayment(branchId, tableIds) {
+    if (redis.status !== 'ready') return true;
+    
     try {
+      // Dùng pipeline hoặc Lua script đều được, ở đây dùng for loop cho nhanh 
+      // vì lúc này bàn ĐÃ thuộc về khách (đã khóa ở phase 1)
       for (const tableId of tableIds) {
         const key = this._buildKey(branchId, tableId);
         const exists = await redis.exists(key);
@@ -90,19 +100,16 @@ class TableLockService {
       }
       return true;
     } catch (error) {
-      console.warn('⚠️ TableLockService.extendLockForPayment failed (Redis offline?). Bypassing lock.', error.message);
+      console.warn(`⚠️ Redis error in extendLockForPayment: ${error.message}. Bypassing.`);
       return true;
     }
   }
 
   /**
    * Giải phóng khóa bàn (Khi thanh toán thành công hoặc hủy đơn)
-   * Lệnh Redis: DEL table_lock_{branch}_{table}
-   * 
-   * @param {string} branchId
-   * @param {string[]} tableIds
    */
   static async unlockTables(branchId, tableIds) {
+    if (redis.status !== 'ready') return;
     try {
       const pipeline = redis.pipeline();
       for (const tableId of tableIds) {
@@ -110,26 +117,26 @@ class TableLockService {
       }
       await pipeline.exec();
     } catch (error) {
-      console.warn('⚠️ TableLockService.unlockTables failed (Redis offline?).', error.message);
+      console.warn(`⚠️ Redis error in unlockTables: ${error.message}`);
     }
   }
 
-  /**
-   * Kiểm tra bàn có đang bị khóa không
-   * @returns {string|null} customerId nếu đang bị lock, null nếu trống
-   */
   static async getTableLockOwner(branchId, tableId) {
-    const key = this._buildKey(branchId, tableId);
-    return await redis.get(key);
+    if (redis.status !== 'ready') return null;
+    try {
+      return await redis.get(this._buildKey(branchId, tableId));
+    } catch (error) {
+      return null;
+    }
   }
 
-  /**
-   * Lấy thời gian còn lại của lock (giây)
-   * @returns {number} Số giây còn lại, -2 nếu key không tồn tại
-   */
   static async getTableLockTTL(branchId, tableId) {
-    const key = this._buildKey(branchId, tableId);
-    return await redis.ttl(key);
+    if (redis.status !== 'ready') return -2;
+    try {
+      return await redis.ttl(this._buildKey(branchId, tableId));
+    } catch (error) {
+      return -2;
+    }
   }
 }
 

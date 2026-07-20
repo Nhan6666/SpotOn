@@ -5,15 +5,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Image from 'next/image';
-import { AlertCircle, Clock, ShoppingCart, Trash2, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, Clock, ShoppingCart, Trash2, CheckCircle2, User, Phone, FileText } from 'lucide-react';
 import { PublicBranchDetail } from '../branch-detail.types';
+import { PUBLIC_TEXTS } from '@/constants/texts/public';
 import { branchDetailService } from '../branch-detail.service';
 import { CheckoutReviewStep } from './CheckoutReviewStep';
+import { useToast } from '@/components/ui/Toast';
 
 const checkoutSchema = z.object({
-  walk_in_name: z.string().min(2, 'Tên phải có ít nhất 2 ký tự').max(50, 'Tên không được quá 50 ký tự'),
-  walk_in_phone: z.string().regex(/^(0|\+84)[3|5|7|8|9][0-9]{8}$/, 'Số điện thoại không hợp lệ'),
-  note: z.string().max(200, 'Ghi chú không được quá 200 ký tự').optional(),
+  walk_in_name: z.string().min(2, PUBLIC_TEXTS.branchDetail.checkout.form.errors.nameMin).max(50, PUBLIC_TEXTS.branchDetail.checkout.form.errors.nameMax),
+  walk_in_phone: z.string().regex(/^(0|\+84)[3|5|7|8|9][0-9]{8}$/, PUBLIC_TEXTS.branchDetail.checkout.form.errors.phoneInvalid),
+  note: z.string().max(200, PUBLIC_TEXTS.branchDetail.checkout.form.errors.noteMax).optional(),
 });
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
@@ -22,10 +24,11 @@ interface Props {
   branch: PublicBranchDetail;
   bookingId: string;
   expiresAt: string;
+  selectedTables?: any[];
   onCancel: () => void;
 }
 
-export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: Props) {
+export function BookingCheckoutStep({ branch, bookingId, expiresAt, selectedTables = [], onCancel }: Props) {
   const [categories, setCategories] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<string>('');
   const [menuItems, setMenuItems] = useState<any[]>([]);
@@ -33,7 +36,9 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
   const [totalPages, setTotalPages] = useState(1);
   const [isLoadingMenu, setIsLoadingMenu] = useState(false);
   const [tabOffset, setTabOffset] = useState(0);
+  const { error } = useToast();
 
+  const [tables, setTables] = useState<any[]>(selectedTables);
   const [cart, setCart] = useState<Record<string, { item: any; quantity: number }>>({});
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,6 +48,26 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
   const { register, handleSubmit, formState: { errors } } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
   });
+
+  // Fetch booking details if tables are missing (fallback for old cache)
+  useEffect(() => {
+    if (tables.length === 0 && bookingId) {
+      const fetchBooking = async () => {
+        const data = await branchDetailService.getBookingById(bookingId);
+        if (data && data.table_ids && data.table_ids.length > 0) {
+          setTables(data.table_ids);
+        }
+      };
+      fetchBooking();
+    }
+  }, [bookingId, tables.length]);
+
+  // Sync state if prop changes
+  useEffect(() => {
+    if (selectedTables && selectedTables.length > 0) {
+      setTables(selectedTables);
+    }
+  }, [selectedTables]);
 
   // Countdown Timer
   useEffect(() => {
@@ -58,7 +83,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
       setTimeLeft(remaining);
       if (remaining <= 0) {
         clearInterval(timer);
-        alert('Đã hết thời gian giữ bàn. Vui lòng chọn lại bàn từ đầu.');
+        error(PUBLIC_TEXTS.branchDetail.checkout.timer.timeoutAlert);
         onCancel();
       }
     }, 1000);
@@ -104,6 +129,14 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
   }, [branch._id, activeTab, currentPage]);
 
   const addToCart = (item: any) => {
+    const currentQty = cart[item._id]?.quantity || 0;
+
+    // Kiểm tra số lượng tồn (nếu có)
+    if (item.quantity !== undefined && currentQty >= item.quantity) {
+      error(`Món này hiện chỉ còn ${item.quantity} phần tại chi nhánh.`);
+      return;
+    }
+
     setCart(prev => {
       const existing = prev[item._id];
       return {
@@ -147,7 +180,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
 
   const onSubmit = async (data: CheckoutFormData) => {
     if (timeLeft <= 0) {
-      alert('Đã hết thời gian giữ bàn. Vui lòng thực hiện lại.');
+      error(PUBLIC_TEXTS.branchDetail.checkout.timer.timeoutAlert);
       onCancel();
       return;
     }
@@ -206,7 +239,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
         <div className="flex items-center gap-3">
           <Clock className="w-6 h-6 text-[#ea580c] animate-pulse" />
           <div>
-            <p className="text-sm text-gray-600 font-medium">Thời gian giữ bàn còn lại</p>
+            <p className="text-sm text-gray-600 font-medium">{PUBLIC_TEXTS.branchDetail.checkout.timer.label}</p>
             <p className="text-2xl font-bold text-[#ea580c] font-mono">{formatTime(timeLeft)}</p>
           </div>
         </div>
@@ -214,14 +247,14 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
           onClick={onCancel}
           className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
         >
-          Hủy đặt bàn
+          {PUBLIC_TEXTS.branchDetail.checkout.timer.cancelBtn}
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Menu */}
         <div className="lg:col-span-2">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Chọn món trước (Không bắt buộc)</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-6">{PUBLIC_TEXTS.branchDetail.checkout.menu.title}</h3>
           
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             {categories.length > 0 ? (
@@ -282,7 +315,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
                             <div key={item._id || iIdx} className={`flex gap-4 p-3 rounded-xl border ${inCart > 0 ? 'border-[#ea580c] bg-orange-50' : 'border-gray-100 bg-white'} relative overflow-hidden transition-all ${isOutOfStock ? 'opacity-60 grayscale-[50%]' : ''}`}>
                               {isOutOfStock && (
                                 <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm z-10 uppercase">
-                                  Đã Hết
+                                  {PUBLIC_TEXTS.branchDetail.checkout.menu.outOfStock}
                                 </div>
                               )}
 
@@ -298,8 +331,15 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
                               
                               <div className="flex-1 flex flex-col justify-between">
                                 <div>
-                                  <h5 className="font-bold text-gray-900 text-sm line-clamp-1">{item.name || 'Tên món'}</h5>
-                                  <span className="font-bold text-[#ea580c] text-sm">{item.price ? `${item.price.toLocaleString()}đ` : 'Liên hệ'}</span>
+                                  <h5 className="font-bold text-gray-900 text-sm line-clamp-1">{item.name || PUBLIC_TEXTS.branchDetail.checkout.menu.noItemName}</h5>
+                                  <div className="flex justify-between items-center mt-1">
+                                    <span className="font-bold text-[#ea580c] text-sm">{item.price ? `${item.price.toLocaleString()}đ` : PUBLIC_TEXTS.branchDetail.checkout.menu.priceContact}</span>
+                                    {item.quantity !== undefined && item.quantity !== -1 && (
+                                      <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                        Còn {Math.max(0, item.quantity - inCart)}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                                 
                                 {!isOutOfStock && (
@@ -308,14 +348,18 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
                                       <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg p-1 w-full justify-between">
                                         <button onClick={() => removeFromCart(item._id)} className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold text-gray-700">-</button>
                                         <span className="font-bold text-sm">{inCart}</span>
-                                        <button onClick={() => addToCart(item)} className="w-6 h-6 rounded bg-[#ea580c] hover:bg-[#c2410c] text-white flex items-center justify-center font-bold">+</button>
+                                        <button 
+                                          onClick={() => addToCart(item)} 
+                                          disabled={item.quantity !== undefined && item.quantity !== -1 && inCart >= item.quantity}
+                                          className="w-6 h-6 rounded bg-[#ea580c] hover:bg-[#c2410c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white flex items-center justify-center font-bold"
+                                        >+</button>
                                       </div>
                                     ) : (
                                       <button 
                                         onClick={() => addToCart(item)}
                                         className="w-full py-1.5 bg-gray-100 hover:bg-[#ea580c] hover:text-white text-gray-700 text-xs font-bold rounded-lg transition-colors"
                                       >
-                                        Thêm món
+                                        {PUBLIC_TEXTS.branchDetail.checkout.menu.addBtn}
                                       </button>
                                     )}
                                   </div>
@@ -358,6 +402,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
               <div className="p-12 text-center text-gray-500 italic bg-gray-50">
                 Đang tải thực đơn hoặc chi nhánh chưa có thực đơn...
               </div>
+
             )}
           </div>
         </div>
@@ -365,16 +410,37 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
         {/* Right Column: Form & Cart Summary */}
         <div className="lg:col-span-1">
           <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden sticky top-32">
+            
+            {/* Selected Tables Info */}
+            <div className="bg-orange-50 border-b border-orange-100 p-4">
+              <h3 className="font-bold text-orange-900 flex items-center gap-2 mb-3">
+                <CheckCircle2 className="w-5 h-5 text-[#ea580c]" /> 
+                Bàn đã chọn
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {tables && tables.length > 0 ? (
+                  tables.map((t: any) => (
+                    <div key={t._id} className="bg-white border border-orange-200 text-orange-800 text-xs px-3 py-1.5 rounded-lg shadow-sm font-medium flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#ea580c]"></span>
+                      Bàn {t.table_number || t.name} <span className="text-gray-400 font-normal">({t.capacity} chỗ)</span>
+                    </div>
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-500 italic">Chưa có thông tin bàn</span>
+                )}
+              </div>
+            </div>
+
             <div className="bg-gray-50 border-b border-gray-200 p-4">
               <h3 className="font-bold text-gray-900 flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5 text-[#ea580c]" /> 
-                Giỏ hàng của bạn
+                {PUBLIC_TEXTS.branchDetail.checkout.cart.title}
               </h3>
             </div>
             
-            <div className="p-4 max-h-[300px] overflow-y-auto">
+            <div className="p-4 max-h-[300px] overflow-y-auto bg-white">
               {cartItems.length === 0 ? (
-                <p className="text-sm text-gray-500 italic text-center py-4">Bạn chưa chọn món nào.</p>
+                <p className="text-sm text-gray-500 italic text-center py-4">{PUBLIC_TEXTS.branchDetail.checkout.cart.empty}</p>
               ) : (
                 <div className="space-y-3">
                   {cartItems.map(({ item, quantity }) => (
@@ -396,46 +462,64 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
             </div>
 
             {cartItems.length > 0 && (
-              <div className="p-4 bg-orange-50 border-t border-orange-100 flex justify-between items-center">
-                <span className="font-medium text-orange-900">Tổng tiền món:</span>
+              <div className="p-4 bg-orange-50 border-y border-orange-100 flex justify-between items-center">
+                <span className="font-medium text-orange-900">{PUBLIC_TEXTS.branchDetail.checkout.cart.total}</span>
                 <span className="text-xl font-bold text-[#ea580c]">{cartTotal.toLocaleString()}đ</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="p-4 border-t border-gray-200 bg-gray-50 space-y-4">
-              <h4 className="font-bold text-gray-900 mb-2">Thông tin liên hệ</h4>
+            <form onSubmit={handleSubmit(onSubmit)} className="p-5 bg-white space-y-4">
+              <h4 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2 flex items-center gap-2">
+                <User className="w-5 h-5 text-gray-500" />
+                {PUBLIC_TEXTS.branchDetail.checkout.form.title}
+              </h4>
               
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Họ tên người đặt <span className="text-red-500">*</span></label>
-                <input 
-                  {...register('walk_in_name')}
-                  type="text" 
-                  className={`w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] ${errors.walk_in_name ? 'border-red-500' : ''}`}
-                  placeholder="Nhập tên của bạn"
-                />
-                {errors.walk_in_name && <p className="text-red-500 text-xs mt-1">{errors.walk_in_name.message}</p>}
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">{PUBLIC_TEXTS.branchDetail.checkout.form.nameLabel} <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <input 
+                    {...register('walk_in_name')}
+                    type="text" 
+                    className={`w-full pl-9 py-2.5 text-sm border-gray-300 rounded-xl shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] transition-colors bg-gray-50 focus:bg-white ${errors.walk_in_name ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                    placeholder={PUBLIC_TEXTS.branchDetail.checkout.form.namePlaceholder}
+                  />
+                </div>
+                {errors.walk_in_name && <p className="text-red-500 text-xs mt-1 font-medium">{errors.walk_in_name.message}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Số điện thoại <span className="text-red-500">*</span></label>
-                <input 
-                  {...register('walk_in_phone')}
-                  type="tel" 
-                  className={`w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] ${errors.walk_in_phone ? 'border-red-500' : ''}`}
-                  placeholder="Ví dụ: 0912345678"
-                />
-                {errors.walk_in_phone && <p className="text-red-500 text-xs mt-1">{errors.walk_in_phone.message}</p>}
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">{PUBLIC_TEXTS.branchDetail.checkout.form.phoneLabel} <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <input 
+                    {...register('walk_in_phone')}
+                    type="tel" 
+                    className={`w-full pl-9 py-2.5 text-sm border-gray-300 rounded-xl shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] transition-colors bg-gray-50 focus:bg-white ${errors.walk_in_phone ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                    placeholder={PUBLIC_TEXTS.branchDetail.checkout.form.phonePlaceholder}
+                  />
+                </div>
+                {errors.walk_in_phone && <p className="text-red-500 text-xs mt-1 font-medium">{errors.walk_in_phone.message}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Ghi chú (Tùy chọn)</label>
-                <textarea 
-                  {...register('note')}
-                  rows={2}
-                  className={`w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] ${errors.note ? 'border-red-500' : ''}`}
-                  placeholder="Ghi chú thêm..."
-                />
-                {errors.note && <p className="text-red-500 text-xs mt-1">{errors.note.message}</p>}
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">{PUBLIC_TEXTS.branchDetail.checkout.form.noteLabel}</label>
+                <div className="relative">
+                  <div className="absolute top-3 left-0 pl-3 flex items-start pointer-events-none">
+                    <FileText className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <textarea 
+                    {...register('note')}
+                    rows={2}
+                    className={`w-full pl-9 py-2.5 text-sm border-gray-300 rounded-xl shadow-sm focus:ring-[#ea580c] focus:border-[#ea580c] transition-colors bg-gray-50 focus:bg-white ${errors.note ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                    placeholder={PUBLIC_TEXTS.branchDetail.checkout.form.notePlaceholder}
+                  />
+                </div>
+                {errors.note && <p className="text-red-500 text-xs mt-1 font-medium">{errors.note.message}</p>}
               </div>
 
               {errorMsg && (
@@ -450,7 +534,7 @@ export function BookingCheckoutStep({ branch, bookingId, expiresAt, onCancel }: 
                 disabled={isSubmitting}
                 className="w-full py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2"
               >
-                {isSubmitting ? 'Đang lưu...' : 'Tiếp tục thanh toán'}
+                {isSubmitting ? PUBLIC_TEXTS.branchDetail.checkout.form.submittingBtn : PUBLIC_TEXTS.branchDetail.checkout.form.submitBtn}
               </button>
             </form>
           </div>

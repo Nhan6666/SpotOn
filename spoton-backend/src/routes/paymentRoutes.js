@@ -19,8 +19,10 @@ const {
 // POST /api/v1/payment/calculate-deposit → Tính tiền cọc (Bước 1: Checkout Review)
 router.post('/calculate-deposit', calculateDeposit);
 
+const { optionalAuth } = require('../middlewares/authMiddleware');
+
 // POST /api/v1/payment/create-payment → Tạo URL thanh toán VNPay/MoMo (Bước 2)
-router.post('/create-payment', createPayment);
+router.post('/create-payment', optionalAuth, createPayment);
 
 // POST /api/v1/payment/mock-payment → API giả lập VNPay trả về thành công (Dành cho App)
 router.post('/mock-payment', mockPayment);

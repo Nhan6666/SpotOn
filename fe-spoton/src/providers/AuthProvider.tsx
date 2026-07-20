@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { useRouter } from "next/navigation";
 
 // Khai báo các types
-export type Role = "GUEST" | "CUSTOMER" | "WAITER" | "MANAGER" | "ADMIN";
+export type Role = "GUEST" | "CUSTOMER" | "WAITER" | "KITCHEN" | "MANAGER" | "ADMIN";
 
 export interface User {
   _id: string;
@@ -50,7 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // Gọi API getMe từ Backend
-        const res = await fetch("http://localhost:5000/api/v1/auth/me", {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        const res = await fetch(`${API_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

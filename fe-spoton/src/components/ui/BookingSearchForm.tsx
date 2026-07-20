@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Calendar, Clock, Users } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 interface BookingSearchFormProps {
   initialDate?: string;
@@ -18,12 +19,30 @@ export function BookingSearchForm({
   className = ''
 }: BookingSearchFormProps) {
   const router = useRouter();
+  const { error: showError } = useToast();
   const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState(initialTime || '19:00');
   const [guests, setGuests] = useState(initialGuests || 2);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const now = new Date();
+    const [year, month, day] = date.split('-').map(Number);
+    const [hours, minutes] = time.split(':').map(Number);
+    const selectedDate = new Date(year, month - 1, day, hours, minutes);
+
+    if (selectedDate.getTime() < now.getTime()) {
+      showError('Không thể chọn thời gian trong quá khứ. Vui lòng chọn lại.');
+      return;
+    }
+
+    const diffHours = (selectedDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    if (diffHours < 2) {
+      showError('Vui lòng đặt bàn trước ít nhất 2 tiếng để nhà hàng chuẩn bị tốt nhất.');
+      return;
+    }
+
     router.push(`/branches?date=${date}&time=${time}&guests=${guests}`);
   };
 

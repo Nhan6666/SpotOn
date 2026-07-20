@@ -34,9 +34,9 @@ export const branchDetailService = {
     }
   },
 
-  getVouchers: async () => {
+  getVouchers: async (branchId: string) => {
     try {
-      const res = await http.get<{ success: boolean; data: any }>('/vouchers');
+      const res = await http.get<{ success: boolean; data: any }>(`/vouchers/public/branch/${branchId}`);
       return res.data;
     } catch {
       return [];

@@ -53,6 +53,7 @@ export function PublicMenuFeature() {
           <h1 className="text-4xl md:text-6xl font-black text-white mb-6 uppercase tracking-wider font-playfair drop-shadow-lg">
             Thực Đơn
           </h1>
+
         </div>
       </section>
 
@@ -71,7 +72,7 @@ export function PublicMenuFeature() {
                 key={cat._id}
                 onClick={() => handleTabChange(cat.category_name)}
                 className={`
-                  snap-start flex-shrink-0 whitespace-nowrap px-6 py-4 font-bold text-[15px] transition-all uppercase border-b-4 
+                  cursor-pointer snap-start flex-shrink-0 whitespace-nowrap px-6 py-4 font-bold text-[15px] transition-all uppercase border-b-4 
                   /* On mobile, ensure approx 4 tabs are visible by setting min/max widths */
                   w-[25%] lg:w-auto min-w-[100px] text-center
                   ${
@@ -98,7 +99,7 @@ export function PublicMenuFeature() {
           <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {items.map((item) => (
-                <div key={item._id} className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-gray-50 flex flex-col group hover:shadow-xl transition-shadow duration-300">
+                <div key={item._id} className="cursor-pointer bg-white rounded-2xl overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-gray-50 flex flex-col group hover:shadow-xl transition-shadow duration-300">
                   <div className="aspect-[4/3] w-full overflow-hidden relative">
                     {item.image_url ? (
                       <img
@@ -134,7 +135,7 @@ export function PublicMenuFeature() {
                       <p className="text-[#e67e22] font-black text-lg">
                         {(item.base_price || item.price || 0).toLocaleString('vi-VN')} <span className="text-sm font-bold opacity-70">đ</span>
                       </p>
-                      <button className="flex items-center justify-center w-9 h-9 rounded-full bg-amber-50 text-[#e67e22] hover:bg-[#e67e22] hover:text-white transition-colors group/btn">
+                      <button className="flex items-center justify-center w-9 h-9 rounded-full bg-amber-50 text-[#e67e22] hover:bg-[#e67e22] hover:text-white transition-colors group/btn cursor-pointer">
                         <Plus className="w-5 h-5 transition-transform group-hover/btn:rotate-90" />
                       </button>
                     </div>

@@ -11,6 +11,7 @@ import { useBranchContext } from "./branch-management.context";
 import { useToast } from "@/components/ui/Toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ADMIN_TEXTS } from "@/constants/texts/admin";
 
 export function EditBranchFeature({ branchId }: { branchId: string }) {
   const { updateBranch } = useBranchContext();
@@ -19,6 +20,8 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showCloseWarning, setShowCloseWarning] = useState(false);
+  const [pendingBookingCount, setPendingBookingCount] = useState(0);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -80,7 +83,7 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
         }
       } catch (error) {
         console.error("Failed to fetch branch:", error);
-        showError("Failed to load branch data.");
+        showError(ADMIN_TEXTS.editBranch.errorFetch);
       } finally {
         setIsLoading(false);
       }
@@ -94,26 +97,53 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
 
   const handleUpdate = async () => {
     if (!formData.name || !formData.address.full || !formData.address.district) {
-      showError("Tên chi nhánh, Quận/Huyện và Địa chỉ đầy đủ là bắt buộc!");
+      showError(ADMIN_TEXTS.editBranch.errorValidation);
       return;
     }
 
     if (!formData.manager_id) {
-      showError("Please assign a Manager for this branch!");
+      showError(ADMIN_TEXTS.editBranch.errorManager);
       return;
     }
 
+    // UC-6.4: Cảnh báo nếu chuyển sang CLOSED mà vẫn còn đơn chờ
+    if (formData.status === 'CLOSED') {
+      try {
+        const response = await fetch(`/api/v1/bookings?branch_id=${branchId}`);
+        const result = await response.json();
+        if (result.success && result.data) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const pendingBookings = result.data.filter((b: any) => 
+            ['PENDING', 'CONFIRMED'].includes(b.status) && new Date(b.reservation_date || b.created_at) >= today
+          );
+          if (pendingBookings.length > 0) {
+            setPendingBookingCount(pendingBookings.length);
+            setShowCloseWarning(true);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra bookings:", error);
+      }
+    }
+
+    await performUpdate();
+  };
+
+  const performUpdate = async () => {
     setIsSaving(true);
     try {
       await updateBranch(branchId, formData);
-      success(`Đã cập nhật chi nhánh "${formData.name}" thành công.`);
+      success(`${ADMIN_TEXTS.editBranch.successUpdate} "${formData.name}"`);
       if (user?.role !== 'MANAGER') {
         router.push("/admin/branches");
       }
     } catch (error) {
-      showError("Lỗi khi cập nhật chi nhánh. Vui lòng thử lại.");
+      showError(ADMIN_TEXTS.editBranch.errorUpdate);
     } finally {
       setIsSaving(false);
+      setShowCloseWarning(false);
     }
   };
 
@@ -126,11 +156,11 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
             href="/admin/branches"
             className="text-gray-500 hover:text-amber-700 transition-colors font-medium"
           >
-            Branch Management
+            {ADMIN_TEXTS.editBranch.breadcrumbList}
           </Link>
           <span className="mx-3 text-gray-300">/</span>
           <span className="font-semibold text-gray-900">
-            Edit Branch
+            {ADMIN_TEXTS.editBranch.breadcrumbEdit}
           </span>
         </div>
       )}
@@ -138,13 +168,13 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
-            {user?.role === 'MANAGER' ? 'Chi nhánh: ' : 'Edit Branch: '}
+            {user?.role === 'MANAGER' ? `${ADMIN_TEXTS.editBranch.titleManager} ` : `${ADMIN_TEXTS.editBranch.titleAdmin} `}
             <span className="font-medium text-gray-600">
-              {formData.name || "Loading..."}
+              {formData.name || ADMIN_TEXTS.editBranch.loadingName}
             </span>
           </h1>
           <p className="text-sm md:text-base text-gray-500 mt-1">
-            Quản lý thông tin và các giới hạn vận hành của chi nhánh.
+            {ADMIN_TEXTS.editBranch.subtitle}
           </p>
         </div>
         {user?.role === 'MANAGER' && (
@@ -152,7 +182,7 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
             <Link href={`/manager/branch/map-editor`}>
               <Button variant="outline" className="shadow-sm flex items-center gap-2">
                 <Map className="w-4 h-4" />
-                Chỉnh Sửa Sơ Đồ Bàn
+                {ADMIN_TEXTS.editBranch.btnEditMap}
               </Button>
             </Link>
           </div>
@@ -180,7 +210,7 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
               variant="outline"
               className="w-32 bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
             >
-              Hủy
+              {ADMIN_TEXTS.editBranch.btnCancel}
             </Button>
           </Link>
         )}
@@ -190,9 +220,25 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
           onClick={handleUpdate}
           disabled={isSaving}
         >
-          {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+          {isSaving ? ADMIN_TEXTS.editBranch.btnSaving : ADMIN_TEXTS.editBranch.btnSave}
         </Button>
       </div>
+
+      {/* UC-6.4: Warning Modal */}
+      {showCloseWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">{ADMIN_TEXTS.editBranch.warningTitle}</h3>
+            <p className="text-gray-600 mb-6">
+              {ADMIN_TEXTS.editBranch.warningDesc1} <strong className="text-red-600">{pendingBookingCount}</strong> {ADMIN_TEXTS.editBranch.warningDesc2}
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowCloseWarning(false)}>{ADMIN_TEXTS.editBranch.warningBtnCancel}</Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={performUpdate}>{ADMIN_TEXTS.editBranch.warningBtnClose}</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

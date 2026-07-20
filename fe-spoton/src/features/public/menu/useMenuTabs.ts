@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { menuService } from './menu.service';
 import { MenuCategory, MenuItem } from './menu.types';
 
-export function useMenuTabs(branchId?: string) {
+export function useMenuTabs(branchId: string = 'master') {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [activeTab, setActiveTab] = useState<string>('');
   
@@ -38,7 +38,6 @@ export function useMenuTabs(branchId?: string) {
 
   // Load items when active tab changes, if not already cached
   const fetchItems = useCallback(async (categoryName: string, page: number = 1) => {
-    if (!branchId) return; // Prevent fetching if branchId is undefined
     
     try {
       setIsLoadingItems(true);

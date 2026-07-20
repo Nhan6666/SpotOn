@@ -33,7 +33,9 @@
     "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^8.0.10",
     "socket.io": "^4.8.3",
-    "spoton-root": "file:.."
+    "spoton-root": "file:..",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

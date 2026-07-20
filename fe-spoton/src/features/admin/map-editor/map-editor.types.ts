@@ -7,6 +7,8 @@ export interface EditorTable {
   table_number: string;
   capacity: number;
   status: TableStatus;
+  status_lunch?: TableStatus;
+  status_dinner?: TableStatus;
   x: number;
   y: number;
   width: number;

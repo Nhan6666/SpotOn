@@ -7,6 +7,7 @@ const {
   createBranch,
   updateBranch,
   deleteBranch,
+  getTableCapacities,
 } = require('../controllers/branchController');
 
 // Import controllers cho các route ở mức Branch nhưng thuộc về Table/Template
@@ -18,6 +19,9 @@ const { protect, authorize } = require('../middlewares/authMiddleware');
 // =============================================
 // BRANCH CRUD
 // =============================================
+
+// GET  /api/v1/branches/table-capacities
+router.get('/table-capacities', getTableCapacities);
 
 // GET  /api/v1/branches    -> Danh sách chi nhánh (Public)
 // POST /api/v1/branches    -> Tạo chi nhánh (Chỉ ADMIN)

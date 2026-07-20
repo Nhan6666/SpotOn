@@ -14,27 +14,31 @@ import { AppError } from '@/lib/errors';
 import type { LoginFormValues, LoginPayload } from './auth.types';
 import { useAuth } from '@/providers/AuthProvider';
 
-// IMPORT HOOK XỬ LÝ GOOGLE AUTH VÀO ĐÂY
 import { useGoogleAuth } from './useGoogleAuth';
+import { AUTH_TEXTS } from '@/constants/texts/auth';
 
 export function LoginFeature() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login: loginUser } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  const { login } = AUTH_TEXTS;
+
   const { loginWithGoogle, isLoading: isGoogleLoading, error: googleError } = useGoogleAuth({
     onSuccess: (token, user) => {
-      login(token, user);
-      setSuccessMessage('Đăng nhập Google thành công! Đang chuyển hướng...');
+      loginUser(token, user);
+      setSuccessMessage(login.messages.success);
       setTimeout(() => {
         if (user?.role === 'ADMIN') {
-          router.push('/admin');
+          window.location.href = '/admin';
         } else if (user?.role === 'MANAGER') {
-          router.push('/manager/branch');
+          window.location.href = '/manager/branch';
+        } else if (user?.role === 'KITCHEN') {
+          window.location.href = '/kitchen';
         } else {
-          router.push('/');
+          window.location.href = '/';
         }
       }, 1000);
     }
@@ -58,12 +62,12 @@ export function LoginFeature() {
     const savedEmail = localStorage.getItem('spoton_saved_email');
     if (savedEmail) {
       setValue('email', savedEmail);
-      setValue('rememberMe', true); // Tự động tick luôn ô checkbox
+      setValue('rememberMe', true);
     }
   }, [setValue]);
 
   const inputClass =
-    'w-full rounded-md border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-[#8a5a19] focus:outline-none focus:ring-1 focus:ring-[#8a5a19] transition-colors';
+    'w-full rounded-md border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-[#164626] focus:outline-none focus:ring-1 focus:ring-[#164626] transition-colors';
   const inputErrorClass =
     'w-full rounded-md border border-red-400 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 transition-colors';
 
@@ -79,8 +83,7 @@ export function LoginFeature() {
     try {
       const result = await authService.login(payload);
       
-      // Lưu token vào Context API (tự động update Navbar)
-      login(result.data.token, result.data.user);
+      loginUser(result.data.token, result.data.user);
       
       if (values.rememberMe) {
         localStorage.setItem('spoton_saved_email', values.email);
@@ -88,22 +91,24 @@ export function LoginFeature() {
         localStorage.removeItem('spoton_saved_email'); 
       }
 
-      setSuccessMessage('Đăng nhập thành công! Đang chuyển hướng...');
+      setSuccessMessage(login.messages.success);
       setTimeout(() => {
         const userRole = result.data.user.role;
         if (userRole === 'ADMIN') {
-          router.push('/admin');
+          window.location.href = '/admin';
         } else if (userRole === 'MANAGER') {
-          router.push('/manager/branch');
+          window.location.href = '/manager/branch';
+        } else if (userRole === 'KITCHEN') {
+          window.location.href = '/kitchen';
         } else {
-          router.push('/');
+          window.location.href = '/';
         }
       }, 1000);
     } catch (error) {
       if (error instanceof AppError) {
-        setServerError(error.message || 'Email hoặc mật khẩu không chính xác.');
+        setServerError(error.message || login.messages.invalidCreds);
       } else {
-        setServerError('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+        setServerError(login.messages.error);
       }
     }
   };
@@ -123,14 +128,14 @@ export function LoginFeature() {
         <div className="absolute inset-0 bg-black/60" />
 
         <div className="absolute bottom-0 left-0 flex h-full flex-col justify-end p-12 lg:p-16 w-full max-w-2xl">
-          <div className="mb-6 flex items-center gap-2 text-[#F2Dbb8]">
-            <span className="text-5xl font-bold tracking-tight">SpotOn</span>
+          <div className="mb-6 flex items-center gap-2 text-[#F2B02A]">
+            <span className="text-5xl font-stencil tracking-wider uppercase drop-shadow-md">SpotOn</span>
           </div>
-          <h2 className="text-3xl lg:text-4xl font-semibold text-white mb-4 leading-snug">
-            "Tiếp thêm năng lượng sôi động cho nhà hàng bằng hệ thống quản lý chuẩn xác."
+          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4 leading-snug drop-shadow-sm">
+            {login.bannerTitle}
           </h2>
           <p className="text-gray-300 text-sm lg:text-base leading-relaxed">
-            Tối ưu hóa đặt bàn và quản lý các chi nhánh với sự rõ ràng và hiệu quả vượt trội.
+            {login.bannerSubtitle}
           </p>
         </div>
       </div>
@@ -138,11 +143,25 @@ export function LoginFeature() {
       {/* Cột phải - Form Đăng nhập */}
       <div className="flex w-full flex-col justify-center px-8 md:w-1/2 md:px-16 lg:px-24 xl:px-32 relative">
         <div className="mx-auto w-full max-w-md">
-          <h1 className="mb-2 text-4xl font-bold text-gray-900">
-            Chào mừng trở lại
+          {/* Logo */}
+          <div className="mb-8 flex items-center gap-2">
+            <div className="flex items-center justify-center text-[#F2B02A]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 2C12 2 12 7.5 9 10.5C6 13.5 2 12 2 12M12 2C12 2 12 7.5 15 10.5C18 13.5 22 12 22 12M12 2V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M7 2L7 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M17 2L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <span className="text-3xl font-stencil tracking-wider uppercase text-[#164626]">
+              SpotOn
+            </span>
+          </div>
+
+          <h1 className="mb-2 text-3xl font-bold text-[#164626]">
+            {login.title}
           </h1>
           <p className="mb-8 text-gray-500">
-            Vui lòng nhập thông tin để đăng nhập.
+            {login.subtitle}
           </p>
 
           {/* Success Message Banner */}
@@ -162,13 +181,13 @@ export function LoginFeature() {
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
             {/* Email */}
             <div className="space-y-1.5">
-              <label htmlFor="email" className="text-xs font-semibold tracking-wide text-gray-700">
-                Email
+              <label htmlFor="email" className="text-xs font-bold tracking-widest text-gray-800 uppercase">
+                {login.emailLabel}
               </label>
               <input
                 id="email"
                 type="email"
-                placeholder="manager@spoton.com"
+                placeholder={login.emailPlaceholder}
                 className={errors.email ? inputErrorClass : inputClass}
                 {...register('email')}
               />
@@ -177,14 +196,14 @@ export function LoginFeature() {
 
             {/* Password */}
             <div className="space-y-1.5 relative">
-              <label htmlFor="password" className="text-xs font-semibold tracking-wide text-gray-700">
-                Mật khẩu
+              <label htmlFor="password" className="text-xs font-bold tracking-widest text-gray-800 uppercase">
+                {login.passwordLabel}
               </label>
               <div className="relative">
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder={login.passwordPlaceholder}
                   className={errors.password ? inputErrorClass : inputClass}
                   {...register('password')}
                 />
@@ -215,25 +234,24 @@ export function LoginFeature() {
                 <input
                   id="rememberMe"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-[#8a5a19] focus:ring-[#8a5a19]"
+                  className="h-4 w-4 rounded border-gray-300 text-[#164626] focus:ring-[#164626]"
                   {...register('rememberMe')}
                 />
                 <label htmlFor="rememberMe" className="text-sm text-gray-600">
                   Ghi nhớ đăng nhập
                 </label>
               </div>
-              <Link href="/forgot-password" className="text-sm font-semibold text-[#8a5a19] hover:underline">
-                Quên mật khẩu?
+              <Link href="/forgot-password" className="text-sm font-semibold text-[#164626] hover:text-[#0A2A12] hover:underline">
+                {login.forgotPassword}
               </Link>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
-              disabled={isSubmitting || isGoogleLoading}
-              className="mt-6 w-full rounded-md bg-[#8a5a19] px-4 cursor-pointer py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#724a15] transition-colors focus:outline-none focus:ring-2 focus:ring-[#8a5a19] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
+              className="w-full rounded-md bg-[#F2B02A] px-4 py-3 text-sm font-bold uppercase tracking-wider text-[#164626] transition-all hover:bg-[#d99d24] disabled:cursor-not-allowed disabled:opacity-70 mt-6 shadow-sm hover:shadow-md"
             >
-              {isSubmitting ? 'Đang xử lý...' : 'Đăng Nhập'}
+              {isSubmitting ? login.submittingBtn : login.submitBtn}
             </button>
           </form>
 
@@ -244,12 +262,11 @@ export function LoginFeature() {
                 <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-3 text-gray-400">Hoặc tiếp tục với</span>
+                <span className="bg-white px-3 text-gray-400">{login.orText}</span>
               </div>
             </div>
 
             <div className="mt-6">
-              {/* ĐÃ GẮN SỰ KIỆN onClick VÀ disabled VÀO NÚT NÀY */}
               <button 
                 type="button" 
                 onClick={loginWithGoogle}
@@ -262,15 +279,15 @@ export function LoginFeature() {
                   <path d="M5.26498 14.2949C5.02498 13.5699 4.88501 12.7999 4.88501 11.9999C4.88501 11.1999 5.01998 10.4299 5.26498 9.7049L1.275 6.60986C0.46 8.22986 0 10.0599 0 11.9999C0 13.9399 0.46 15.7699 1.28 17.3899L5.26498 14.2949Z" fill="#FBBC05" />
                   <path d="M12.0004 24.0001C15.2404 24.0001 17.9654 22.935 19.9454 21.095L16.0804 18.095C15.0054 18.82 13.6204 19.245 12.0004 19.245C8.8704 19.245 6.21537 17.135 5.26538 14.29L1.27539 17.385C3.25539 21.31 7.3104 24.0001 12.0004 24.0001Z" fill="#34A853" />
                 </svg>
-                {isGoogleLoading ? 'Đang kết nối...' : 'Tiếp tục với Google'}
+                {isGoogleLoading ? login.googleConnecting : login.googleBtn}
               </button>
             </div>
           </div>
 
           <p className="mt-8 text-center text-sm text-gray-500">
-            Chưa có tài khoản?{' '}
-            <Link href="/register" className="font-semibold text-[#8a5a19] hover:underline">
-              Đăng ký ngay
+            {login.noAccount}{' '}
+            <Link href="/register" className="font-semibold text-[#164626] hover:text-[#0A2A12] hover:underline">
+              {login.registerLink}
             </Link>
           </p>
         </div>

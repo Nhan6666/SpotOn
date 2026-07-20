@@ -15,6 +15,6 @@ router.post('/ipad/unlock-by-table', unlockIpad);
 router.post('/:id/items', protect, authorize('MANAGER', 'WAITER', 'IPAD'), addAdditionalOrder);
 
 // KDS Bếp/Waiter cập nhật trạng thái món ăn
-router.patch('/:id/items/:itemId/status', protect, updateOrderItemStatus);
+router.patch('/:id/items/:itemId/status', protect, authorize('KITCHEN', 'MANAGER', 'WAITER'), updateOrderItemStatus);
 
 module.exports = router;

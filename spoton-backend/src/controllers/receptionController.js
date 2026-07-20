@@ -20,16 +20,20 @@ const checkAvailability = asyncHandler(async (req, res) => {
   const nextDate = new Date(targetDate);
   nextDate.setDate(nextDate.getDate() + 1);
 
-  // Tìm các bàn đang được giữ hoặc đã xác nhận trong cùng ca + ngày
-  const existingBookings = await Booking.find({
+  // Tìm các bàn đang được giữ hoặc đã xác nhận trong ngày
+  const activeBookings = await Booking.find({
     branch_id,
-    shift,
     reservation_date: { $gte: targetDate, $lt: nextDate },
     $or: [
       { status: { $in: ['PENDING_PAYMENT', 'PENDING_DEPOSIT', 'CONFIRMED', 'IN_USE', 'OCCUPIED', 'RESERVED'] } },
       { status: 'HOLDING', expires_at: { $gt: new Date() } }
     ]
   });
+
+  const { isTimeOverlap } = require('../services/bookingService');
+
+  // Lọc các booking bị chồng lấp thời gian (120 phút)
+  const existingBookings = activeBookings.filter(b => isTimeOverlap(b.arrival_time, time));
 
   const bookedTableIds = [];
   existingBookings.forEach(b => {
@@ -112,9 +116,11 @@ const releaseHoldingBooking = async (req, res) => {
           table_ids: booking.table_ids
         });
       } catch (e) {}
+      return res.status(200).json({ success: true, message: 'Đã hủy giữ bàn.' });
     }
 
-    res.status(200).json({ success: true, message: 'Đã nhả bàn thành công.' });
+    // Nếu không ở trạng thái HOLDING thì báo lỗi
+    return res.status(400).json({ success: false, message: 'Chỉ có thể hủy đơn đang giữ chỗ.' });
   } catch (error) {
     console.error('Lỗi releaseHoldingBooking:', error);
     res.status(500).json({ success: false, message: 'Lỗi server khi nhả bàn.' });
@@ -187,8 +193,7 @@ const checkInBooking = async (req, res) => {
 const checkoutBooking = async (req, res) => {
   try {
     const BookingService = require('../services/bookingService');
-    const { final_bill_amount } = req.body;
-    const booking = await BookingService.checkoutBooking(req.params.id, final_bill_amount);
+    const booking = await BookingService.checkoutBooking(req.params.id);
 
     // 3. Hiệu ứng phụ: Emit WebSocket
     const io = require('../socket').getIO();
@@ -226,6 +231,53 @@ const checkoutBooking = async (req, res) => {
     res.status(error.statusCode || 500).json({ 
       success: false, 
       message: error.message || 'Lỗi server nội bộ trong quá trình thanh toán.' 
+    });
+  }
+};
+
+// @desc   Nhả bàn (Force Release) khi chưa thanh toán (chuyển sang PENDING_SETTLEMENT)
+// @route  PATCH /api/v1/reception/bookings/:id/force-release
+// @access Private (Manager/Admin)
+const forceReleaseBooking = async (req, res) => {
+  try {
+    const BookingService = require('../services/bookingService');
+    const booking = await BookingService.forceReleaseBooking(req.params.id);
+
+    const io = require('../socket').getIO();
+    
+    // Tắt iPad tại từng bàn (Reset)
+    if (booking.table_ids) {
+      booking.table_ids.forEach(tableId => {
+        io.to(`table_${tableId}`).emit('RESET_IPAD', {
+          tableId: tableId
+        });
+      });
+    }
+
+    // Báo cho các Manager khác biết
+    io.to(`branch_${booking.branch_id}`).emit('BOOKING_STATUS_CHANGED', {
+      bookingId: booking._id,
+      status: 'PENDING_SETTLEMENT'
+    });
+    
+    // Cập nhật lại UI bản đồ ngay lập tức
+    io.to(`branch_${booking.branch_id}`).emit('table_status_changed', {
+      action: 'EMPTY',
+      branch_id: booking.branch_id,
+      table_ids: booking.table_ids,
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Nhả bàn thành công. Đơn hàng được chuyển sang danh sách chờ đối soát.',
+      data: booking 
+    });
+
+  } catch (error) {
+    console.error('Lỗi forceReleaseBooking:', error);
+    res.status(error.statusCode || 500).json({ 
+      success: false, 
+      message: error.message || 'Lỗi server nội bộ trong quá trình nhả bàn.' 
     });
   }
 };
@@ -284,11 +336,86 @@ const createWalkInBooking = async (req, res) => {
   }
 };
 
+// @desc   Thêm điều chỉnh hóa đơn (Giảm giá phát sinh, thiếu món...)
+// @route  POST /api/v1/reception/bookings/:id/adjustments
+// @access Private (Manager/Admin)
+const addBillAdjustment = async (req, res) => {
+  try {
+    const BookingService = require('../services/bookingService');
+    const booking = await BookingService.addBillAdjustment(req.params.id, req.body, req.user._id);
+
+    const io = require('../socket').getIO();
+    io.to(`branch_${booking.branch_id}`).emit('BOOKING_UPDATED', { bookingId: booking._id });
+
+    res.status(200).json({ success: true, data: booking });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc   Xóa điều chỉnh hóa đơn
+// @route  DELETE /api/v1/reception/bookings/:id/adjustments/:adjId
+// @access Private (Manager/Admin)
+const removeBillAdjustment = async (req, res) => {
+  try {
+    const BookingService = require('../services/bookingService');
+    const booking = await BookingService.removeBillAdjustment(req.params.id, req.params.adjId);
+
+    const io = require('../socket').getIO();
+    io.to(`branch_${booking.branch_id}`).emit('BOOKING_UPDATED', { bookingId: booking._id });
+
+    res.status(200).json({ success: true, data: booking });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc   Hoàn tiền cho khách (Refund)
+// @route  POST /api/v1/reception/bookings/:id/refund
+// @access Private (Manager/Admin ONLY — Waiter KHÔNG được phép)
+const processRefund = async (req, res) => {
+  try {
+    const BookingService = require('../services/bookingService');
+    
+    // refund_proof_url đã được upload trước qua /api/v1/uploads/refund
+    const { refund_amount, reason, refund_proof_url } = req.body;
+    
+    const booking = await BookingService.processRefund(
+      req.params.id, 
+      { refund_amount: Number(refund_amount), reason, refund_proof_url },
+      req.user._id
+    );
+
+    const io = require('../socket').getIO();
+    io.to(`branch_${booking.branch_id}`).emit('BOOKING_STATUS_CHANGED', {
+      bookingId: booking._id,
+      status: booking.status
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      message: `Hoàn tiền ${Number(refund_amount).toLocaleString()}đ thành công.`,
+      data: booking 
+    });
+
+  } catch (error) {
+    console.error('Lỗi processRefund:', error);
+    res.status(error.statusCode || 500).json({ 
+      success: false, 
+      message: error.message || 'Lỗi server khi xử lý hoàn tiền.' 
+    });
+  }
+};
+
 module.exports = {
   checkAvailability,
   holdBooking,
   releaseHoldingBooking,
   checkInBooking,
   checkoutBooking,
-  createWalkInBooking
+  forceReleaseBooking,
+  createWalkInBooking,
+  addBillAdjustment,
+  removeBillAdjustment,
+  processRefund
 };

@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { MenuItem } from '../menu.types';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 interface MenuTableProps {
   items: MenuItem[];           // Already paginated from server
@@ -134,19 +135,19 @@ export function MenuTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-100 bg-[#f8fafc]">
-              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider w-[35%]">MÓN ĂN</th>
-              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">DANH MỤC</th>
-              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">GIÁ CƠ BẢN (VNĐ)</th>
-              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">KHOẢNG GIÁ (MIN-MAX)</th>
-              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">TRẠNG THÁI</th>
-              <th className="text-right py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">THAO TÁC</th>
+              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider w-[35%]">{ADMIN_TEXTS.menu.tableColItem}</th>
+              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">{ADMIN_TEXTS.menu.tableColCategory}</th>
+              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">{ADMIN_TEXTS.menu.tableColBasePrice}</th>
+              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">{ADMIN_TEXTS.menu.tableColPriceRange}</th>
+              <th className="text-left py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">{ADMIN_TEXTS.menu.tableColStatus}</th>
+              <th className="text-right py-4 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">{ADMIN_TEXTS.menu.tableColActions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {items.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-12 text-center text-gray-400 text-sm">
-                  Không có món ăn nào trong danh mục này.
+                  {ADMIN_TEXTS.menu.tableEmpty}
                 </td>
               </tr>
             ) : items.map((item) => (
@@ -193,7 +194,7 @@ export function MenuTable({
                       {formatVND(item.min_price)} <span className="text-gray-300 mx-1">—</span> {formatVND(item.max_price)}
                     </span>
                   ) : (
-                    <span className="text-[14px] text-gray-400 italic">Flexible (No Limits)</span>
+                    <span className="text-[14px] text-gray-400 italic">{ADMIN_TEXTS.menu.tableFlexiblePrice}</span>
                   )}
                 </td>
 
@@ -206,7 +207,7 @@ export function MenuTable({
                 <td className="py-4 px-6 text-right">
                   {deleteConfirmId === item._id ? (
                     <div className="flex items-center justify-end gap-2">
-                      <span className="text-xs text-red-600 font-bold mr-1">Xóa?</span>
+                      <span className="text-xs text-red-600 font-bold mr-1">{ADMIN_TEXTS.menu.tableConfirmDelete}</span>
                       <button
                         disabled={isDeleting}
                         onClick={async () => {
@@ -217,14 +218,14 @@ export function MenuTable({
                         }}
                         className="px-2.5 py-1 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 disabled:opacity-50"
                       >
-                        {isDeleting ? '...' : 'Có'}
+                        {isDeleting ? '...' : ADMIN_TEXTS.menu.tableBtnYes}
                       </button>
                       <button
                         disabled={isDeleting}
                         onClick={() => setDeleteConfirmId(null)}
                         className="px-2.5 py-1 bg-gray-200 text-gray-700 text-xs font-bold rounded hover:bg-gray-300 disabled:opacity-50"
                       >
-                        Hủy
+                        {ADMIN_TEXTS.menu.tableBtnCancel}
                       </button>
                     </div>
                   ) : (
@@ -232,14 +233,14 @@ export function MenuTable({
                       <Link
                         href={`/admin/menu/${item.menu_id}/${item._id}/edit`}
                         className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors inline-flex justify-end"
-                        title="Sửa món"
+                        title={ADMIN_TEXTS.menu.tableBtnEdit}
                       >
                         <Pencil className="w-4 h-4" strokeWidth={2} />
                       </Link>
                       <button
                         onClick={() => setDeleteConfirmId(item._id)}
                         className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors inline-flex justify-end"
-                        title="Xóa món"
+                        title={ADMIN_TEXTS.menu.tableBtnDelete}
                       >
                         <Trash2 className="w-4 h-4" strokeWidth={2} />
                       </button>
@@ -256,8 +257,8 @@ export function MenuTable({
       <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
         <p className="text-sm text-gray-500">
           {totalItems === 0
-            ? 'No items found'
-            : `Showing ${showingFrom} to ${showingTo} of ${totalItems} items`}
+            ? ADMIN_TEXTS.menu.tablePaginationEmpty
+            : `${ADMIN_TEXTS.menu.tablePaginationPrefix}${showingFrom}${ADMIN_TEXTS.menu.tablePaginationTo}${showingTo}${ADMIN_TEXTS.menu.tablePaginationOf}${totalItems}${ADMIN_TEXTS.menu.tablePaginationSuffix}`}
         </p>
         {totalPages > 1 && (
           <div className="flex items-center gap-1">

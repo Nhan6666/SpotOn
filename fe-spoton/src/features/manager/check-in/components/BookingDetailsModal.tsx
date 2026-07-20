@@ -23,6 +23,9 @@ interface BookingDetails {
   reservation_date: string;
   status: string;
   note?: string;
+  applied_voucher_code?: string;
+  voucher_discount_amount?: number;
+  payment_info?: { voucher_code?: string };
 }
 
 interface BookingDetailsModalProps {
@@ -48,6 +51,8 @@ export function BookingDetailsModal({ booking, onClose }: BookingDetailsModalPro
   const calculatedTotal = items.reduce((acc, item) => acc + (item.price_at_time * item.quantity), 0);
   const totalBill = calculatedTotal > 0 ? calculatedTotal : (booking.pre_order_total_amount || 0);
   const depositPaid = booking.total_deposit_paid || 0;
+  
+  const actualVoucherCode = booking.applied_voucher_code || booking.payment_info?.voucher_code;
 
   // Lọc và Phân trang món ăn
   const filteredItems = useMemo(() => {
@@ -215,10 +220,16 @@ export function BookingDetailsModal({ booking, onClose }: BookingDetailsModalPro
                 <span>Tiền cọc đã thu:</span>
                 <span className="font-semibold">- {depositPaid.toLocaleString()}đ</span>
               </div>
+              {(actualVoucherCode || (booking.voucher_discount_amount || 0) > 0) && (
+                <div className="flex justify-between items-center text-orange-600">
+                  <span>Mã giảm giá dự kiến ({actualVoucherCode || 'Đã áp dụng'}):</span>
+                  <span className="font-semibold">- {(booking.voucher_discount_amount || 0).toLocaleString()}đ</span>
+                </div>
+              )}
               <div className="h-px bg-blue-200 my-1"></div>
               <div className="flex justify-between items-center">
                 <span className="font-bold text-gray-900">Khách cần trả thêm:</span>
-                <span className="font-bold text-lg text-blue-700">{Math.max(0, totalBill - depositPaid).toLocaleString()}đ</span>
+                <span className="font-bold text-lg text-blue-700">{Math.max(0, totalBill - depositPaid - (booking.voucher_discount_amount || 0)).toLocaleString()}đ</span>
               </div>
             </div>
           </div>

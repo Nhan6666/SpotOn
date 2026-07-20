@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { CustomerService } from '../customer/customer.service';
 import { FontAwesome } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
@@ -8,8 +9,10 @@ import { Branch } from '@/types/branch.types';
 
 export function HomeFeature() {
   const router = useRouter();
+  const { user } = useAuthStore();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [bestSellers, setBestSellers] = useState<any[]>([]);
+  const [vouchers, setVouchers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,12 +21,14 @@ export function HomeFeature() {
 
   const fetchData = async () => {
     try {
-      const [branchRes, bestRes] = await Promise.all([
+      const [branchRes, bestRes, voucherRes] = await Promise.all([
         CustomerService.getBranches(),
-        CustomerService.getBestSellers()
+        CustomerService.getBestSellers(),
+        CustomerService.getPublicVouchers()
       ]);
       if (branchRes.success) setBranches(branchRes.data || []);
       if (bestRes.success) setBestSellers(bestRes.data || []);
+      if (voucherRes.success) setVouchers(voucherRes.data || []);
     } catch (error) {
       console.log('Error fetching home data:', error);
     } 
@@ -33,44 +38,58 @@ export function HomeFeature() {
   return (
     <ScrollView className="flex-1 bg-background" showsVerticalScrollIndicator={false}>
       {/* Hero Banner */}
-      <View className="bg-amber-700 px-6 pt-16 pb-10 rounded-b-[40px] shadow-sm">
-        <View className="flex-row justify-between items-center mb-2">
-          <View>
-            <Text className="font-lexend text-amber-200 text-sm font-semibold">Chào mừng đến với</Text>
-            <Text className="font-lexend font-bold text-4xl text-white tracking-tight">SpotOn</Text>
+      <ImageBackground 
+        source={{ uri: 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=1000' }}
+        className="px-6 pt-16 pb-10 rounded-b-[40px] shadow-sm overflow-hidden"
+        imageStyle={{ borderRadius: 40 }}
+      >
+        <View className="absolute inset-0 bg-black/60 rounded-b-[40px]" />
+        <View className="relative z-10">
+          <View className="flex-row justify-between items-center mb-4">
+            <View>
+              <Text className="font-lexend text-amber-300 text-sm font-semibold tracking-wider uppercase mb-1">Chào mừng đến với</Text>
+              <Text className="font-lexend font-bold text-4xl text-white tracking-tight">SpotOn</Text>
+            </View>
+            <View className="flex-row gap-3">
+              {user?.role === 'ADMIN' && (
+                <TouchableOpacity 
+                  onPress={() => router.push('/admin-dashboard')}
+                  className="w-12 h-12 bg-white/20 rounded-full items-center justify-center border border-white/30 backdrop-blur-sm"
+                >
+                  <FontAwesome name="dashboard" size={20} color="#fff" />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-          <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center">
-            <FontAwesome name="bell-o" size={20} color="#fff" />
+          <Text className="font-lexend text-gray-200 text-base leading-6 mt-1 mb-8">
+            Hệ thống đặt bàn thông minh hàng đầu. Tận hưởng bữa tiệc trọn vẹn không lo chờ đợi.
+          </Text>
+          
+          {/* Stats */}
+          <View className="flex-row gap-3">
+            <View className="flex-1 bg-white/10 rounded-2xl p-4 items-center border border-white/20 backdrop-blur-md">
+              <Text className="font-lexend font-bold text-2xl text-white mb-1">{branches.length}</Text>
+              <Text className="font-lexend text-gray-300 text-xs text-center">Chi nhánh</Text>
+            </View>
+            <View className="flex-1 bg-white/10 rounded-2xl p-4 items-center border border-white/20 backdrop-blur-md">
+              <Text className="font-lexend font-bold text-2xl text-white mb-1">24/7</Text>
+              <Text className="font-lexend text-gray-300 text-xs text-center">Đặt bàn</Text>
+            </View>
+            <View className="flex-1 bg-white/10 rounded-2xl p-4 items-center border border-white/20 backdrop-blur-md">
+              <Text className="font-lexend font-bold text-2xl text-white mb-1">⭐</Text>
+              <Text className="font-lexend text-gray-300 text-xs text-center">Top rate</Text>
+            </View>
           </View>
         </View>
-        <Text className="font-lexend text-amber-100 text-base leading-6 mt-1 mb-6">
-          Hệ thống đặt bàn thông minh hàng đầu. Tận hưởng bữa tiệc trọn vẹn không lo chờ đợi.
-        </Text>
-        
-        {/* Stats */}
-        <View className="flex-row gap-3">
-          <View className="flex-1 bg-white/10 rounded-2xl p-4 items-center border border-white/20">
-            <Text className="font-lexend font-bold text-2xl text-white mb-1">{branches.length}</Text>
-            <Text className="font-lexend text-amber-100 text-xs text-center">Chi nhánh</Text>
-          </View>
-          <View className="flex-1 bg-white/10 rounded-2xl p-4 items-center border border-white/20">
-            <Text className="font-lexend font-bold text-2xl text-white mb-1">24/7</Text>
-            <Text className="font-lexend text-amber-100 text-xs text-center">Đặt bàn nhanh</Text>
-          </View>
-          <View className="flex-1 bg-white/10 rounded-2xl p-4 items-center border border-white/20">
-            <Text className="font-lexend font-bold text-2xl text-white mb-1">⭐</Text>
-            <Text className="font-lexend text-amber-100 text-xs text-center">Top đánh giá</Text>
-          </View>
-        </View>
-      </View>
+      </ImageBackground>
 
       {/* Quick Actions */}
       <View className="px-4 py-8">
         <Text className="font-lexend font-bold text-xl text-text mb-4">Khám phá ngay</Text>
         <View className="flex-row gap-4">
           <TouchableOpacity 
-            className="flex-1 bg-white rounded-2xl p-5 items-center shadow-sm border border-gray-50"
-            style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05 }}
+            className="flex-1 bg-white rounded-2xl p-4 items-center border border-gray-100 shadow-md"
+            style={{ shadowColor: '#3b82f6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 }}
             onPress={() => router.push('/(tabs)/branches')}
             activeOpacity={0.7}
           >
@@ -78,18 +97,20 @@ export function HomeFeature() {
               <FontAwesome name="map-marker" size={24} color="#3b82f6" />
             </View>
             <Text className="font-lexend font-semibold text-text text-sm">Tìm Chi nhánh</Text>
+            <Text className="font-lexend text-gray-500 text-[10px] mt-1">Gần bạn nhất</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            className="flex-1 bg-white rounded-2xl p-5 items-center shadow-sm border border-gray-50"
-            style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05 }}
-            onPress={() => router.push('/menu')}
+            className="flex-1 bg-white rounded-2xl p-4 items-center border border-gray-100 shadow-md"
+            style={{ shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 }}
+            onPress={() => router.push('/(tabs)/menu')}
             activeOpacity={0.7}
           >
             <View className="w-14 h-14 bg-amber-50 rounded-full items-center justify-center mb-3">
               <FontAwesome name="book" size={24} color={Colors.primary} />
             </View>
             <Text className="font-lexend font-semibold text-text text-sm">Xem Thực đơn</Text>
+            <Text className="font-lexend text-gray-500 text-[10px] mt-1">Đặt món trước</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -144,6 +165,35 @@ export function HomeFeature() {
           </ScrollView>
         )}
       </View>
+
+      {/* Ưu đãi hấp dẫn */}
+      {vouchers && vouchers.length > 0 && (
+        <View className="px-4 pb-8">
+          <View className="flex-row justify-between items-end mb-4">
+            <Text className="font-lexend font-bold text-xl text-text">Ưu đãi nổi bật</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 px-4">
+            {vouchers.map((voucher) => (
+              <View 
+                key={voucher._id} 
+                className="bg-orange-50 rounded-2xl p-4 mr-4 shadow-sm border border-orange-100 flex-row items-center"
+                style={{ width: 260 }}
+              >
+                <View className="w-12 h-12 bg-orange-100 rounded-full items-center justify-center mr-3 border border-orange-200">
+                  <FontAwesome name="ticket" size={20} color="#ea580c" />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-lexend font-bold text-orange-900 text-sm mb-1" numberOfLines={1}>{voucher.code}</Text>
+                  <Text className="font-lexend text-orange-700 text-xs" numberOfLines={2}>{voucher.description}</Text>
+                  <Text className="font-lexend font-bold text-orange-600 text-xs mt-1">
+                    Giảm {voucher.discount_type === 'PERCENT' ? `${voucher.discount_value || 0}%` : `${(voucher.discount_value || 0).toLocaleString()}đ`}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       {/* Best Sellers */}
       <View className="px-4 pb-12">

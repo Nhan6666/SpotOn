@@ -26,9 +26,13 @@ export const AuthService = {
     return response.data;
   },
 
-  /** Google OAuth — sends Firebase idToken to backend */
   async loginWithGoogle(idToken: string) {
     const response = await apiClient.post('/auth/google', { idToken });
     return response.data;
   },
+
+  async updateProfile(data: any) {
+    const response = await apiClient.put('/users/profile', data);
+    return response.data;
+  }
 };

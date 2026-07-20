@@ -15,7 +15,7 @@ export function BookingFlowFeature({ id }: BookingFlowProps) {
   const { state, actions } = useBookingFlow(id);
   
   const { step, initLoading, loading, branch, canPreOrder } = state;
-  const { setStep, checkAvailabilityAndContinue, handleHoldAndContinue, handleConfirm, handleMockPayment, router } = actions;
+  const { setStep, checkAvailabilityAndContinue, handleHoldAndContinue, handleConfirmBooking, handleProcessPayment, router } = actions;
 
   if (initLoading) {
     return <View className="flex-1 justify-center items-center bg-background"><ActivityIndicator size="large" color="#b45309" /></View>;
@@ -71,15 +71,15 @@ export function BookingFlowFeature({ id }: BookingFlowProps) {
             step === 1 ? 'Kiểm tra bàn trống' :
             step === 2 ? 'Giữ bàn & tiếp tục' :
             step === 3 && canPreOrder ? 'Tiếp tục' :
-            step === 4 ? 'Tiến hành thanh toán' :
-            'Tôi đã thanh toán (Giả lập)'
+            step === 4 ? 'Xác nhận & Thanh toán' :
+            'Thanh toán qua ' + (state.paymentMethod === 'MOMO' ? 'MoMo' : 'VNPAY')
           }
           onPress={() => {
             if (step === 1) { checkAvailabilityAndContinue(); }
             else if (step === 2) { handleHoldAndContinue(); }
             else if (step === 3 && canPreOrder) { setStep(4); }
-            else if (step === 4) { handleConfirm(); }
-            else if (step === 5) { handleMockPayment(); }
+            else if (step === 4) { handleConfirmBooking(); }
+            else if (step === 5) { handleProcessPayment(); }
           }}
           loading={loading}
         />

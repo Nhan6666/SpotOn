@@ -152,10 +152,17 @@ export function AdminBranchesFeature() {
           </TouchableOpacity>
           <TouchableOpacity 
             className="flex-1 py-3 items-center justify-center border-r border-gray-50 flex-row gap-2"
+            onPress={() => router.push(`/branch/${item._id}`)}
+          >
+            <FontAwesome name="eye" size={14} color={Colors.text} />
+            <Text className="font-lexend text-sm text-gray-700">Chi tiết</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            className="flex-1 py-3 items-center justify-center border-r border-gray-50 flex-row gap-2"
             onPress={() => openEditForm(item)}
           >
             <FontAwesome name="edit" size={14} color={Colors.text} />
-            <Text className="font-lexend text-sm text-gray-700">Chỉnh sửa</Text>
+            <Text className="font-lexend text-sm text-gray-700">Sửa</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             className="flex-1 py-3 items-center justify-center flex-row gap-2"

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, FlatList, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, ScrollView, FlatList, TouchableOpacity, ActivityIndicator, Alert, Platform, RefreshControl } from 'react-native';
 import { io, Socket } from 'socket.io-client';
 import { BranchService } from './branch.service';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -24,6 +24,13 @@ export function TablesFeature() {
 
   const [walkInModalVisible, setWalkInModalVisible] = useState(false);
   const [selectedWalkInTable, setSelectedWalkInTable] = useState<any>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchBranchData();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     fetchBranchData();
@@ -51,9 +58,14 @@ export function TablesFeature() {
             )
           }));
         });
+        fetchBookings(branch._id); // Update bookings list
+      });
+
+      socket.on('BOOKING_STATUS_CHANGED', () => {
+        fetchBookings(branch._id);
       });
     }
-  }, [socket, branch]);
+  }, [socket, branch, selectedDate, activeShift]);
 
   const fetchBranchData = async () => {
     try {
@@ -83,12 +95,26 @@ export function TablesFeature() {
     try {
       const res = await BookingService.getAllBookings({ branch_id: branchId });
       if (res.success) {
-        const targetDate = selectedDate.toLocaleDateString('vi-VN');
-        const activeBookings = res.data.filter((b: any) => 
-          ['HOLDING', 'PENDING_DEPOSIT', 'PENDING_PAYMENT', 'CONFIRMED', 'IN_USE'].includes(b.status) &&
-          new Date(b.reservation_date).toLocaleDateString('vi-VN') === targetDate &&
-          b.shift === activeShift.toUpperCase()
-        );
+        // Robust YYYY-MM-DD string for local date
+        const targetYear = selectedDate.getFullYear();
+        const targetMonth = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const targetDay = String(selectedDate.getDate()).padStart(2, '0');
+        const targetDateStr = `${targetYear}-${targetMonth}-${targetDay}`;
+
+        const activeBookings = res.data.filter((b: any) => {
+          if (!['HOLDING', 'PENDING_DEPOSIT', 'PENDING_PAYMENT', 'CONFIRMED', 'IN_USE'].includes(b.status)) return false;
+          if (b.shift !== activeShift.toUpperCase()) return false;
+          
+          // b.reservation_date from backend is like "2026-07-22T00:00:00.000Z"
+          // We can parse it and format to local YYYY-MM-DD
+          const bDate = new Date(b.reservation_date);
+          const bYear = bDate.getFullYear();
+          const bMonth = String(bDate.getMonth() + 1).padStart(2, '0');
+          const bDay = String(bDate.getDate()).padStart(2, '0');
+          const bDateStr = `${bYear}-${bMonth}-${bDay}`;
+          
+          return bDateStr === targetDateStr;
+        });
         setBookings(activeBookings);
       }
     } catch (error) {
@@ -126,11 +152,22 @@ export function TablesFeature() {
       if (tableBookings.some((b: any) => b.status === 'HOLDING')) return 'HOLDING';
     }
 
-    const todayStr = new Date().toLocaleDateString('vi-VN');
-    const selectedDateStr = selectedDate.toLocaleDateString('vi-VN');
+    const today = new Date();
+    const isToday = 
+      today.getFullYear() === selectedDate.getFullYear() &&
+      today.getMonth() === selectedDate.getMonth() &&
+      today.getDate() === selectedDate.getDate();
 
-    if (todayStr === selectedDateStr) {
-      return (activeShift === 'Lunch' ? table.status_lunch : table.status_dinner) || table.status || 'EMPTY';
+    if (isToday) {
+      if (['HOLDING', 'CLEANING', 'OCCUPIED', 'IN_USE', 'RESERVED'].includes(table.status)) {
+        return table.status;
+      }
+      
+      const shiftStatus = activeShift === 'Lunch' ? table.status_lunch : table.status_dinner;
+      if (shiftStatus && shiftStatus !== 'EMPTY') {
+        return shiftStatus;
+      }
+      return table.status || 'EMPTY';
     }
 
     return 'EMPTY';
@@ -279,7 +316,12 @@ export function TablesFeature() {
     <View className="flex-1 bg-[#F9FAFB]">
       {/* 1. Header & Filters */}
       <View className="bg-white px-4 pt-4 pb-3 shadow-sm z-10 border-b border-gray-100">
-        <Text className="font-lexend font-bold text-xl text-text mb-1">Quản lý Đặt bàn & Sơ đồ</Text>
+        <View className="flex-row justify-between items-center mb-1">
+          <Text className="font-lexend font-bold text-xl text-text">Quản lý Đặt bàn & Sơ đồ</Text>
+          <TouchableOpacity onPress={onRefresh} className="p-2 bg-gray-50 rounded-full border border-gray-200 shadow-sm">
+            <FontAwesome name="refresh" size={14} color="#4b5563" />
+          </TouchableOpacity>
+        </View>
         <Text className="font-lexend text-xs text-gray-500 mb-3">Theo dõi trạng thái bàn theo thời gian thực (Real-time).</Text>
         
         <View className="flex-row items-center border border-gray-200 rounded-lg bg-gray-50 p-2">
@@ -309,7 +351,11 @@ export function TablesFeature() {
         </View>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1" 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#14532d" />}
+      >
         {/* 2. Danh sách đặt bàn (Top Section on Mobile) */}
         <View className="px-4 pt-4 pb-2">
           <Text className="font-lexend font-bold text-base text-text mb-3">Danh sách đặt bàn ({bookings.length})</Text>

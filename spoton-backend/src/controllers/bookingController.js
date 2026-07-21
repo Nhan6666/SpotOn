@@ -4,9 +4,14 @@
 // ============================================================
 const Booking = require('../models/Booking');
 const Branch = require('../models/Branch');
-// const Notification = require('../models/Notification');
+const Otp = require('../models/Otp');
+const sendEmail = require('../utils/sendEmail');
 const mongoose = require('mongoose');
 const asyncHandler = require('../utils/asyncHandler');
+
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 // Helper function
 const timeToMinutes = (timeStr) => {
@@ -98,26 +103,14 @@ const createBooking = async (req, res) => {
         const currentCapacityPercent = (currentGuests / totalCapacity) * 100;
 
         if (currentCapacityPercent >= branch.overload_threshold) {
-          // Check if an alert was already sent recently to avoid spam (e.g. in the last hour)
-          /*
-          const recentAlert = await Notification.findOne({
-            user_id: branch.manager_id,
-            type: 'OVERLOAD_ALERT',
-            created_at: { $gte: new Date(Date.now() - 60 * 60 * 1000) }
+          // Emit socket event for the banner
+          const io = require('../socket').getIO();
+          io.to(`branch_${branch._id}`).emit('OVERLOAD_ALERT', {
+             capacityPercent: currentCapacityPercent.toFixed(1),
+             threshold: branch.overload_threshold,
+             branchId: branch._id
           });
-          */
-
-          /*
-          if (!recentAlert) {
-            await Notification.create({
-              user_id: branch.manager_id,
-              type: 'OVERLOAD_ALERT',
-              title: 'Cảnh báo quá tải chi nhánh!',
-              content: `Chi nhánh ${branch.name} đang đạt mức công suất ${currentCapacityPercent.toFixed(1)}% (vượt ngưỡng ${branch.overload_threshold}%). Vui lòng kiểm tra và xử lý!`
-            });
-            console.log(`[UC-6.1] Overload alert sent to manager of branch ${branch.name}`);
-          }
-          */
+          console.log(`[UC-6.1] Overload alert sent to manager of branch ${branch.name}`);
         }
       }
     }
@@ -372,6 +365,14 @@ const updateBookingInfo = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt bàn.' });
     }
 
+    // BẢO VỆ DỮ LIỆU TÀI CHÍNH (BR-C06-02: Receipt Immutable Audit Trail)
+    if (['COMPLETED', 'CANCELLED', 'CANCELLED_TIMEOUT', 'CANCELLED_REFUND_PENDING'].includes(booking.status)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Lỗi: Không thể chỉnh sửa đơn hàng đã hoàn tất hoặc đã hủy (BR-C06-02).' 
+      });
+    }
+
     if (!walk_in_name || walk_in_name.trim().length < 2) {
       return res.status(400).json({ success: false, message: 'Vui lòng nhập họ tên hợp lệ (ít nhất 2 ký tự).' });
     }
@@ -504,10 +505,73 @@ const applyVoucher = async (req, res) => {
   }
 };
 
+// @desc   Yêu cầu OTP để hủy bàn
+// @route  POST /api/v1/bookings/:id/request-cancel-otp
+// @access Private (CUSTOMER)
+const requestCancelRefundOtp = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt bàn.' });
+    }
+
+    if (String(booking.customer_id) !== String(req.user._id)) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền thao tác trên đơn này.' });
+    }
+
+    if (!['PENDING_PAYMENT', 'CONFIRMED'].includes(booking.status)) {
+      return res.status(400).json({ success: false, message: 'Đơn đặt bàn này không thể hủy được nữa.' });
+    }
+
+    const email = req.user.email;
+    await Otp.deleteMany({ email });
+
+    const otpCode = generateOTP();
+    await Otp.create({ email, otp: otpCode });
+
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #8a5a19; text-align: center;">SpotOn - Xác nhận Hủy Bàn</h2>
+        <p>Xin chào <strong>${req.user.full_name}</strong>,</p>
+        <p>Chúng tôi nhận được yêu cầu HỦY đơn đặt bàn <strong>#${booking._id}</strong>. Vui lòng sử dụng mã OTP dưới đây để xác nhận hủy và yêu cầu hoàn tiền (nếu có):</p>
+        <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0;">
+          <h1 style="color: #d9534f; letter-spacing: 5px; margin: 0;">${otpCode}</h1>
+        </div>
+        <p style="color: #d9534f; font-size: 14px;"><strong>CẢNH BÁO:</strong> Tuyệt đối không chia sẻ mã này cho bất kỳ ai. Mã hết hạn sau 5 phút.</p>
+      </div>
+    `;
+
+    await sendEmail({
+      email,
+      subject: "Mã OTP Xác nhận Hủy bàn SpotOn",
+      html: emailHtml,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Mã OTP đã được gửi đến email của bạn.",
+    });
+  } catch (error) {
+    console.error('Lỗi requestCancelRefundOtp:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi gửi OTP.' });
+  }
+};
+
 // @desc   Khách hàng tự hủy bàn và yêu cầu hoàn cọc
 // @route  POST /api/v1/bookings/:id/cancel-refund
 // @access Private (CUSTOMER)
 const cancelAndRequestRefund = async (req, res) => {
+  const { otp, bank_account_number, bank_name, account_holder_name, reason } = req.body;
+  
+  // Xác thực OTP trước khi mở Transaction (BR-17-02)
+  if (!otp) {
+    return res.status(400).json({ success: false, message: 'Vui lòng cung cấp mã OTP.' });
+  }
+  const otpDoc = await Otp.findOne({ email: req.user.email, otp });
+  if (!otpDoc) {
+    return res.status(400).json({ success: false, message: 'Mã OTP không đúng hoặc đã hết hạn.' });
+  }
+
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -573,7 +637,8 @@ const cancelAndRequestRefund = async (req, res) => {
 
     const refundAmount = (booking.total_deposit_paid || 0) * (refundPercentage / 100);
 
-    const { bank_account_number, bank_name, account_holder_name, reason } = req.body;
+    // Xóa OTP sau khi dùng thành công
+    await Otp.deleteOne({ _id: otpDoc._id }, { session });
 
     // Cập nhật thông tin hoàn tiền
     booking.refund_info = {
@@ -651,5 +716,6 @@ module.exports = {
   getMyBookings, 
   updateBookingInfo,
   applyVoucher,
-  cancelAndRequestRefund
+  cancelAndRequestRefund,
+  requestCancelRefundOtp
 };

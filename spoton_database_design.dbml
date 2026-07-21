@@ -1,0 +1,296 @@
+Project SpotOn {
+  database_type: 'MongoDB'
+  Note: 'F&B Management System Database Design'
+}
+
+Table User {
+  _id ObjectId [pk]
+  email String [unique, not null]
+  password_hash String
+  auth_provider String [note: "'LOCAL', 'GOOGLE'"]
+  google_id String
+  full_name String [not null]
+  phone String
+  role String [note: "'ADMIN', 'MANAGER', 'WAITER', 'KITCHEN', 'CUSTOMER'"]
+  branch_id ObjectId [ref: > Branch._id, note: "null if ADMIN/CUSTOMER"]
+  avatar String
+  has_custom_avatar Boolean
+  is_email_verified Boolean
+  profile_allergies String[]
+  profile_vip_notes String[]
+  created_at Date
+  updated_at Date
+}
+
+Table Branch {
+  _id ObjectId [pk]
+  manager_id ObjectId [ref: > User._id]
+  name String [not null]
+  address_full String
+  address_city String
+  address_district String
+  address_ward String
+  address_street String
+  location_type String [default: 'Point']
+  location_coordinates Number[] [note: "[lng, lat]"]
+  hotline String
+  images String[]
+  service_periods Object [note: "lunch and dinner times"]
+  description String
+  status String [note: "'OPEN', 'FULL', 'CLOSED'"]
+  overload_threshold Number [default: 85]
+  amenities ObjectId[] [ref: > Amenity._id]
+  disabled_vouchers ObjectId[] [ref: > Voucher._id]
+  ipad_pin String
+  table_templates Object[]
+  created_at Date
+  updated_at Date
+}
+
+// Embedded in Branch / MapTemplate, extracted for visualization
+Table Zone {
+  _id ObjectId [pk]
+  branch_id ObjectId [ref: > Branch._id, note: "If embedded in Branch"]
+  map_template_id ObjectId [ref: > MapTemplate._id, note: "If embedded in MapTemplate"]
+  name String [not null]
+  capacity Number
+  status String [note: "'OPEN', 'CLOSED'"]
+}
+
+// Embedded in Zone, extracted for visualization
+Table Table {
+  _id ObjectId [pk]
+  zone_id ObjectId [ref: > Zone._id]
+  table_number String [not null]
+  capacity Number [not null]
+  status String [note: "'EMPTY', 'HOLDING', 'LOCKED', 'RESERVED', 'OCCUPIED', 'CLEANING', 'MAINTENANCE'"]
+  status_lunch String
+  status_dinner String
+  x Number
+  y Number
+  width Number
+  height Number
+  shape String [note: "'RECTANGLE', 'CIRCLE'"]
+  image_url String
+}
+
+Table Amenity {
+  _id ObjectId [pk]
+  name String [unique, not null]
+  icon String
+  description String
+  is_active Boolean
+  created_at Date
+  updated_at Date
+}
+
+Table Menu {
+  _id ObjectId [pk]
+  branch_id ObjectId [ref: > Branch._id, note: "null for Master Menu"]
+  category_name String [not null]
+  created_at Date
+  updated_at Date
+}
+
+// Embedded in Menu, extracted for visualization
+Table MenuItem {
+  _id ObjectId [pk]
+  menu_id ObjectId [ref: > Menu._id]
+  name String [not null]
+  sku String
+  description String
+  dietary_tags String[]
+  price Number
+  base_price Number
+  min_price Number
+  max_price Number
+  is_available Boolean
+  is_core_item Boolean
+  image_url String
+  status String [note: "'ACTIVE', 'DRAFT', 'HIDDEN'"]
+  branches ObjectId[] [ref: > Branch._id]
+  branch_overrides Object[]
+}
+
+Table Booking {
+  _id ObjectId [pk]
+  customer_id ObjectId [ref: > User._id]
+  walk_in_name String
+  walk_in_phone String
+  branch_id ObjectId [ref: > Branch._id, not null]
+  reservation_date Date [not null]
+  arrival_time String
+  shift String [note: "'LUNCH', 'DINNER'"]
+  guest_count Number
+  ipad_pin String
+  status String [note: "'HOLDING', 'PENDING_PAYMENT', 'CONFIRMED', 'IN_USE', 'COMPLETED', 'CANCELLED', etc."]
+  expires_at Date
+  cancellation_reason String
+  note String
+  has_reviewed Boolean
+  table_ids ObjectId[] [ref: > Table._id]
+  applied_voucher_code String
+  table_deposit_amount Number
+  pre_order_total_amount Number
+  pre_order_deposit_amount Number
+  voucher_discount_amount Number
+  total_deposit_paid Number
+  final_bill_amount Number
+  amount_collected Number
+  created_at Date
+  updated_at Date
+}
+
+// Embedded in Booking
+Table AssignedTable {
+  _id ObjectId [pk]
+  booking_id ObjectId [ref: > Booking._id]
+  zone_name String
+  table_number String
+}
+
+// Embedded in Booking
+Table OrderItem {
+  _id ObjectId [pk]
+  booking_id ObjectId [ref: > Booking._id]
+  menu_item_id ObjectId [ref: > MenuItem._id]
+  name String
+  quantity Number
+  price_at_time Number
+  prep_status String [note: "'PENDING', 'PREPARING', 'READY', 'SERVED'"]
+  type String [note: "'PRE_ORDER', 'ADDITIONAL'"]
+}
+
+// Embedded in Booking (1-1)
+Table PaymentInfo {
+  _id ObjectId [pk]
+  booking_id ObjectId [ref: - Booking._id]
+  transaction_id String
+  method String [note: "'VNPAY', 'MOMO', 'CASH', 'BANK_TRANSFER'"]
+  status String [note: "'PENDING', 'PAID', 'FAILED', 'REFUNDED'"]
+  voucher_code String
+  paid_at Date
+}
+
+// Embedded in Booking (1-1)
+Table RefundInfo {
+  _id ObjectId [pk]
+  booking_id ObjectId [ref: - Booking._id]
+  refund_amount Number
+  refund_percentage Number
+  bank_account_number String
+  bank_name String
+  account_holder_name String
+  refund_proof_url String
+  refund_completed_at Date
+}
+
+// Embedded in Booking
+Table BillAdjustment {
+  _id ObjectId [pk]
+  booking_id ObjectId [ref: > Booking._id]
+  type String [note: "'DISCOUNT', 'ITEM_REMOVED', 'COMBO_INCOMPLETE', 'GOODWILL', 'OTHER'"]
+  amount Number
+  reason String
+  actor_id ObjectId [ref: > User._id]
+  created_at Date
+}
+
+Table Voucher {
+  _id ObjectId [pk]
+  code String [unique, not null]
+  branch_id ObjectId [ref: > Branch._id, note: "null for all branches"]
+  discount_percentage Number
+  max_discount_amount Number
+  min_order_value Number
+  valid_from Date
+  valid_until Date
+  usage_limit Number
+  used_count Number
+  min_guest_count Number
+  is_public Boolean
+  is_active Boolean
+  created_at Date
+  updated_at Date
+}
+
+Table UserVoucher {
+  _id ObjectId [pk]
+  customer_id ObjectId [ref: > User._id, not null]
+  voucher_id ObjectId [ref: > Voucher._id, not null]
+  status String [note: "'UNUSED', 'USED', 'EXPIRED'"]
+  used_at Date
+  used_in_booking ObjectId [ref: > Booking._id]
+  created_at Date
+  updated_at Date
+}
+
+Table MapTemplate {
+  _id ObjectId [pk]
+  name String [not null]
+  description String
+  created_at Date
+  updated_at Date
+}
+
+Table Revenue {
+  _id ObjectId [pk]
+  branch_id ObjectId [ref: > Branch._id, not null]
+  booking_id ObjectId [ref: > Booking._id, not null]
+  date Date [not null]
+  shift String [note: "'LUNCH', 'DINNER'"]
+  amount Number [not null]
+  pre_order_total Number
+  deposit_paid Number
+  voucher_discount Number
+  adjustments_total Number
+  final_paid_at_checkout Number
+  status String [note: "'COMPLETED', 'REFUNDED'"]
+  created_at Date
+}
+
+Table Review {
+  _id ObjectId [pk]
+  branch_id ObjectId [ref: > Branch._id, not null]
+  booking_id ObjectId [ref: > Booking._id, not null]
+  user_id ObjectId [ref: > User._id, not null]
+  rating Number [not null]
+  comment String
+  reply_text String
+  replied_by ObjectId [ref: > User._id]
+  replied_at Date
+  status String [note: "'PENDING', 'REPLIED', 'FLAGGED'"]
+  sla_deadline Date
+  is_deleted Boolean
+  deleted_at Date
+  deleted_by ObjectId [ref: > User._id]
+  created_at Date
+  updated_at Date
+}
+
+Table AuditLog {
+  _id ObjectId [pk]
+  action String [not null]
+  entity String [not null]
+  entity_id ObjectId
+  actor ObjectId [ref: > User._id, not null]
+  old_value Mixed
+  new_value Mixed
+  description String
+  created_at Date
+}
+
+Table SystemConfig {
+  _id ObjectId [pk]
+  config_key String [unique, not null]
+  config_value String [not null]
+  description String
+  updated_at Date
+}
+
+Table Otp {
+  _id ObjectId [pk]
+  email String [not null]
+  otp String [not null]
+  createdAt Date
+}

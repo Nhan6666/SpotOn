@@ -4,13 +4,14 @@
 // ============================================================
 const Branch = require('../models/Branch');
 const User = require('../models/User');
+const SystemConfig = require('../models/SystemConfig');
 
 // @desc   Lấy tất cả chi nhánh
 // @route  GET /api/v1/branches
 // @access Public
 const getAllBranches = async (req, res) => {
   try {
-    const branches = await Branch.find()
+    const branches = await Branch.find({})
       .populate('manager_id', 'full_name email phone')
       .populate('amenities');
     res.status(200).json({ 

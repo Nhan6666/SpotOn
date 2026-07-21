@@ -34,7 +34,17 @@ const updateProfile = async (req, res) => {
     }
 
     if (full_name !== undefined) user.full_name = full_name;
-    if (phone !== undefined) user.phone = phone;
+    
+    // Kiểm tra tính duy nhất của số điện thoại (BR-04)
+    if (phone !== undefined && phone !== user.phone) {
+      if (phone.trim() !== '') {
+        const existingPhone = await User.findOne({ phone: phone.trim(), _id: { $ne: user._id } });
+        if (existingPhone) {
+          return res.status(409).json({ success: false, message: 'Số điện thoại này đã được sử dụng bởi tài khoản khác.' });
+        }
+      }
+      user.phone = phone.trim();
+    }
     if (profile_allergies !== undefined) user.profile_allergies = profile_allergies;
     if (profile_vip_notes !== undefined) user.profile_vip_notes = profile_vip_notes;
 
@@ -109,10 +119,17 @@ const updateUserRole = async (req, res) => {
     }
     
     // Xử lý branch_id
-    if (role === 'ADMIN' || role === 'CUSTOMER') {
+    const targetRole = role || user.role;
+    
+    if (['MANAGER', 'WAITER', 'KITCHEN'].includes(targetRole)) {
+      if (!branch_id && !user.branch_id) {
+        return res.status(400).json({ success: false, message: `Vui lòng chọn chi nhánh phân công cho quyền ${targetRole}.` });
+      }
+      if (branch_id) {
+        user.branch_id = branch_id;
+      }
+    } else if (targetRole === 'ADMIN' || targetRole === 'CUSTOMER') {
       user.branch_id = null; // Admin và Customer không thuộc chi nhánh cụ thể
-    } else if (branch_id) {
-      user.branch_id = branch_id;
     }
 
     await user.save();

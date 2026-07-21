@@ -52,6 +52,10 @@ const updateBookingRules = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Tỷ lệ cọc phải từ 0-100%.' });
     }
 
+    // Lấy config cũ để Audit
+    const oldConfig = await SystemConfig.findOne({ config_key: BOOKING_RULES_KEY });
+    const oldRules = oldConfig ? JSON.parse(oldConfig.config_value) : null;
+
     const config = await SystemConfig.findOneAndUpdate(
       { config_key: BOOKING_RULES_KEY },
       { 
@@ -60,6 +64,18 @@ const updateBookingRules = async (req, res) => {
       },
       { new: true, upsert: true }
     );
+
+    // Lưu Audit Log
+    const AuditLog = require('../models/AuditLog');
+    await AuditLog.create({
+      action: 'UPDATE_SYSTEM_CONFIG',
+      entity: 'SystemConfig',
+      entity_id: config._id,
+      actor: req.user._id,
+      old_value: oldRules,
+      new_value: newRules,
+      description: 'Cập nhật chính sách đặt bàn toàn chuỗi'
+    });
 
     res.status(200).json({
       success: true,

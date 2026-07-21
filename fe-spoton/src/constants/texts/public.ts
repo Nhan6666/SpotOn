@@ -60,6 +60,9 @@ export const PUBLIC_TEXTS = {
   },
   branchDetail: {
     backBtn: "Quay lại danh sách",
+    bookingWidget: {
+      supportLink: "Liên hệ Hotline"
+    },
     hero: {
       capacity: "người lớn",
       statusOpen: "ĐANG MỞ CỬA",

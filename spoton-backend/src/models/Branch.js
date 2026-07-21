@@ -88,7 +88,35 @@ const BranchSchema = new mongoose.Schema(
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
+
+// Tự động tính toán trạng thái hoạt động dựa trên giờ Server (BR-05)
+BranchSchema.virtual('current_operational_status').get(function() {
+  // Nếu Admin đã chủ động đóng cửa hoặc báo Full trong DB thì ưu tiên DB
+  if (this.status !== 'OPEN') return this.status;
+
+  const now = new Date();
+  // Chuyển đổi giờ server sang múi giờ Việt Nam (bắt buộc cho F&B)
+  const vnTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+  const currentHour = vnTime.getHours().toString().padStart(2, '0');
+  const currentMinute = vnTime.getMinutes().toString().padStart(2, '0');
+  const currentTimeStr = `${currentHour}:${currentMinute}`;
+  
+  const lunch = this.service_periods?.lunch;
+  const dinner = this.service_periods?.dinner;
+  
+  const isLunchTime = lunch && currentTimeStr >= lunch.start && currentTimeStr <= lunch.end;
+  const isDinnerTime = dinner && currentTimeStr >= dinner.start && currentTimeStr <= dinner.end;
+  
+  // Nếu ngoài giờ phục vụ của cả Trưa và Tối -> Đóng cửa
+  if (!isLunchTime && !isDinnerTime) {
+    return 'CLOSED';
+  }
+  
+  return 'OPEN';
+});
 
 module.exports = mongoose.model('Branch', BranchSchema);

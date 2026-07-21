@@ -108,8 +108,8 @@ export function FeaturedBranches() {
               : FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
 
             return (
-              <div key={branch._id} className="bg-[#0A2A12] rounded-2xl overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.3)] border border-[#2A5A3A] flex flex-col group h-full transition-transform hover:-translate-y-1">
-                <Link href={`/branches/${branch._id}`} className="flex flex-col h-full group cursor-pointer">
+              <div key={branch._id} className={`bg-[#0A2A12] rounded-2xl overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.3)] border border-[#2A5A3A] flex flex-col group h-full transition-transform ${branch.status === 'FULL' || branch.status === 'CLOSED' || branch.status === 'MAINTENANCE' ? 'opacity-70 grayscale-[30%]' : 'hover:-translate-y-1'}`}>
+                <Link href={`/branches/${branch._id}`} className={`flex flex-col h-full group ${branch.status === 'FULL' || branch.status === 'CLOSED' || branch.status === 'MAINTENANCE' ? 'pointer-events-none' : 'cursor-pointer'}`}>
                   <div className="relative h-56 w-full overflow-hidden">
                     <Image 
                       src={imageUrl} 
@@ -143,8 +143,8 @@ export function FeaturedBranches() {
                     </div>
                     
                     <div className="flex justify-end mt-4 pt-4 border-t border-[#2A5A3A]">
-                      <span className="px-6 py-2 bg-[#164626] text-[#F2B02A] hover:bg-[#F2B02A] hover:text-[#164626] text-sm font-bold uppercase tracking-wider rounded-full transition-colors w-full text-center cursor-pointer border border-[#F2B02A]">
-                        {HOME_TEXTS.popularBranches.bookingBtn || 'Đặt bàn'}
+                      <span className={`px-6 py-2 text-sm font-bold uppercase tracking-wider rounded-full transition-colors w-full text-center border ${branch.status === 'FULL' || branch.status === 'CLOSED' || branch.status === 'MAINTENANCE' ? 'bg-gray-500 text-gray-300 border-gray-500' : 'bg-[#164626] text-[#F2B02A] hover:bg-[#F2B02A] hover:text-[#164626] cursor-pointer border-[#F2B02A]'}`}>
+                        {branch.status === 'FULL' ? 'Đã Hết Bàn' : branch.status === 'CLOSED' ? 'Đã Đóng Cửa' : branch.status === 'MAINTENANCE' ? 'Bảo Trì' : (HOME_TEXTS.popularBranches.bookingBtn || 'Đặt bàn')}
                       </span>
                     </div>
                   </div>

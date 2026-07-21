@@ -133,6 +133,10 @@ const updateMasterItemOverride = async (req, res) => {
 
     await menu.save();
 
+    // Phát sự kiện Real-time để đồng bộ Menu trên iPad và KDS
+    const io = require('../socket').getIO();
+    io.to(`branch_${branchId}`).emit('MENU_UPDATED', { action: 'UPDATE_MASTER_OVERRIDE' });
+
     res.status(200).json({
       success: true,
       message: 'Cập nhật trạng thái và tồn kho món Master thành công.',
@@ -203,6 +207,10 @@ const addLocalItem = async (req, res) => {
 
     const addedItem = localMenu.items[localMenu.items.length - 1];
 
+    // Phát sự kiện Real-time để đồng bộ Menu trên iPad và KDS
+    const io = require('../socket').getIO();
+    io.to(`branch_${branchId}`).emit('MENU_UPDATED', { action: 'ADD_LOCAL_ITEM' });
+
     res.status(201).json({
       success: true,
       message: 'Thêm món ăn Local thành công.',
@@ -248,6 +256,10 @@ const updateLocalItem = async (req, res) => {
 
     await menu.save();
 
+    // Phát sự kiện Real-time để đồng bộ Menu trên iPad và KDS
+    const io = require('../socket').getIO();
+    io.to(`branch_${branchId}`).emit('MENU_UPDATED', { action: 'UPDATE_LOCAL_ITEM' });
+
     res.status(200).json({
       success: true,
       message: 'Cập nhật món ăn Local thành công.',
@@ -276,6 +288,10 @@ const deleteLocalItem = async (req, res) => {
 
     menu.items.pull({ _id: req.params.itemId });
     await menu.save();
+
+    // Phát sự kiện Real-time để đồng bộ Menu trên iPad và KDS
+    const io = require('../socket').getIO();
+    io.to(`branch_${branchId}`).emit('MENU_UPDATED', { action: 'DELETE_LOCAL_ITEM' });
 
     res.status(200).json({
       success: true,

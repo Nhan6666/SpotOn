@@ -17,18 +17,38 @@ const updateTableStatus = async (req, res) => {
       });
     }
 
-    const branch = await Branch.findOneAndUpdate(
-      { _id: branchId },
-      { $set: { 'zones.$[].tables.$[table].status': status } },
-      {
-        arrayFilters: [{ 'table._id': tableId }],
-        new: true,
-      }
-    );
-
+    const branch = await Branch.findById(branchId);
     if (!branch) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh hoặc bàn.' });
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
     }
+
+    // Tìm bàn trong tất cả các zone
+    let targetTable = null;
+    let targetZone = null;
+    for (const zone of branch.zones) {
+      targetTable = zone.tables.id(tableId);
+      if (targetTable) {
+        targetZone = zone;
+        break;
+      }
+    }
+
+    if (!targetTable) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy bàn.' });
+    }
+
+    // BR-1: Occupied Table Lock Restriction
+    if (status === 'LOCKED' || status === 'MAINTENANCE') {
+      if (['OCCUPIED', 'RESERVED'].includes(targetTable.status)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Không thể khóa bàn đang có khách (OCCUPIED) hoặc đã đặt trước (RESERVED).' 
+        });
+      }
+    }
+
+    targetTable.status = status;
+    await branch.save();
 
     // Phát sự kiện WebSocket để cập nhật UI Sơ đồ bàn realtime
     const io = require('../socket').getIO();

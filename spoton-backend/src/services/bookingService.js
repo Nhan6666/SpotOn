@@ -96,6 +96,19 @@ class BookingService {
     const nextDate = new Date(targetDate);
     nextDate.setDate(nextDate.getDate() + 1);
 
+    // CHỐT CHẶN BR-15-03: Giới hạn số lượng đơn Hold của một user
+    if (userId) {
+      const activeHolds = await Booking.countDocuments({
+        customer_id: userId,
+        status: { $in: ['HOLDING', 'PENDING_PAYMENT'] }
+      });
+      if (activeHolds >= 2) {
+        const err = new Error('Bạn đã đạt giới hạn giữ chỗ (tối đa 2 bàn cùng lúc). Vui lòng hoàn tất thanh toán hoặc hủy các đơn đang giữ trước khi đặt thêm.');
+        err.statusCode = 429; // 429 Too Many Requests
+        throw err;
+      }
+    }
+
     // 2. Khóa bàn trên Redis (Giai đoạn 1 — TTL 10 phút)
     const customerId = userId ? userId.toString() : `guest_${Date.now()}`;
     const lockResult = await TableLockService.lockMultipleTables(branch_id, table_ids, customerId);
@@ -350,6 +363,35 @@ class BookingService {
         const err = new Error('Đơn đặt bàn phải ở trạng thái Đã xác nhận (CONFIRMED) mới có thể Check-in.');
         err.statusCode = 400;
         throw err;
+      }
+
+      // BR-1: Check table statuses to prevent race condition (Anti-Collision)
+      if (booking.table_ids && booking.table_ids.length > 0) {
+        const branch = await Branch.findById(booking.branch_id).session(session);
+        if (!branch) {
+          const err = new Error('Không tìm thấy chi nhánh.');
+          err.statusCode = 404;
+          throw err;
+        }
+
+        let occupiedTables = [];
+        if (branch.zones) {
+          branch.zones.forEach(zone => {
+            zone.tables.forEach(t => {
+              if (booking.table_ids.includes(t._id.toString())) {
+                if (!['EMPTY', 'CLEANING', 'RESERVED'].includes(t.status)) {
+                  occupiedTables.push(t.table_number);
+                }
+              }
+            });
+          });
+        }
+
+        if (occupiedTables.length > 0) {
+          const err = new Error(`Không thể Check-in! Bàn số ${occupiedTables.join(', ')} hiện đang có khách ngồi. Vui lòng chuyển bàn khác trước khi Check-in.`);
+          err.statusCode = 409;
+          throw err;
+        }
       }
 
       // 1. Cập nhật Booking -> IN_USE
@@ -709,6 +751,159 @@ class BookingService {
     }
   }
 
+  static async rejectRefund(bookingId, rejectData, userId) {
+    const { reason } = rejectData;
+
+    if (!reason || !reason.trim()) {
+      const err = new Error('Lý do từ chối hoàn tiền là bắt buộc.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const booking = await Booking.findById(bookingId).session(session);
+
+      if (!booking) {
+        const err = new Error('Không tìm thấy đơn đặt bàn.');
+        err.statusCode = 404;
+        throw err;
+      }
+
+      if (booking.status !== 'CANCELLED_REFUND_PENDING') {
+        const err = new Error('Chỉ có thể từ chối các đơn đang ở trạng thái chờ hoàn tiền (CANCELLED_REFUND_PENDING).');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      // Cập nhật trạng thái
+      booking.status = 'REFUND_REJECTED';
+      booking.cancellation_reason = `REFUND_REJECTED: ${reason} (Bởi Manager ID: ${userId})`;
+
+      await booking.save({ session });
+
+      // Lịch sử cọc (nếu cần xử lý doanh thu, hiện tại tiền cọc không bị trừ đi, nghĩa là quán giữ lại cọc)
+      // Quán giữ lại cọc thì không cần tạo Revenue âm (refund), tiền cọc đã là Revenue dương từ trước (nếu đã lưu Revenue lúc đóng cọc) hoặc tính vào doanh thu giữ cọc.
+      // Dựa trên kiến trúc, hệ thống có thể cần thêm Logic nếu muốn ghi nhận doanh thu 'tiền cọc vi phạm'. 
+      // Tạm thời chỉ cập nhật trạng thái theo Use Case.
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return booking;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
+
+  static async changeBookingTables(bookingId, newTableIds) {
+    if (!newTableIds || newTableIds.length === 0) {
+      const err = new Error('Vui lòng chọn ít nhất 1 bàn mới.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const booking = await Booking.findById(bookingId).session(session);
+      if (!booking) {
+        const err = new Error('Không tìm thấy đơn đặt bàn.');
+        err.statusCode = 404;
+        throw err;
+      }
+
+      if (booking.status !== 'IN_USE') {
+        const err = new Error('Chỉ có thể chuyển bàn khi khách đang sử dụng (IN_USE).');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      const branch = await Branch.findById(booking.branch_id).session(session);
+      if (!branch) {
+        const err = new Error('Không tìm thấy chi nhánh.');
+        err.statusCode = 404;
+        throw err;
+      }
+
+      // 1. Kiểm tra xem bàn mới có đang trống không
+      let occupiedTables = [];
+      let newAssignedTables = [];
+      
+      if (branch.zones) {
+        branch.zones.forEach(zone => {
+          zone.tables.forEach(t => {
+            if (newTableIds.includes(t._id.toString())) {
+              newAssignedTables.push({ table_id: t._id, table_number: t.table_number });
+              
+              // Nếu bàn mới KHÔNG PHẢI là bàn cũ của đơn này và KHÔNG PHẢI là trống
+              if (!booking.table_ids.includes(t._id.toString()) && !['EMPTY', 'CLEANING'].includes(t.status)) {
+                occupiedTables.push(t.table_number);
+              }
+            }
+          });
+        });
+      }
+
+      if (occupiedTables.length > 0) {
+        const err = new Error(`Không thể chuyển bàn! Bàn số ${occupiedTables.join(', ')} hiện đang có người sử dụng.`);
+        err.statusCode = 409;
+        throw err;
+      }
+
+      // Lưu lại bàn cũ để trả về
+      const oldTableIds = booking.table_ids || [];
+      const oldTableNumbers = (booking.assigned_tables || []).map(t => t.table_number).join(', ');
+
+      // 2. Cập nhật Bàn cũ -> EMPTY
+      if (oldTableIds.length > 0) {
+        await Branch.updateOne(
+          { _id: booking.branch_id },
+          { $set: { 'zones.$[].tables.$[tbl].status': 'EMPTY' } },
+          { 
+            arrayFilters: [{ 'tbl._id': { $in: oldTableIds } }],
+            session 
+          }
+        );
+      }
+
+      // 3. Cập nhật Bàn mới -> OCCUPIED
+      await Branch.updateOne(
+        { _id: booking.branch_id },
+        { $set: { 'zones.$[].tables.$[tbl].status': 'OCCUPIED' } },
+        { 
+          arrayFilters: [{ 'tbl._id': { $in: newTableIds } }],
+          session 
+        }
+      );
+
+      // 4. Cập nhật Booking
+      booking.table_ids = newTableIds;
+      booking.assigned_tables = newAssignedTables;
+      
+      // Thêm log
+      const newTableNumbers = newAssignedTables.map(t => t.table_number).join(', ');
+      const note = `[Hệ thống]: Đã chuyển từ bàn ${oldTableNumbers || 'Không rõ'} sang bàn ${newTableNumbers}.`;
+      booking.note = booking.note ? `${booking.note}\n${note}` : note;
+
+      await booking.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return { booking, oldTableIds };
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
+
   static async createWalkInBooking(payload, branchId) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -716,32 +911,52 @@ class BookingService {
     try {
       const { table_ids, assigned_tables, guest_count, note } = payload;
       
-      if (!table_ids || table_ids.length === 0) {
-        const err = new Error('Vui lòng chọn ít nhất 1 bàn.');
-        err.statusCode = 400;
-        throw err;
-      }
-
       const now = new Date();
       const currentHour = now.getHours();
       const shift = (currentHour >= 10 && currentHour < 15) ? 'LUNCH' : 'DINNER';
       const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-      // Lấy tên bàn từ DB
-      let final_assigned_tables = assigned_tables;
-      if (!final_assigned_tables || final_assigned_tables.length === 0) {
-        final_assigned_tables = [];
-        const branch = await Branch.findById(branchId).session(session);
-        if (branch && branch.zones) {
-          branch.zones.forEach(zone => {
-            zone.tables.forEach(t => {
-              if (table_ids.includes(t._id.toString())) {
-                final_assigned_tables.push({ table_id: t._id, table_number: t.table_number });
-              }
-            });
-          });
-        }
+      // Lấy chi nhánh để kiểm tra
+      const branch = await Branch.findById(branchId).session(session);
+      if (!branch) {
+        const err = new Error('Không tìm thấy chi nhánh.');
+        err.statusCode = 404;
+        throw err;
       }
+
+      // PRE-1: Check branch status
+      if (branch.status === 'CLOSED' || branch.status === 'FULL') {
+        const err = new Error(`Không thể nhận thêm khách. Chi nhánh hiện đang ${branch.status === 'CLOSED' ? 'đóng cửa (CLOSED)' : 'quá tải (FULL)'}.`);
+        err.statusCode = 400;
+        throw err;
+      }
+
+      // Lấy tên bàn từ DB và đồng thời check PRE-2 (Anti-Collision)
+      let final_assigned_tables = [];
+      let occupiedTables = [];
+      
+      if (branch.zones) {
+        branch.zones.forEach(zone => {
+          zone.tables.forEach(t => {
+            if (table_ids.includes(t._id.toString())) {
+              final_assigned_tables.push({ table_id: t._id, table_number: t.table_number });
+              
+              // Chặn nếu bàn không trống
+              if (!['EMPTY', 'CLEANING'].includes(t.status)) {
+                occupiedTables.push(t.table_number);
+              }
+            }
+          });
+        });
+      }
+
+      if (occupiedTables.length > 0) {
+        const err = new Error(`Thao tác thất bại! Bàn số ${occupiedTables.join(', ')} vừa bị thu ngân hoặc nhân viên khác nhận trước.`);
+        err.statusCode = 409;
+        throw err;
+      }
+
+      const isWaitingList = !table_ids || table_ids.length === 0;
 
       // 1. Tạo Booking
       const booking = new Booking({
@@ -751,23 +966,25 @@ class BookingService {
         arrival_time: timeStr,
         shift,
         guest_count: guest_count || 2,
-        status: 'IN_USE',
+        status: isWaitingList ? 'WAITING_LIST' : 'IN_USE',
         note: note || '',
-        table_ids,
+        table_ids: table_ids || [],
         assigned_tables: final_assigned_tables
       });
 
       await booking.save({ session });
 
-      // 2. Cập nhật trạng thái bàn -> OCCUPIED
-      await Branch.updateOne(
-        { _id: branchId },
-        { $set: { 'zones.$[].tables.$[tbl].status': 'OCCUPIED' } },
-        { 
-          arrayFilters: [{ 'tbl._id': { $in: table_ids } }],
-          session 
-        }
-      );
+      // 2. Cập nhật trạng thái bàn -> OCCUPIED (Nếu không phải Waiting List)
+      if (!isWaitingList) {
+        await Branch.updateOne(
+          { _id: branchId },
+          { $set: { 'zones.$[].tables.$[tbl].status': 'OCCUPIED' } },
+          { 
+            arrayFilters: [{ 'tbl._id': { $in: table_ids } }],
+            session 
+          }
+        );
+      }
 
       await session.commitTransaction();
       session.endSession();

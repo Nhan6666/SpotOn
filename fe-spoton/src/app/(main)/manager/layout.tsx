@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 import { Store, UtensilsCrossed, BarChart3, CalendarDays, ClipboardCheck, LogOut, Ticket, Receipt, Wallet } from 'lucide-react';
 import { Navbar } from '@/components/ui/Navbar';
+import { GlobalOverloadAlert } from '@/features/manager/components/GlobalOverloadAlert';
 
 const MANAGER_NAV = [
   { href: '/manager/branch', label: 'Chi nhánh', icon: Store },
@@ -30,6 +31,9 @@ export default function ManagerLayout({
     <div className="flex flex-col h-screen w-full bg-gray-50">
       {/* Header spanning full width */}
       <Navbar isAdmin={true} />
+      
+      {/* Global Overload Alert Banner */}
+      <GlobalOverloadAlert />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display, Lexend } from "next/font/google";
 import { AOSProvider } from "@/providers/AOSProvider";
 import { ToastProvider } from "@/components/ui/Toast";
-import { AuthProvider } from "@/providers/AuthProvider"; 
+import { AuthProvider } from "@/providers/AuthProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -48,7 +48,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col w-full">
         {/* Bọc AuthProvider ở vòng ngoài cùng của các Provider */}
-        <AuthProvider> 
+        <AuthProvider>
           <AOSProvider>
             <ToastProvider>
               {children}

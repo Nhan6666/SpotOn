@@ -80,10 +80,43 @@ const updateZone = async (req, res) => {
       }
       zone.name = name;
     }
-    if (capacity !== undefined) zone.capacity = capacity;
-    if (status) zone.status = status;
+    if (status) {
+      // BR-2: Zone Closure Cascade
+      if (status === 'CLOSED' && zone.status !== 'CLOSED') {
+        const hasOccupiedTables = zone.tables.some(t => ['OCCUPIED', 'RESERVED'].includes(t.status));
+        if (hasOccupiedTables) {
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Không thể đóng khu vực đang có bàn sử dụng (OCCUPIED) hoặc đặt trước (RESERVED).' 
+          });
+        }
+        
+        // Khóa toàn bộ bàn trong Zone
+        zone.tables.forEach(t => {
+          t.status = 'LOCKED';
+        });
+      }
+      zone.status = status;
+    }
 
     await branch.save({ validateModifiedOnly: true });
+
+    // Phát sự kiện WebSocket
+    const io = require('../socket').getIO();
+    io.to(`branch_${branchId}`).emit('ZONE_STATUS_CHANGED', {
+      action: status,
+      branch_id: branchId,
+      zone_id: zoneId
+    });
+    
+    if (status === 'CLOSED') {
+       io.to(`branch_${branchId}`).emit('table_status_changed', {
+         action: 'LOCKED',
+         branch_id: branchId,
+         table_ids: zone.tables.map(t => t._id)
+       });
+    }
+
     res.status(200).json({
       success: true,
       message: 'Cập nhật khu vực thành công.',

@@ -29,6 +29,18 @@ export const posService = {
     return res;
   },
 
+  createWaitingList: async (guestCount: number, customerName: string, phone: string, note: string = '') => {
+    const res = await http.post<{ success: boolean; message: string }>('/reception/walk-in', {
+      table_ids: [],
+      assigned_tables: [],
+      guest_count: guestCount,
+      walk_in_name: customerName || 'Khách vãng lai',
+      walk_in_phone: phone || '',
+      note: note ? `Waiting List: ${note}` : 'Khách Walk-in (Waiting List)'
+    });
+    return res;
+  },
+
   updateTableStatus: async (branchId: string, tableId: string, status: string) => {
     const res = await http.patch<{ success: boolean; message: string }>(
       `/branches/${branchId}/tables/${tableId}/status`, 

@@ -39,7 +39,7 @@ export default function AdminPage() {
   const fetchStats = async () => {
     setIsLoading(true);
     try {
-      const data = await http.get<{success: boolean; data: ChainStats}>('/stats/chain/dashboard');
+      const data = await http.get<{ success: boolean; data: ChainStats }>('/stats/chain/dashboard');
       if (data.success) {
         setStats(data.data);
       }
@@ -73,7 +73,7 @@ export default function AdminPage() {
           <h1 className="text-3xl font-bold text-gray-900">Tổng quan toàn chuỗi</h1>
           <p className="text-gray-500 mt-1">Xin chào {user?.full_name}, đây là số liệu hoạt động của hệ thống hôm nay.</p>
         </div>
-        <button 
+        <button
           onClick={fetchStats}
           disabled={isLoading}
           className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
@@ -196,7 +196,7 @@ export default function AdminPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} tickFormatter={(value) => `${value / 1000000}M`} />
-                  <RechartsTooltip 
+                  <RechartsTooltip
                     formatter={(value: number) => [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value), 'Doanh thu']}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
                   />
@@ -227,7 +227,7 @@ export default function AdminPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
-                  <RechartsTooltip 
+                  <RechartsTooltip
                     cursor={{ fill: '#f3f4f6' }}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
                   />

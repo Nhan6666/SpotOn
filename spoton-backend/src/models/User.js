@@ -25,8 +25,8 @@ const UserSchema = new mongoose.Schema(
     },
     has_custom_avatar: { type: Boolean, default: false },
     is_email_verified: { type: Boolean, default: false },
-    profile_allergies: { type: String },
-    profile_vip_notes: { type: String },
+    profile_allergies: [{ type: String }],
+    profile_vip_notes: [{ type: String }],
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

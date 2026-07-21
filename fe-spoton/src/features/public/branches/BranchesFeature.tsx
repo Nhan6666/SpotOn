@@ -467,10 +467,16 @@ export function BranchesFeature() {
                 const serviceHours = getServiceHoursDisplay(branch);
                 const totalCapacity = getTotalCapacity(branch);
 
+                // Nếu chi nhánh đã FULL, CLOSED, hoặc MAINTENANCE -> Hệ thống tự động disable chi nhánh này
+                const isBranchDisabled = branch.status === 'FULL' || branch.status === 'CLOSED' || branch.status === 'MAINTENANCE';
+
                 // Kiểm tra xem có bàn trống phù hợp với ngưỡng chênh lệch không (MAX_GAP = 2)
                 let hasSuitableTable = false;
                 const MAX_GAP = 2;
-                if (filterGuests >= 10 || filterGuests <= 0) {
+                
+                if (isBranchDisabled) {
+                  hasSuitableTable = false;
+                } else if (filterGuests >= 10 || filterGuests <= 0) {
                   hasSuitableTable = true;
                 } else {
                   if (branch.zones && branch.zones.length > 0) {
@@ -492,7 +498,7 @@ export function BranchesFeature() {
                 return (
                   <div
                     key={branch._id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow group cursor-pointer"
+                    className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row transition-shadow group ${isBranchDisabled ? 'opacity-70 grayscale-[30%]' : 'hover:shadow-md cursor-pointer'}`}
                   >
                     {/* Image Section */}
                     <div className="w-full md:w-5/12 h-56 md:h-auto relative overflow-hidden flex-shrink-0">
@@ -673,10 +679,14 @@ export function BranchesFeature() {
                           </Link>
                         ) : (
                           <div className="flex flex-col items-end sm:items-center">
-                            <span className="text-[11px] text-red-500 font-bold mb-1.5 uppercase tracking-wider bg-red-50 px-2 py-0.5 rounded border border-red-100">{PUBLIC_TEXTS.branches.filters.status.full}</span>
+                            <span className="text-[11px] text-red-500 font-bold mb-1.5 uppercase tracking-wider bg-red-50 px-2 py-0.5 rounded border border-red-100">
+                              {branch.status === 'FULL' ? PUBLIC_TEXTS.branches.filters.status.full : 
+                               branch.status === 'CLOSED' ? 'Đã đóng cửa' : 
+                               branch.status === 'MAINTENANCE' ? 'Đang bảo trì' : 'Không khả dụng'}
+                            </span>
                             <a
                               href={`tel:${branch.hotline || '19001234'}`}
-                              className="w-full sm:w-auto px-6 py-2 bg-[#164626] text-white hover:bg-[#0A2A12] font-bold rounded-full text-sm transition-colors text-center shrink-0 flex items-center justify-center gap-2 shadow-sm"
+                              className={`w-full sm:w-auto px-6 py-2 text-white font-bold rounded-full text-sm transition-colors text-center shrink-0 flex items-center justify-center gap-2 shadow-sm ${isBranchDisabled ? 'bg-gray-400 cursor-not-allowed pointer-events-none' : 'bg-[#164626] hover:bg-[#0A2A12]'}`}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
                               {PUBLIC_TEXTS.branchDetail.bookingWidget.supportLink}

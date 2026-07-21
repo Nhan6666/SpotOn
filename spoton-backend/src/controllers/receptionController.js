@@ -407,6 +407,102 @@ const processRefund = async (req, res) => {
   }
 };
 
+// @desc   Chuyển bàn cho khách đang sử dụng (IN_USE)
+// @route  PATCH /api/v1/reception/bookings/:id/change-tables
+// @access Private (Manager/Admin/Waiter)
+const changeTables = async (req, res) => {
+  try {
+    const { new_table_ids } = req.body;
+    const BookingService = require('../services/bookingService');
+    
+    const { booking, oldTableIds } = await BookingService.changeBookingTables(req.params.id, new_table_ids);
+
+    const io = require('../socket').getIO();
+    
+    // 1. Reset iPad ở các bàn cũ
+    if (oldTableIds && oldTableIds.length > 0) {
+      oldTableIds.forEach(tableId => {
+        io.to(`table_${tableId}`).emit('RESET_IPAD', { tableId });
+      });
+      // Cập nhật Sơ đồ bàn -> Trống
+      io.to(`branch_${booking.branch_id}`).emit('table_status_changed', {
+        action: 'EMPTY',
+        branch_id: booking.branch_id,
+        table_ids: oldTableIds
+      });
+    }
+
+    // 2. Kích hoạt iPad ở các bàn mới
+    if (booking.table_ids && booking.table_ids.length > 0) {
+      booking.table_ids.forEach(tableId => {
+        io.to(`table_${tableId}`).emit('ACTIVATE_IPAD', {
+          bookingId: booking._id,
+          customerName: booking.customer_id?.full_name || booking.walk_in_name || 'Khách hàng',
+          tableId: tableId
+        });
+      });
+      // Cập nhật Sơ đồ bàn -> Đang dùng
+      io.to(`branch_${booking.branch_id}`).emit('table_status_changed', {
+        action: 'OCCUPIED',
+        branch_id: booking.branch_id,
+        booking_id: booking._id,
+        table_ids: booking.table_ids
+      });
+    }
+
+    // 3. Update Kanban
+    io.to(`branch_${booking.branch_id}`).emit('BOOKING_UPDATED', { bookingId: booking._id });
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Chuyển bàn thành công.',
+      data: booking 
+    });
+
+  } catch (error) {
+    console.error('Lỗi changeTables:', error);
+    res.status(error.statusCode || 500).json({ 
+      success: false, 
+      message: error.message || 'Lỗi server khi chuyển bàn.' 
+    });
+  }
+};
+
+// @desc   Từ chối hoàn tiền cho khách (Reject Refund)
+// @route  POST /api/v1/reception/bookings/:id/reject-refund
+// @access Private (Manager/Admin ONLY)
+const rejectRefund = async (req, res) => {
+  try {
+    const BookingService = require('../services/bookingService');
+    const { reason } = req.body;
+    
+    const booking = await BookingService.rejectRefund(
+      req.params.id, 
+      { reason },
+      req.user._id
+    );
+
+    const io = require('../socket').getIO();
+    io.to(`branch_${booking.branch_id}`).emit('BOOKING_STATUS_CHANGED', {
+      bookingId: booking._id,
+      status: booking.status
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Từ chối hoàn tiền thành công.',
+      data: booking 
+    });
+
+  } catch (error) {
+    console.error('Lỗi rejectRefund:', error);
+    res.status(error.statusCode || 500).json({ 
+      success: false, 
+      message: error.message || 'Lỗi server khi từ chối hoàn tiền.' 
+    });
+  }
+};
+
 module.exports = {
   checkAvailability,
   holdBooking,
@@ -415,7 +511,9 @@ module.exports = {
   checkoutBooking,
   forceReleaseBooking,
   createWalkInBooking,
+  changeTables,
   addBillAdjustment,
   removeBillAdjustment,
-  processRefund
+  processRefund,
+  rejectRefund
 };

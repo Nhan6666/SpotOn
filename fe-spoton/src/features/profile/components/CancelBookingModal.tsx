@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
-import { X, AlertTriangle, Building2, User, FileText, CheckCircle2 } from 'lucide-react';
+import { X, AlertTriangle, Building2, User, FileText, CheckCircle2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { profileService } from '../profile.service';
+import { useToast } from '@/components/ui/Toast';
 
 interface CancelBookingModalProps {
   booking: any;
   onClose: () => void;
-  onConfirm: (payload: { bank_name: string; bank_account_number: string; account_holder_name: string; reason: string }) => void;
+  onConfirm: (payload: { bank_name: string; bank_account_number: string; account_holder_name: string; reason: string; otp?: string }) => void;
   isSubmitting: boolean;
 }
 
 export function CancelBookingModal({ booking, onClose, onConfirm, isSubmitting }: CancelBookingModalProps) {
-  const [step, setStep] = useState<'CALCULATE' | 'FORM'>('CALCULATE');
+  const [step, setStep] = useState<'CALCULATE' | 'FORM' | 'OTP'>('CALCULATE');
+  const [isRequestingOtp, setIsRequestingOtp] = useState(false);
+  const { error: showError, success: showSuccess } = useToast();
   
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountName, setAccountName] = useState('');
   const [reason, setReason] = useState('');
+  const [otp, setOtp] = useState('');
 
   const now = new Date();
   const reservationDate = new Date(booking.reservation_date);
@@ -36,13 +41,32 @@ export function CancelBookingModal({ booking, onClose, onConfirm, isSubmitting }
   const refundAmount = (booking.total_deposit_paid || 0) * (refundPercentage / 100);
   const isRefundable = refundAmount > 0;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleRequestOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    try {
+      setIsRequestingOtp(true);
+      await profileService.requestCancelOtp(booking._id);
+      showSuccess('Mã OTP đã được gửi đến email của bạn');
+      setStep('OTP');
+    } catch (err: any) {
+      showError(err.message || 'Lỗi khi gửi mã OTP');
+    } finally {
+      setIsRequestingOtp(false);
+    }
+  };
+
+  const handleConfirmCancel = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!otp.trim()) {
+      showError('Vui lòng nhập mã OTP');
+      return;
+    }
     onConfirm({
       bank_name: bankName,
       bank_account_number: accountNumber,
       account_holder_name: accountName,
-      reason: reason
+      reason: reason,
+      otp: otp
     });
   };
 
@@ -67,7 +91,7 @@ export function CancelBookingModal({ booking, onClose, onConfirm, isSubmitting }
         </div>
 
         <div className="p-6">
-          {step === 'CALCULATE' ? (
+          {step === 'CALCULATE' && (
             <div className="space-y-6">
               <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl">
                 <h3 className="font-bold text-orange-900 mb-2">Chính sách hủy bàn & Hoàn cọc</h3>
@@ -104,18 +128,20 @@ export function CancelBookingModal({ booking, onClose, onConfirm, isSubmitting }
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={onClose}>Giữ lại bàn</Button>
+                <Button variant="outline" className="flex-1" onClick={onClose} disabled={isRequestingOtp}>Giữ lại bàn</Button>
                 <Button 
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                  onClick={() => isRefundable ? setStep('FORM') : onConfirm({ bank_name: '', bank_account_number: '', account_holder_name: '', reason: '' })}
-                  disabled={isSubmitting}
+                  onClick={() => isRefundable ? setStep('FORM') : handleRequestOtp()}
+                  disabled={isRequestingOtp}
                 >
-                  {isRefundable ? 'Tiếp tục điền Form' : 'Xác nhận hủy (Không hoàn cọc)'}
+                  {isRequestingOtp ? 'Đang gửi mã OTP...' : (isRefundable ? 'Tiếp tục điền Form' : 'Nhận mã OTP để Hủy')}
                 </Button>
               </div>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+          )}
+
+          {step === 'FORM' && (
+            <form onSubmit={handleRequestOtp} className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl flex gap-3 text-sm text-blue-800 mb-2">
                 <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-blue-600" />
                 <p>Bạn sẽ được hoàn <strong>{refundAmount.toLocaleString()}đ</strong>. Vui lòng cung cấp chính xác thông tin tài khoản ngân hàng để chúng tôi chuyển khoản.</p>
@@ -177,9 +203,41 @@ export function CancelBookingModal({ booking, onClose, onConfirm, isSubmitting }
               </div>
 
               <div className="flex gap-3 pt-4 border-t border-gray-100">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setStep('CALCULATE')} disabled={isSubmitting}>Quay lại</Button>
-                <Button type="submit" className="flex-1 bg-red-600 hover:bg-red-700 text-white" disabled={isSubmitting}>
-                  {isSubmitting ? 'Đang xử lý...' : 'Xác nhận hủy & Hoàn tiền'}
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setStep('CALCULATE')} disabled={isRequestingOtp}>Quay lại</Button>
+                <Button type="submit" className="flex-1 bg-red-600 hover:bg-red-700 text-white" disabled={isRequestingOtp}>
+                  {isRequestingOtp ? 'Đang gửi mã OTP...' : 'Nhận mã OTP & Tiếp tục'}
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {step === 'OTP' && (
+            <form onSubmit={handleConfirmCancel} className="space-y-4">
+              <div className="bg-green-50 border border-green-200 p-4 rounded-xl text-center">
+                <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <h3 className="font-bold text-green-900 mb-1">Mã OTP đã được gửi!</h3>
+                <p className="text-sm text-green-800">Vui lòng kiểm tra email của bạn để lấy mã xác thực gồm 6 chữ số.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                  <Lock className="w-4 h-4 text-gray-400" /> Nhập mã OTP *
+                </label>
+                <input 
+                  required
+                  type="text"
+                  maxLength={6}
+                  placeholder="Nhập 6 số OTP"
+                  value={otp}
+                  onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                  className="w-full border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 text-center text-xl tracking-[0.5em] font-mono font-bold"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-gray-100">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => isRefundable ? setStep('FORM') : setStep('CALCULATE')} disabled={isSubmitting}>Quay lại</Button>
+                <Button type="submit" className="flex-1 bg-red-600 hover:bg-red-700 text-white" disabled={isSubmitting || otp.length < 6}>
+                  {isSubmitting ? 'Đang xử lý...' : 'Xác nhận Hủy bàn'}
                 </Button>
               </div>
             </form>

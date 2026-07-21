@@ -88,6 +88,22 @@ export function usePos() {
     }
   };
 
+  const handleCreateWaitingList = async (guestCount: number, customerName: string, phone: string, note: string = '') => {
+    if (!user?.branch_id) return;
+    setIsSubmitting(true);
+    try {
+      const res = await posService.createWaitingList(guestCount, customerName, phone, note);
+      if (res.success) {
+        success("Đã đưa khách vào Waiting List thành công!");
+        fetchBranchData(); // Cập nhật lại danh sách bookings để thấy Waiting List
+      }
+    } catch (err: any) {
+      showError(err.response?.data?.message || "Lỗi khi thêm vào Waiting List.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleUpdateTableStatus = async (status: string) => {
     if (!selectedTable || !user?.branch_id) return;
     setIsSubmitting(true);
@@ -122,6 +138,7 @@ export function usePos() {
     setGuestCount,
     isSubmitting,
     handleOpenTable,
+    handleCreateWaitingList,
     handleUpdateTableStatus,
   };
 }

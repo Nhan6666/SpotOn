@@ -497,10 +497,20 @@ exports.validateVoucher = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Voucher đã hết lượt sử dụng.' });
     }
 
-    // Check branch
-    if (voucher.branch_id && branch_id) {
-      if (voucher.branch_id.toString() !== branch_id.toString()) {
-        return res.status(400).json({ success: false, message: 'Voucher không áp dụng cho chi nhánh này.' });
+    // Check branch (Local & Global)
+    if (branch_id) {
+      if (voucher.branch_id) {
+        // Local Voucher
+        if (voucher.branch_id.toString() !== branch_id.toString()) {
+          return res.status(400).json({ success: false, message: 'Voucher không áp dụng cho chi nhánh này.' });
+        }
+      } else {
+        // Global Voucher -> Check BR-2 (Opt-out)
+        const Branch = require('../models/Branch');
+        const branch = await Branch.findById(branch_id);
+        if (branch && branch.disabled_vouchers && branch.disabled_vouchers.includes(voucher._id)) {
+          return res.status(400).json({ success: false, message: 'Rất tiếc, chi nhánh này không tham gia chương trình khuyến mãi này.' });
+        }
       }
     }
 
@@ -549,5 +559,58 @@ exports.validateVoucher = async (req, res) => {
   } catch (error) {
     console.error('Error in validateVoucher:', error);
     res.status(500).json({ success: false, message: 'Lỗi server khi kiểm tra voucher.' });
+  }
+};
+
+// @desc    Tắt/Bật Global Voucher cho chi nhánh (Opt-out)
+// @route   POST /api/v1/vouchers/:id/opt-out
+// @access  Private/Manager
+exports.toggleOptOutGlobalVoucher = async (req, res) => {
+  try {
+    const voucherId = req.params.id;
+    const branchId = req.user.branch_id;
+
+    if (!branchId) {
+      return res.status(403).json({ success: false, message: 'Bạn chưa được gán vào chi nhánh nào.' });
+    }
+
+    const voucher = await Voucher.findById(voucherId);
+    if (!voucher) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy voucher.' });
+    }
+
+    if (voucher.branch_id) {
+      return res.status(400).json({ success: false, message: 'Chức năng này chỉ dành cho Voucher Toàn Hệ Thống (Global).' });
+    }
+
+    const Branch = require('../models/Branch');
+    const branch = await Branch.findById(branchId);
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+    
+    let message = '';
+    const index = branch.disabled_vouchers.indexOf(voucherId);
+    if (index > -1) {
+      // Bật lại
+      branch.disabled_vouchers.splice(index, 1);
+      message = `Đã BẬT lại voucher ${voucher.code} cho chi nhánh của bạn.`;
+    } else {
+      // Tắt đi
+      branch.disabled_vouchers.push(voucherId);
+      message = `Đã TẮT voucher ${voucher.code} tại chi nhánh của bạn.`;
+    }
+
+    await branch.save({ validateModifiedOnly: true });
+
+    res.status(200).json({
+      success: true,
+      message,
+      data: branch.disabled_vouchers
+    });
+
+  } catch (error) {
+    console.error('Error in toggleOptOutGlobalVoucher:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi cập nhật trạng thái voucher.' });
   }
 };

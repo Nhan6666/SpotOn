@@ -132,8 +132,14 @@ export function useManagerBookings() {
       if (tableBookings.some(b => ['PENDING_PAYMENT', 'PENDING_DEPOSIT'].includes(b.status))) return 'LOCKED';
       if (tableBookings.some(b => b.status === 'HOLDING')) return 'HOLDING';
     }
-    return (shift === 'LUNCH' ? table.status_lunch : table.status_dinner) || table.status || 'EMPTY';
-  }, [bookings, shift]);
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (date === todayStr) {
+      return (shift === 'LUNCH' ? table.status_lunch : table.status_dinner) || table.status || 'EMPTY';
+    }
+    
+    return 'EMPTY';
+  }, [bookings, shift, date]);
 
   return {
     branch,

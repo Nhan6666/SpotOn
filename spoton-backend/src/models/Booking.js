@@ -97,6 +97,7 @@ const BookingSchema = new mongoose.Schema(
         'NO_SHOW',                    // Quá giờ 30 phút không đến (System Worker UC-S02)
         'PENDING_SETTLEMENT',         // Bàn đã nhả nhưng chưa thanh toán (Force Release)
         'WRITE_OFF',                  // Khách ăn quỵt hoặc thất thoát
+        'WAITING_LIST'                // Khách đang đợi có bàn (Walk-in Waiting List)
       ],
       default: 'HOLDING',
     },
@@ -104,6 +105,7 @@ const BookingSchema = new mongoose.Schema(
     expires_at: { type: Date, index: true }, // Index for fast cron querying, NOT TTL index to prevent silent deletion
     cancellation_reason: { type: String },
     note: { type: String },
+    has_reviewed: { type: Boolean, default: false }, // Cho phép tracking xem đơn đã đánh giá chưa
 
     // ============================================================
     // DỮ LIỆU NHÚNG (Embedded Documents)

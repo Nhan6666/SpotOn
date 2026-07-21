@@ -8,7 +8,8 @@ const {
   getMyBookings,
   updateBookingInfo,
   applyVoucher,
-  cancelAndRequestRefund
+  cancelAndRequestRefund,
+  requestCancelRefundOtp
 } = require('../controllers/bookingController');
 
 // MỞ KHÓA MIDDLEWARE
@@ -30,6 +31,7 @@ router.get('/:id', optionalAuth, getBookingById);
 router.put('/:id/update-info', protect, updateBookingInfo);
 router.patch('/:id/status', protect, authorize('ADMIN', 'MANAGER'), updateBookingStatus);
 router.post('/:id/apply-voucher', protect, authorize('MANAGER', 'WAITER'), applyVoucher);
+router.post('/:id/request-cancel-otp', protect, authorize('CUSTOMER'), requestCancelRefundOtp);
 router.post('/:id/cancel-refund', protect, authorize('CUSTOMER'), cancelAndRequestRefund);
 
 module.exports = router;

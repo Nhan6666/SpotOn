@@ -93,7 +93,16 @@ const getPublicMenuItems = async (req, res) => {
     }
 
     const showAll = req.query.show_all === 'true';
-    const activeItems = showAll ? items : items.filter(i => i.is_available !== false);
+    let activeItems = showAll ? items : items.filter(i => i.is_available !== false);
+
+    const keyword = req.query.keyword;
+    if (keyword && keyword.trim() !== '') {
+      const kw = keyword.toLowerCase();
+      activeItems = activeItems.filter(i => 
+        i.name.toLowerCase().includes(kw) || 
+        (i.description && i.description.toLowerCase().includes(kw))
+      );
+    }
 
     const total = activeItems.length;
     const totalPages = Math.ceil(total / limit) || 1;

@@ -24,6 +24,8 @@ router.route('/')
   .get(voucherController.getAllVouchers)
   .post(voucherController.createVoucher);
 
+router.post('/:id/opt-out', voucherController.toggleOptOutGlobalVoucher);
+
 router.route('/:id')
   .get(voucherController.getVoucherById)
   .put(voucherController.updateVoucher)

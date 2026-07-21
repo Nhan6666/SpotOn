@@ -259,9 +259,12 @@ export function useBookingFlow(branchId: string) {
         setStep(3);
         setLoading(false);
         return;
+      } else {
+        Alert.alert('Lỗi', res.message || 'Không thể giữ bàn, vui lòng thử lại.');
       }
-    } catch {}
-    setStep(3);
+    } catch (error: any) {
+      Alert.alert('Lỗi', error?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+    }
     setLoading(false);
   };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert, ActivityIndicator, Modal, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ActivityIndicator, Modal, TextInput, ScrollView } from 'react-native';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
@@ -121,8 +121,9 @@ export function ProfileFeature() {
 
   // LOGGED IN: Show profile info
   return (
-    <View className="flex-1 bg-background px-4 pt-6">
-      <View className="items-center mb-8">
+    <View className="flex-1 bg-background">
+      <ScrollView className="flex-1 px-4 pt-6" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        <View className="items-center mb-8">
         <View className="w-24 h-24 bg-primary rounded-full items-center justify-center mb-4 shadow-sm">
           <Text className="text-white text-3xl font-lexend font-bold">
             {user.full_name?.charAt(0).toUpperCase() || 'U'}
@@ -269,11 +270,14 @@ export function ProfileFeature() {
         </View>
       )}
 
-      <Button 
-        title="Đăng xuất"
-        variant="danger"
-        onPress={handleLogout}
-      />
+      <View className="mt-2 mb-8">
+        <Button 
+          title="Đăng xuất"
+          variant="danger"
+          onPress={handleLogout}
+        />
+      </View>
+      </ScrollView>
 
       {/* Edit Profile Modal */}
       <Modal visible={editModalVisible} animationType="slide" transparent>

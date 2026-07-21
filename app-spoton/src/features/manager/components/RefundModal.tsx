@@ -35,6 +35,7 @@ export function RefundModal({ visible, booking, onClose, onSuccess }: RefundModa
   const customerName = booking.customer_id?.full_name || booking.walk_in_name || 'Khách vãng lai';
   
   const alreadyRefunded = booking.status === 'REFUND_COMPLETED' ? (booking.refund_info?.refund_amount || 0) : 0;
+  const isViewOnly = booking.status === 'REFUND_COMPLETED';
   const maxRefundable = booking.status === 'CANCELLED_REFUND_PENDING'
     ? (booking.refund_info?.refund_amount || booking.total_deposit_paid || 0)
     : (booking.total_deposit_paid || 0) + (booking.amount_collected || 0) - alreadyRefunded;
@@ -183,7 +184,8 @@ export function RefundModal({ visible, booking, onClose, onSuccess }: RefundModa
                     value={refundAmount}
                     onChangeText={setRefundAmount}
                     placeholder={`Tối đa ${maxRefundable.toLocaleString()}đ`}
-                    className="border border-gray-300 rounded-lg px-3 py-2 font-lexend text-sm bg-white"
+                    className={`border border-gray-300 rounded-lg px-3 py-2 font-lexend text-sm ${isViewOnly ? 'bg-gray-100 text-gray-500' : 'bg-white'}`}
+                    editable={!isViewOnly}
                   />
                   {refundAmount && Number(refundAmount) > maxRefundable && (
                     <Text className="font-lexend text-red-500 text-[10px] mt-1">Vượt quá số tiền có thể hoàn!</Text>
@@ -227,34 +229,39 @@ export function RefundModal({ visible, booking, onClose, onSuccess }: RefundModa
                   <TextInput
                     multiline
                     numberOfLines={3}
-                    value={reason}
+                    value={booking.refund_info?.reason ? booking.refund_info.reason.replace(/^\[.*?\]\s*/, '') : reason}
                     onChangeText={setReason}
                     placeholder="Mô tả lý do..."
-                    className="border border-gray-300 rounded-lg px-3 py-2 font-lexend text-sm bg-white text-left"
+                    className={`border border-gray-300 rounded-lg px-3 py-2 font-lexend text-sm text-left ${isViewOnly ? 'bg-gray-100 text-gray-500' : 'bg-white'}`}
                     style={{ textAlignVertical: 'top' }}
+                    editable={!isViewOnly}
                   />
                 </View>
 
                 <View className="mb-4">
                   <Text className="font-lexend font-bold text-gray-700 text-xs mb-2">Ảnh chứng từ UNC *</Text>
                   
-                  {proofUri ? (
+                  {proofUri || booking.refund_info?.refund_proof_url ? (
                     <View className="relative rounded-lg overflow-hidden border-2 border-green-300">
-                      <Image source={{ uri: proofUri }} className="w-full h-32" resizeMode="cover" />
-                      <TouchableOpacity 
-                        onPress={() => setProofUri(null)}
-                        className="absolute top-2 right-2 bg-red-500 w-8 h-8 rounded-full items-center justify-center shadow"
-                      >
-                        <FontAwesome name="times" size={14} color="white" />
-                      </TouchableOpacity>
+                      <Image source={{ uri: proofUri || booking.refund_info.refund_proof_url }} className="w-full h-32" resizeMode="cover" />
+                      {!isViewOnly && (
+                        <TouchableOpacity 
+                          onPress={() => setProofUri(null)}
+                          className="absolute top-2 right-2 bg-red-500 w-8 h-8 rounded-full items-center justify-center shadow"
+                        >
+                          <FontAwesome name="times" size={14} color="white" />
+                        </TouchableOpacity>
+                      )}
                     </View>
                   ) : (
                     <TouchableOpacity 
-                      onPress={pickImage}
-                      className="border-2 border-dashed border-gray-300 rounded-lg p-5 items-center justify-center bg-gray-50"
+                      className={`border-2 border-dashed border-gray-300 rounded-lg h-32 items-center justify-center ${isViewOnly ? 'bg-gray-50' : 'bg-white'}`}
+                      onPress={isViewOnly ? undefined : pickImage}
                     >
-                      <FontAwesome name="camera" size={24} color="#9ca3af" style={{ marginBottom: 8 }} />
-                      <Text className="font-lexend text-gray-600 text-xs font-medium mt-2">Bấm để chọn ảnh</Text>
+                      <FontAwesome name="camera" size={24} color="#9ca3af" />
+                      <Text className="font-lexend text-sm text-gray-500 mt-2">
+                        {isViewOnly ? 'Không có ảnh' : 'Chụp/Tải ảnh UNC'}
+                      </Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -293,7 +300,14 @@ export function RefundModal({ visible, booking, onClose, onSuccess }: RefundModa
 
           {/* Footer */}
           <View className="p-4 bg-gray-50 border-t border-gray-200 flex-row gap-3">
-            {step === 'FORM' ? (
+            {isViewOnly ? (
+              <TouchableOpacity 
+                onPress={onClose}
+                className="flex-1 bg-white border border-gray-300 py-3 rounded-xl items-center"
+              >
+                <Text className="font-lexend font-bold text-gray-700 text-sm">Đóng</Text>
+              </TouchableOpacity>
+            ) : step === 'FORM' ? (
               <>
                 <TouchableOpacity 
                   onPress={onClose}

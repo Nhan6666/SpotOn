@@ -50,7 +50,8 @@ export function ManagerInvoicesFeature() {
         'COMPLETED', 
         'PENDING_SETTLEMENT', 
         'CANCELLED_REFUND_PENDING',
-        'REFUND_COMPLETED'
+        'REFUND_COMPLETED',
+        'CANCELLED'
       ].includes(b.status)) : [];
       
       setInvoices(filtered);
@@ -67,7 +68,7 @@ export function ManagerInvoicesFeature() {
 
   const filteredInvoices = useMemo(() => {
     return invoices.filter(inv => {
-      if (activeTab === 'COMPLETED' && !['COMPLETED', 'REFUND_COMPLETED'].includes(inv.status)) return false;
+      if (activeTab === 'COMPLETED' && !['COMPLETED', 'REFUND_COMPLETED', 'CANCELLED'].includes(inv.status)) return false;
       if (activeTab === 'PENDING_SETTLEMENT' && inv.status !== 'PENDING_SETTLEMENT') return false;
       if (activeTab === 'REFUND_PENDING' && inv.status !== 'CANCELLED_REFUND_PENDING') return false;
       
@@ -84,7 +85,7 @@ export function ManagerInvoicesFeature() {
 
   const stats = {
     total: invoices.length,
-    completed: invoices.filter(i => ['COMPLETED', 'REFUND_COMPLETED'].includes(i.status)).length,
+    completed: invoices.filter(i => ['COMPLETED', 'REFUND_COMPLETED', 'CANCELLED'].includes(i.status)).length,
     pending: invoices.filter(i => i.status === 'PENDING_SETTLEMENT').length,
     refundPending: invoices.filter(i => i.status === 'CANCELLED_REFUND_PENDING').length,
   };
@@ -237,6 +238,11 @@ export function ManagerInvoicesFeature() {
                           <FontAwesome name="undo" size={10} color="#dc2626" style={{ marginRight: 4 }} />
                           <Text className="font-lexend font-bold text-[10px] text-red-700">Y/c hoàn tiền</Text>
                         </View>
+                      ) : invoice.status === 'CANCELLED' ? (
+                        <View className="flex-row items-center bg-gray-100 px-2 py-1 rounded mb-1">
+                          <FontAwesome name="times-circle" size={10} color="#4b5563" style={{ marginRight: 4 }} />
+                          <Text className="font-lexend font-bold text-[10px] text-gray-700">Đã hủy</Text>
+                        </View>
                       ) : (
                         <View className="flex-row items-center bg-amber-50 px-2 py-1 rounded mb-1">
                           <FontAwesome name="clock-o" size={10} color="#d97706" style={{ marginRight: 4 }} />
@@ -244,9 +250,17 @@ export function ManagerInvoicesFeature() {
                         </View>
                       )}
                       
-                      {invoice.status === 'COMPLETED' || invoice.status === 'REFUND_COMPLETED' ? (
+                      {invoice.status === 'COMPLETED' ? (
                         <Text className="font-lexend font-bold text-base text-gray-900">
                           {invoice.final_bill_amount?.toLocaleString()}đ
+                        </Text>
+                      ) : invoice.status === 'REFUND_COMPLETED' ? (
+                        <Text className="font-lexend font-bold text-base text-blue-600">
+                          {invoice.refund_info?.refund_amount?.toLocaleString()}đ
+                        </Text>
+                      ) : invoice.status === 'CANCELLED' ? (
+                        <Text className="font-lexend font-bold text-base text-gray-500 line-through">
+                          {amountToPay.toLocaleString()}đ
                         </Text>
                       ) : (
                         <Text className="font-lexend font-bold text-base text-blue-600">
@@ -285,6 +299,16 @@ export function ManagerInvoicesFeature() {
                       >
                         <FontAwesome name="undo" size={10} color="#dc2626" style={{ marginRight: 4 }} />
                         <Text className="font-lexend font-bold text-xs text-red-600">Hoàn tiền</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {invoice.status === 'REFUND_COMPLETED' && (
+                      <TouchableOpacity 
+                        className="border border-purple-200 bg-purple-50 px-3 py-2 rounded-lg flex-row items-center"
+                        onPress={() => setSelectedBookingForRefund(invoice)}
+                      >
+                        <FontAwesome name="eye" size={10} color="#9333ea" style={{ marginRight: 4 }} />
+                        <Text className="font-lexend font-bold text-xs text-purple-600">Xem chi tiết</Text>
                       </TouchableOpacity>
                     )}
                   </View>

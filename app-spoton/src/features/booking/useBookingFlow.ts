@@ -447,7 +447,7 @@ export function useBookingFlow(branchId: string) {
       selectedDateIdx, selectedTimeIdx, selectedZoneIdx, selectedTableIds, bookedTableIds,
       dateOptions, timeOptions, selectedDate, selectedTime, allMenuItems, menuCategories,
       isAuthenticated, user, depositAmount, paymentMethod, paymentTimeLeft, holdTimeLeft,
-      voucherCode, paymentDetails, myVouchers
+      voucherCode, paymentDetails, myVouchers, holdingBookingId
     },
     actions: {
       setStep, setGuests, setNote, setSelectedDateIdx, setSelectedTimeIdx, setSelectedZoneIdx,

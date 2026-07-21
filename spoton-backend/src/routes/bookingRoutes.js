@@ -31,7 +31,7 @@ router.route('/')
 // PUT   /api/v1/bookings/:id/update-info -> Cập nhật thông tin & chốt món
 // PATCH /api/v1/bookings/:id/status    -> Cập nhật trạng thái đơn đặt (Admin/Manager)
 router.get('/:id', optionalAuth, getBookingById);
-router.put('/:id/update-info', protect, updateBookingInfo);
+router.put('/:id/update-info', optionalAuth, updateBookingInfo);
 router.patch('/:id/status', protect, authorize('ADMIN', 'MANAGER'), updateBookingStatus);
 router.post('/:id/apply-voucher', protect, authorize('MANAGER', 'WAITER'), applyVoucher);
 router.post('/:id/cancel-refund', protect, authorize('CUSTOMER'), cancelAndRequestRefund);

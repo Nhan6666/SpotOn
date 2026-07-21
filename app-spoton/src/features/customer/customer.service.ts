@@ -29,5 +29,10 @@ export const CustomerService = {
   async getMyWallet() {
     const response = await apiClient.get('/vouchers/my-wallet');
     return response.data;
+  },
+
+  async getBranchReviews(branchId: string) {
+    const response = await apiClient.get(`/reviews/branch/${branchId}`);
+    return response.data;
   }
 };

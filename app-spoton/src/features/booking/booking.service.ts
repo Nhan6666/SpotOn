@@ -76,6 +76,8 @@ export const BookingService = {
       type: 'PRE_ORDER' | 'ADDITIONAL';
     }>;
     note?: string;
+    walk_in_name?: string;
+    walk_in_phone?: string;
   }) {
     const response = await apiClient.put(`/bookings/${bookingId}/update-info`, data);
     return response.data;
@@ -103,9 +105,10 @@ export const BookingService = {
   },
 
   /** Mock Payment Success (App Simulation) */
-  async mockConfirmPayment(bookingId: string) {
+  async mockConfirmPayment(bookingId: string, voucherCode?: string) {
     const response = await apiClient.post('/payment/mock-payment', {
-      booking_id: bookingId
+      booking_id: bookingId,
+      voucher_code: voucherCode || undefined
     });
     return response.data;
   },

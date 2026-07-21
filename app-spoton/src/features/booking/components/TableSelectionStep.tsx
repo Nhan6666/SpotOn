@@ -16,14 +16,21 @@ interface TableSelectionStepProps {
 }
 
 export function TableSelectionStep({ state, actions }: TableSelectionStepProps) {
-  const { zones, selectedZoneIdx, selectedTableIds, bookedTableIds } = state;
+  const { zones, selectedZoneIdx, selectedTableIds, bookedTableIds, dateOptions, selectedDateIdx, selectedTime } = state;
   const { setSelectedZoneIdx, handleTableToggle } = actions;
 
   const currentZone = zones[selectedZoneIdx];
   const tables = currentZone?.tables || [];
+  const selectedDateLabel = dateOptions[selectedDateIdx]?.label || '';
 
   return (
     <View className="flex-1 bg-[#F9FAFB]">
+      {/* Selected Time Banner */}
+      <View className="bg-blue-50 px-4 py-2 flex-row justify-center items-center border-b border-blue-100">
+        <Text className="font-lexend font-medium text-blue-800 text-sm">
+          Đang chọn bàn cho: <Text className="font-bold">{selectedTime} - {selectedDateLabel}</Text>
+        </Text>
+      </View>
       <View style={{ height: 60, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
         <ScrollView 
           horizontal 
@@ -78,11 +85,21 @@ export function TableSelectionStep({ state, actions }: TableSelectionStepProps) 
               tables.map((table: any) => {
                 const isBooked = bookedTableIds.includes(table._id);
                 const isSelected = selectedTableIds.includes(table._id);
-                const isAvailable = !isBooked && (table.status === 'EMPTY' || !table.status);
+                const isLocked = table.status === 'LOCKED';
                 
-                let colors = TABLE_STATUS[table.status] || TABLE_STATUS.EMPTY;
+                // Bàn có thể đặt nếu không bị đặt (trong ca đó) và không bị khóa (bảo trì)
+                const isAvailable = !isBooked && !isLocked;
+                
+                // Mặc định bàn trống (xanh lá) nếu khả dụng
+                let colors = TABLE_STATUS.EMPTY;
+                
                 if (!isAvailable) {
-                  colors = { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-400', label: isBooked ? 'Đã đặt' : (TABLE_STATUS[table.status]?.label || 'Bảo trì') };
+                  colors = { 
+                    bg: 'bg-gray-100', 
+                    border: 'border-gray-300', 
+                    text: 'text-gray-400', 
+                    label: isBooked ? 'Đã đặt' : 'Bảo trì' 
+                  };
                 }
                 
                 if (isSelected) {

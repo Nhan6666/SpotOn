@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { BookingService } from '@/features/booking/booking.service';
 import apiClient from '@/lib/http';
@@ -29,17 +30,29 @@ export function KDSFeature() {
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'TABLE' | 'ITEM'>('ITEM'); // Group by Table or Group by Item
   const [now, setNow] = useState(Date.now());
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const branchId = user?.branch_id;
 
   const fetchOrders = useCallback(async () => {
     if (!branchId) return setLoading(false);
     try {
-      const res = await BookingService.getAllBookings({ branch_id: branchId });
+      const start = new Date(selectedDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+
+      const res = await BookingService.getAllBookings({ 
+        branch_id: branchId,
+        start_date: start.toISOString(),
+        end_date: end.toISOString()
+      });
+      
       if (res.success) {
         const activeItems: any[] = [];
         (res.data || []).forEach((booking: any) => {
-          if (booking.status === 'IN_USE' && booking.order_items) {
+          if (['IN_USE', 'CONFIRMED'].includes(booking.status) && booking.order_items) {
             booking.order_items.forEach((item: any) => {
               if (['PENDING', 'PREPARING'].includes(item.prep_status)) {
                 activeItems.push({
@@ -64,7 +77,7 @@ export function KDSFeature() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [branchId]);
+  }, [branchId, selectedDate]);
 
   useEffect(() => {
     fetchOrders();
@@ -89,7 +102,11 @@ export function KDSFeature() {
   const updateStatus = async (bookingId: string, itemId: string, newStatus: string) => {
     try {
       // Optimistic update
-      setItems(prev => prev.map(i => i._id === itemId ? { ...i, prep_status: newStatus } : i));
+      if (newStatus === 'READY') {
+        setItems(prev => prev.filter(i => i._id !== itemId));
+      } else {
+        setItems(prev => prev.map(i => i._id === itemId ? { ...i, prep_status: newStatus } : i));
+      }
       
       await apiClient.patch(`/orders/${bookingId}/items/${itemId}/status`, {
         status: newStatus,
@@ -104,7 +121,11 @@ export function KDSFeature() {
   const updateGroupStatus = async (groupItems: any[], newStatus: string) => {
     // For grouped items, we update them sequentially or via Promise.all
     try {
-      setItems(prev => prev.map(i => groupItems.some(gi => gi._id === i._id) ? { ...i, prep_status: newStatus } : i));
+      if (newStatus === 'READY') {
+        setItems(prev => prev.filter(i => !groupItems.some(gi => gi._id === i._id)));
+      } else {
+        setItems(prev => prev.map(i => groupItems.some(gi => gi._id === i._id) ? { ...i, prep_status: newStatus } : i));
+      }
       
       await Promise.all(
         groupItems.map(item => 
@@ -152,27 +173,71 @@ export function KDSFeature() {
 
   const groupedArray = Object.values(groupedByItem).sort((a: any, b: any) => a.oldest_time - b.oldest_time);
 
-  if (loading && !refreshing) {
+  if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-[#F9FAFB]">
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <ActivityIndicator size="large" color="#ea580c" />
+        <Text className="mt-4 font-lexend text-gray-500">Đang tải KDS...</Text>
       </View>
     );
   }
 
+  const onChangeDate = (event: any, date?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (date) setSelectedDate(date);
+  };
+
+  const stats = {
+    pending: items.filter(i => i.prep_status === 'PENDING').length,
+    preparing: items.filter(i => i.prep_status === 'PREPARING').length
+  };
+
   return (
-    <View className="flex-1 bg-[#F9FAFB]">
-      <View className="bg-white px-5 pt-5 pb-3 shadow-sm z-10 border-b border-gray-100 flex-row justify-between items-center">
+    <View className="flex-1 bg-gray-50">
+      {/* Header */}
+      <View className="bg-white px-6 pt-14 pb-4 shadow-sm border-b border-gray-200 flex-row justify-between items-center z-10">
         <View>
-          <Text className="font-lexend font-bold text-xl text-gray-900 mb-1">Màn Hình Bếp (KDS)</Text>
-          <Text className="font-lexend text-xs text-gray-500">
-            {items.filter(i => i.prep_status === 'PENDING').length} chờ nấu • {items.filter(i => i.prep_status === 'PREPARING').length} đang nấu
+          <Text className="font-lexend font-bold text-2xl text-gray-900 mb-1">Màn Hình Bếp (KDS)</Text>
+          <Text className="font-lexend text-gray-500 text-sm">
+            {stats.pending} chờ nấu • {stats.preparing} đang nấu
           </Text>
         </View>
-        <TouchableOpacity onPress={() => fetchOrders()} className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 items-center justify-center">
-          <FontAwesome name="refresh" size={16} color="#4b5563" />
-        </TouchableOpacity>
+        <View className="flex-row items-center gap-3">
+          <TouchableOpacity 
+            className="w-10 h-10 bg-orange-50 rounded-full items-center justify-center border border-orange-200"
+            onPress={() => setShowDatePicker(true)}
+          >
+            <FontAwesome name="calendar" size={16} color="#ea580c" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center border border-gray-200"
+            onPress={fetchOrders}
+          >
+            <FontAwesome name="refresh" size={16} color="#4b5563" />
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* Date Indicator */}
+      <View className="px-6 py-3 bg-orange-50 border-b border-orange-100 flex-row justify-between items-center">
+        <Text className="font-lexend font-bold text-orange-800 text-sm">
+          Ngày: {selectedDate.toLocaleDateString('vi-VN')}
+        </Text>
+        {selectedDate.toDateString() !== new Date().toDateString() && (
+          <TouchableOpacity onPress={() => setSelectedDate(new Date())}>
+            <Text className="font-lexend font-bold text-orange-600 text-xs underline">Về hôm nay</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          onChange={onChangeDate}
+        />
+      )}
 
       {/* Tabs */}
       <View className="flex-row px-4 py-3 gap-3 bg-white border-b border-gray-100">

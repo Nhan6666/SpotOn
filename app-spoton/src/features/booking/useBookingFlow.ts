@@ -37,6 +37,8 @@ export function useBookingFlow(branchId: string) {
   const [selectedDateIdx, setSelectedDateIdx] = useState(0);
   const [selectedTimeIdx, setSelectedTimeIdx] = useState(-1);
   const [note, setNote] = useState('');
+  const [walkInName, setWalkInName] = useState(user?.full_name || '');
+  const [walkInPhone, setWalkInPhone] = useState(user?.phone || '');
 
   // Step 2: Table selection
   const [zones, setZones] = useState<Zone[]>([]);
@@ -173,7 +175,7 @@ export function useBookingFlow(branchId: string) {
       const h = Math.floor(m / 60);
       const min = m % 60;
       const timeStr = `${h.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-      const isPast = isToday && m <= nowMin + 30;
+      const isPast = isToday && m <= nowMin + 120; // Đặt tối thiểu 2 tiếng
       slots.push({ label: timeStr, value: timeStr, disabled: isPast });
     }
     return slots;
@@ -259,9 +261,12 @@ export function useBookingFlow(branchId: string) {
         setStep(3);
         setLoading(false);
         return;
+      } else {
+        Alert.alert('Lỗi', res.message || 'Không thể giữ bàn, vui lòng thử lại.');
       }
-    } catch {}
-    setStep(3);
+    } catch (error: any) {
+      Alert.alert('Lỗi', error?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+    }
     setLoading(false);
   };
 
@@ -276,6 +281,37 @@ export function useBookingFlow(branchId: string) {
       if (delta > 0) return [...prev, { item, quantity: 1 }];
       return prev;
     });
+  };
+
+  const cancelHoldAndExit = () => {
+    Alert.alert(
+      'Hủy đặt bàn',
+      'Bạn có chắc chắn muốn hủy giữ bàn và thoát không?',
+      [
+        { text: 'Không', style: 'cancel' },
+        { 
+          text: 'Đồng ý', 
+          style: 'destructive',
+          onPress: async () => {
+            if (holdingBookingId) {
+              setLoading(true);
+              try {
+                await BookingService.releaseHold(holdingBookingId);
+              } catch (error) {
+                console.log('Error releasing hold', error);
+              } finally {
+                setLoading(false);
+                setHoldingBookingId(null);
+                setStep(1);
+                router.back();
+              }
+            } else {
+              router.back();
+            }
+          }
+        }
+      ]
+    );
   };
 
   const getPreOrderTotal = () => cart.reduce((t, i) => t + (i.item.price * i.quantity), 0);
@@ -296,12 +332,14 @@ export function useBookingFlow(branchId: string) {
   };
 
   const handleConfirmBooking = async () => {
-    if (!isAuthenticated) {
-       Alert.alert("Yêu cầu đăng nhập", "Vui lòng đăng nhập để tiếp tục đặt bàn. Thông tin của bạn sẽ được dùng để xác nhận đơn.", [
-         { text: "Hủy", style: "cancel" },
-         { text: "Đăng nhập", onPress: () => router.push('/(auth)/login') }
-       ]);
-       return;
+    if (!walkInName || walkInName.trim().length < 2) {
+      Alert.alert('Lỗi', 'Vui lòng nhập họ tên hợp lệ (ít nhất 2 ký tự).');
+      return;
+    }
+    const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
+    if (!walkInPhone || !phoneRegex.test(walkInPhone)) {
+      Alert.alert('Lỗi', 'Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng Việt Nam.');
+      return;
     }
 
     setLoading(true);
@@ -309,13 +347,15 @@ export function useBookingFlow(branchId: string) {
       let bId = holdingBookingId;
       
       if (holdingBookingId) {
-        if (cart.length > 0 || note) {
+        if (cart.length > 0 || note || walkInName || walkInPhone) {
           await BookingService.updateBookingInfo(holdingBookingId, {
-            order_items: cart.map(i => ({
+            order_items: cart.length > 0 ? cart.map(i => ({
               menu_item_id: i.item._id, name: i.item.name,
               quantity: i.quantity, price_at_time: i.item.price, type: 'PRE_ORDER' as const,
-            })),
+            })) : undefined,
             note: note || undefined,
+            walk_in_name: walkInName.trim() || undefined,
+            walk_in_phone: walkInPhone.trim() || undefined,
           });
         }
       } else {
@@ -323,6 +363,8 @@ export function useBookingFlow(branchId: string) {
           branch_id: branchId, reservation_date: selectedDate, arrival_time: selectedTime,
           guest_count: guests, note,
           table_ids: selectedTableIds,
+          walk_in_name: walkInName.trim() || undefined,
+          walk_in_phone: walkInPhone.trim() || undefined,
         };
         if (cart.length > 0) {
           payload.order_items = cart.map((i: any) => ({
@@ -377,7 +419,20 @@ export function useBookingFlow(branchId: string) {
     if (!holdingBookingId) return;
     setLoading(true);
     try {
-      const paymentData = await BookingService.createPayment(holdingBookingId, paymentMethod, voucherCode);
+      if (paymentMethod === 'MOCK') {
+        const mockData = await BookingService.mockConfirmPayment(holdingBookingId, voucherCode);
+        if (mockData.success) {
+          setLoading(false);
+          Alert.alert('Thành công', 'Thanh toán giả lập thành công!');
+          router.replace('/(tabs)/bookings');
+        } else {
+          Alert.alert('Lỗi', 'Không thể thanh toán giả lập.');
+          setLoading(false);
+        }
+        return;
+      }
+
+      const paymentData = await BookingService.createPayment(holdingBookingId, paymentMethod as any, voucherCode);
       if (paymentData.success) {
         setLoading(false); // Stop loading before opening browser
         const WebBrowser = await import('expo-web-browser');
@@ -400,12 +455,13 @@ export function useBookingFlow(branchId: string) {
       selectedDateIdx, selectedTimeIdx, selectedZoneIdx, selectedTableIds, bookedTableIds,
       dateOptions, timeOptions, selectedDate, selectedTime, allMenuItems, menuCategories,
       isAuthenticated, user, depositAmount, paymentMethod, paymentTimeLeft, holdTimeLeft,
-      voucherCode, paymentDetails, myVouchers
+      voucherCode, paymentDetails, myVouchers, holdingBookingId
     },
     actions: {
       setStep, setGuests, setNote, setSelectedDateIdx, setSelectedTimeIdx, setSelectedZoneIdx,
       setPaymentMethod, handleTableToggle, handleAddToCart, getPreOrderTotal,
-      checkAvailabilityAndContinue, handleHoldAndContinue, handleConfirmBooking, handleProcessPayment, handleApplyVoucher,
+      checkAvailabilityAndContinue, handleHoldAndContinue, cancelHoldAndExit,
+      handleConfirmBooking, handleProcessPayment, handleApplyVoucher,
       setVoucherCode,
       router
     }

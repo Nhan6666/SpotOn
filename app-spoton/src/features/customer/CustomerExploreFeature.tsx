@@ -145,8 +145,7 @@ export function CustomerExploreFeature() {
             data={[
               { id: 'all', type: 'status', label: 'Tất cả trạng thái', value: null },
               { id: 'open', type: 'status', label: 'Đang mở', value: 'OPEN' },
-              { id: 'full', type: 'status', label: 'Kín bàn', value: 'FULL' },
-              ...cities.map(c => ({ id: `city_${c}`, type: 'city', label: c, value: c }))
+              { id: 'full', type: 'status', label: 'Kín bàn', value: 'FULL' }
             ]}
             keyExtractor={item => item.id}
             renderItem={({ item }) => {

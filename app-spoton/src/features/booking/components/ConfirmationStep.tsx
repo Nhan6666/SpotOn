@@ -1,4 +1,4 @@
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, TextInput } from 'react-native';
 import { InfoRow } from './InfoRow';
 
 interface ConfirmationStepProps {
@@ -38,15 +38,25 @@ export function ConfirmationStep({ state, actions }: ConfirmationStepProps) {
 
       <View className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mt-4">
         <Text className="font-lexend font-bold text-lg mb-4">Thông tin khách hàng</Text>
-        {isAuthenticated && user ? (
-          <>
-            <InfoRow label="Họ tên" value={user.full_name} />
-            <InfoRow label="Số điện thoại" value={user.phone} />
-            <InfoRow label="Email" value={user.email} />
-          </>
-        ) : (
-          <Text className="font-lexend text-red-500 text-sm">Chưa đăng nhập. Bạn sẽ được yêu cầu đăng nhập khi thanh toán.</Text>
-        )}
+        <View className="mb-3">
+          <Text className="font-lexend text-gray-700 text-sm mb-1">Họ tên người đặt <Text className="text-red-500">*</Text></Text>
+          <TextInput
+            className="bg-gray-50 border border-gray-200 rounded-lg p-3 font-lexend text-gray-800"
+            placeholder="Nhập tên của bạn"
+            value={state.walkInName}
+            onChangeText={actions.setWalkInName}
+          />
+        </View>
+        <View className="mb-3">
+          <Text className="font-lexend text-gray-700 text-sm mb-1">Số điện thoại <Text className="text-red-500">*</Text></Text>
+          <TextInput
+            className="bg-gray-50 border border-gray-200 rounded-lg p-3 font-lexend text-gray-800"
+            placeholder="Ví dụ: 0912345678"
+            keyboardType="phone-pad"
+            value={state.walkInPhone}
+            onChangeText={actions.setWalkInPhone}
+          />
+        </View>
         {cart.length > 0 && (
           <View className="mt-4 pt-4 border-t border-gray-100">
             <Text className="font-lexend font-bold text-text mb-2">Món đặt trước ({cart.reduce((a: any, b: any) => a+b.quantity, 0)} món)</Text>

@@ -76,6 +76,8 @@ export const BookingService = {
       type: 'PRE_ORDER' | 'ADDITIONAL';
     }>;
     note?: string;
+    walk_in_name?: string;
+    walk_in_phone?: string;
   }) {
     const response = await apiClient.put(`/bookings/${bookingId}/update-info`, data);
     return response.data;

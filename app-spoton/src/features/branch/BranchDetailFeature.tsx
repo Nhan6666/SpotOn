@@ -10,6 +10,48 @@ interface BranchDetailProps {
   id: string;
 }
 
+const MenuCategory = ({ category }: { category: any }) => {
+  const [expanded, setExpanded] = useState(true);
+
+  return (
+    <View className="mb-4">
+      <TouchableOpacity 
+        onPress={() => setExpanded(!expanded)}
+        className="flex-row justify-between items-center mb-3 py-1"
+      >
+        <Text className="font-lexend font-bold text-lg text-primary">
+          {category.category || category.name || 'Category'}
+        </Text>
+        <FontAwesome name={expanded ? "chevron-up" : "chevron-down"} size={16} color="#b45309" />
+      </TouchableOpacity>
+      
+      {expanded && (category.items || []).map((item: any, itemIdx: number) => {
+        const imageUrl = item.image || item.image_url || item.images?.[0];
+        return (
+          <View key={item._id || itemIdx} className="flex-row items-center bg-white rounded-xl p-3 mb-3 border border-gray-100 shadow-sm">
+            {imageUrl ? (
+              <Image source={{ uri: imageUrl }} className="w-20 h-20 rounded-lg mr-3 bg-gray-100" />
+            ) : (
+              <View className="w-20 h-20 rounded-lg mr-3 bg-gray-100 items-center justify-center border border-gray-200">
+                <FontAwesome name="cutlery" size={24} color="#d1d5db" />
+              </View>
+            )}
+            <View className="flex-1 pr-2">
+              <Text className="font-lexend font-semibold text-text text-base mb-1">{item.name}</Text>
+              {item.description ? (
+                <Text className="font-lexend text-gray-500 text-xs mb-2" numberOfLines={2}>{item.description}</Text>
+              ) : null}
+              <Text className="font-lexend font-bold text-primary">
+                {item.price?.toLocaleString() || '0'}đ
+              </Text>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+};
+
 export function BranchDetailFeature({ id }: BranchDetailProps) {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
@@ -132,24 +174,7 @@ export function BranchDetailFeature({ id }: BranchDetailProps) {
         <Text className="font-lexend text-muted text-center py-4">Chưa có thực đơn</Text>
       ) : (
         menu.map((category: any, idx: number) => (
-          <View key={category._id || idx} className="mb-4">
-            <Text className="font-lexend font-bold text-lg text-primary mb-2">
-              {category.category || category.name || 'Category'}
-            </Text>
-            {(category.items || []).map((item: any, itemIdx: number) => (
-              <View key={item._id || itemIdx} className="flex-row justify-between items-center bg-white rounded-md p-3 mb-2 border border-gray-100 shadow-sm">
-                <View className="flex-1 pr-3">
-                  <Text className="font-lexend font-semibold text-text">{item.name}</Text>
-                  {item.description && (
-                    <Text className="font-lexend text-muted text-xs mt-1" numberOfLines={2}>{item.description}</Text>
-                  )}
-                </View>
-                <Text className="font-lexend font-bold text-primary">
-                  {item.price?.toLocaleString() || '0'}đ
-                </Text>
-              </View>
-            ))}
-          </View>
+          <MenuCategory key={category._id || idx} category={category} />
         ))
       )}
     </View>

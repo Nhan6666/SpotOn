@@ -646,6 +646,32 @@ const cancelAndRequestRefund = async (req, res) => {
   }
 };
 
+// @desc   [PUBLIC] Lấy booking đang hoạt động của một bàn (Dùng cho Self-Ordering)
+// @route  GET /api/v1/bookings/public/active/:tableId
+// @access Public/Customer
+const getActiveBookingByTable = async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    const booking = await Booking.findOne({
+      status: 'IN_USE',
+      $or: [
+        { table_ids: tableId },
+        { 'assigned_tables._id': tableId },
+        { 'assigned_tables.table_number': tableId } // Fallback
+      ]
+    }).populate('branch_id');
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Bàn này hiện không có phiếu đặt nào đang hoạt động.' });
+    }
+
+    res.status(200).json({ success: true, data: booking });
+  } catch (error) {
+    console.error('Lỗi getActiveBookingByTable:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
 module.exports = { 
   createBooking, 
   getAllBookings, 
@@ -654,5 +680,6 @@ module.exports = {
   getMyBookings, 
   updateBookingInfo,
   applyVoucher,
-  cancelAndRequestRefund
+  cancelAndRequestRefund,
+  getActiveBookingByTable
 };

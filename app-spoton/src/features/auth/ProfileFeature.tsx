@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert, ActivityIndicator, Modal, TextInput, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ActivityIndicator, Modal, TextInput, ScrollView, FlatList } from 'react-native';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
 import { FontAwesome } from '@expo/vector-icons';
 import apiClient from '@/lib/http';
 import { AuthService } from './auth.service';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { BookingService } from '@/features/booking/booking.service';
+import { MobileOrderMenuModal } from '@/features/ordering/MobileOrderMenuModal';
 
 export function ProfileFeature() {
   const { user, isAuthenticated, logout, checkAuth } = useAuthStore();
@@ -18,6 +21,15 @@ export function ProfileFeature() {
     full_name: '',
     phone: ''
   });
+
+  // QR Scanning State
+  const [permission, requestPermission] = useCameraPermissions();
+  const [scanning, setScanning] = useState(false);
+  const [scannedTableId, setScannedTableId] = useState<string | null>(null);
+
+  // Ordering State
+  const [orderingBooking, setOrderingBooking] = useState<any>(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
 
   useEffect(() => {
     if (user?.branch_id) {
@@ -87,6 +99,47 @@ export function ProfileFeature() {
       Alert.alert('Lỗi', error.response?.data?.message || 'Không thể cập nhật thông tin');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleScanQR = async () => {
+    if (!permission?.granted) {
+      const res = await requestPermission();
+      if (!res.granted) {
+        Alert.alert('Lỗi', 'Cần cấp quyền camera để quét mã QR');
+        return;
+      }
+    }
+    setScanning(true);
+  };
+
+  const handleBarcodeScanned = async ({ data }: { data: string }) => {
+    if (!scanning) return;
+    setScanning(false);
+    
+    try {
+      // Data looks like: http://spoton.vn/ipad/table/669255a8...
+      const parts = data.split('/');
+      const tableId = parts[parts.length - 1];
+      if (!tableId || tableId.length < 10) {
+        Alert.alert('Lỗi', 'Mã QR không hợp lệ');
+        return;
+      }
+      
+      setScannedTableId(tableId);
+      
+      // Use the new public endpoint to fetch active booking for this table
+      const res = await apiClient.get(`/bookings/public/active/${tableId}`);
+      if (res.data?.success && res.data.data) {
+        const targetBooking = res.data.data;
+        
+        setOrderingBooking(targetBooking);
+        setShowOrderModal(true);
+      } else {
+        Alert.alert('Lỗi', 'Bàn này hiện không có người (Không tìm thấy phiên đặt bàn đang hoạt động).');
+      }
+    } catch (error) {
+      Alert.alert('Lỗi', 'Không thể quét bàn. Vui lòng thử lại.');
     }
   };
 
@@ -183,6 +236,21 @@ export function ProfileFeature() {
           </View>
         </View>
       )}
+
+      {/* TÍNH NĂNG QUÉT MÃ QR CHO KHÁCH TỰ ĐẶT MÓN */}
+      <View className="mb-6">
+        <Text className="font-lexend font-bold text-gray-500 mb-2 uppercase text-xs">Self-Ordering (Tại bàn)</Text>
+        <TouchableOpacity 
+          onPress={handleScanQR}
+          className="bg-blue-600 rounded-xl flex-row items-center justify-center p-4 shadow-sm"
+        >
+          <FontAwesome name="qrcode" size={24} color="white" />
+          <Text className="font-lexend font-bold text-white text-lg ml-3">Quét Mã QR Bàn</Text>
+        </TouchableOpacity>
+        <Text className="font-lexend text-xs text-gray-400 mt-2 text-center">
+          Dùng để quét mã trên máy phục vụ để tự gọi món
+        </Text>
+      </View>
 
       {user.role === 'CUSTOMER' && (
         <View className="mb-6">
@@ -319,6 +387,39 @@ export function ProfileFeature() {
           </View>
         </View>
       </Modal>
+      {/* QR Scanner Modal */}
+      <Modal visible={scanning} animationType="slide" transparent={false}>
+        <View className="flex-1 bg-black">
+          <View className="pt-12 pb-4 px-5 flex-row justify-between items-center z-10 bg-black/50 absolute top-0 left-0 right-0">
+            <Text className="font-lexend font-bold text-white text-lg">Quét Mã QR Bàn</Text>
+            <TouchableOpacity onPress={() => setScanning(false)} className="p-2 bg-white/20 rounded-full">
+              <FontAwesome name="times" size={16} color="white" />
+            </TouchableOpacity>
+          </View>
+          <CameraView 
+            style={{ flex: 1 }} 
+            facing="back"
+            onBarcodeScanned={handleBarcodeScanned}
+            barcodeScannerSettings={{
+              barcodeTypes: ["qr"],
+            }}
+          />
+          <View className="absolute bottom-10 left-0 right-0 items-center">
+            <Text className="font-lexend text-white bg-black/60 px-4 py-2 rounded-full">
+              Đưa mã QR vào khung hình
+            </Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Customer Ordering Modal */}
+      <MobileOrderMenuModal 
+        visible={showOrderModal} 
+        booking={orderingBooking} 
+        branchId={orderingBooking?.branch_id?._id || orderingBooking?.branch_id} 
+        onClose={() => setShowOrderModal(false)} 
+        onSubmitSuccess={() => {}} 
+      />
     </View>
   );
 }

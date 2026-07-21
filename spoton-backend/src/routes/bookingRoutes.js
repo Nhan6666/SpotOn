@@ -8,11 +8,15 @@ const {
   getMyBookings,
   updateBookingInfo,
   applyVoucher,
-  cancelAndRequestRefund
+  cancelAndRequestRefund,
+  getActiveBookingByTable
 } = require('../controllers/bookingController');
 
 // MỞ KHÓA MIDDLEWARE
 const { protect, authorize, optionalAuth } = require('../middlewares/authMiddleware');
+
+// GET /api/v1/bookings/public/active/:tableId -> Booking đang hoạt động của bàn (Public)
+router.get('/public/active/:tableId', getActiveBookingByTable);
 
 // GET /api/v1/bookings/my-bookings     -> Booking của chính khách hàng đang login (Customer)
 router.get('/my-bookings', protect, authorize('CUSTOMER'), getMyBookings);

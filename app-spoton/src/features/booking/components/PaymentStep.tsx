@@ -112,13 +112,23 @@ export function PaymentStep({ state, actions }: PaymentStepProps) {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setPaymentMethod('MOMO')} className={`flex-row items-center p-3 border rounded-xl ${paymentMethod === 'MOMO' ? 'border-primary bg-amber-50' : 'border-gray-200'}`}>
+        <TouchableOpacity onPress={() => setPaymentMethod('MOMO')} className={`flex-row items-center p-3 border rounded-xl mb-3 ${paymentMethod === 'MOMO' ? 'border-primary bg-amber-50' : 'border-gray-200'}`}>
           <View className="w-4 h-4 rounded-full border border-primary mr-3 items-center justify-center">
             {paymentMethod === 'MOMO' && <View className="w-2 h-2 rounded-full bg-primary" />}
           </View>
           <View className="flex-1">
             <Text className="font-lexend font-semibold text-text text-base">Thanh toán qua MoMo</Text>
             <Text className="font-lexend text-muted text-xs">Quét mã QR / Ứng dụng MoMo</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => setPaymentMethod('MOCK')} className={`flex-row items-center p-3 border rounded-xl ${paymentMethod === 'MOCK' ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}>
+          <View className="w-4 h-4 rounded-full border border-green-500 mr-3 items-center justify-center">
+            {paymentMethod === 'MOCK' && <View className="w-2 h-2 rounded-full bg-green-500" />}
+          </View>
+          <View className="flex-1">
+            <Text className="font-lexend font-semibold text-green-700 text-base">Thanh toán Giả lập (Test)</Text>
+            <Text className="font-lexend text-green-600/80 text-xs">Bỏ qua cổng thanh toán, tự động thành công (Dành cho App)</Text>
           </View>
         </TouchableOpacity>
         

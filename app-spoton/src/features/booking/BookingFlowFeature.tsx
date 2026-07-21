@@ -72,7 +72,7 @@ export function BookingFlowFeature({ id }: BookingFlowProps) {
             step === 2 ? 'Giữ bàn & tiếp tục' :
             step === 3 && canPreOrder ? 'Tiếp tục' :
             step === 4 ? 'Xác nhận & Thanh toán' :
-            'Thanh toán qua ' + (state.paymentMethod === 'MOMO' ? 'MoMo' : 'VNPAY')
+            'Thanh toán qua ' + (state.paymentMethod === 'MOCK' ? 'Giả lập (Test)' : state.paymentMethod === 'MOMO' ? 'MoMo' : 'VNPAY')
           }
           onPress={() => {
             if (step === 1) { checkAvailabilityAndContinue(); }

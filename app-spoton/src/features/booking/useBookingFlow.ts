@@ -377,7 +377,20 @@ export function useBookingFlow(branchId: string) {
     if (!holdingBookingId) return;
     setLoading(true);
     try {
-      const paymentData = await BookingService.createPayment(holdingBookingId, paymentMethod, voucherCode);
+      if (paymentMethod === 'MOCK') {
+        const mockData = await BookingService.mockConfirmPayment(holdingBookingId);
+        if (mockData.success) {
+          setLoading(false);
+          Alert.alert('Thành công', 'Thanh toán giả lập thành công!');
+          router.replace('/(tabs)/bookings');
+        } else {
+          Alert.alert('Lỗi', 'Không thể thanh toán giả lập.');
+          setLoading(false);
+        }
+        return;
+      }
+
+      const paymentData = await BookingService.createPayment(holdingBookingId, paymentMethod as any, voucherCode);
       if (paymentData.success) {
         setLoading(false); // Stop loading before opening browser
         const WebBrowser = await import('expo-web-browser');

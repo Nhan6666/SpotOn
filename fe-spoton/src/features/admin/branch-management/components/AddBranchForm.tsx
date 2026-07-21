@@ -262,7 +262,13 @@ export function AddBranchForm({ formData, updateFormData, currentBranchId, disab
           </label>
           <Select
             value={formData.manager_id || ''}
-            onChange={(e) => updateFormData({ manager_id: e.target.value })}
+            onChange={(e) => {
+              const selectedManager = managers.find(m => m.value === e.target.value);
+              updateFormData({ 
+                manager_id: e.target.value,
+                manager_name: selectedManager ? selectedManager.label.split(' (')[0] : ''
+              });
+            }}
             options={managers}
             placeholder={managers.length > 0 ? ADMIN_TEXTS.addBranchForm.inputManagerPlaceholder : ADMIN_TEXTS.addBranchForm.inputManagerEmpty}
             disabled={disabled}

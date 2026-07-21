@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { AddBranchForm } from "./components/AddBranchForm";
 import { AddBranchOperations } from "./components/AddBranchOperations";
+import { AddBranchImages } from "./components/AddBranchImages";
 import { useAuth } from "@/providers/AuthProvider";
 import { Map } from "lucide-react";
 import { useBranchContext } from "./branch-management.context";
@@ -22,6 +23,7 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [showCloseWarning, setShowCloseWarning] = useState(false);
   const [pendingBookingCount, setPendingBookingCount] = useState(0);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -80,6 +82,9 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
             amenities: b.amenities?.map((a: any) => typeof a === 'string' ? a : a._id) || [],
             description: b.description || "",
           });
+          if (b.images && b.images.length > 0) {
+            setExistingImages(b.images);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch branch:", error);
@@ -196,11 +201,19 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
           currentBranchId={branchId}
           disabled={user?.role === "MANAGER"}
         />
-        <AddBranchOperations
-          formData={formData}
-          updateFormData={updateFormData}
-          disabled={false}
-        />
+        <div className="flex flex-col gap-8">
+          <AddBranchOperations
+            formData={formData}
+            updateFormData={updateFormData}
+            disabled={false}
+          />
+          <AddBranchImages 
+            branchId={branchId} 
+            mode="edit" 
+            existingImages={existingImages}
+            onImagesUpdated={(newImages) => setExistingImages(newImages)}
+          />
+        </div>
       </div>
 
       <div className="flex justify-end items-center mt-8 pb-12 pt-6 border-t border-gray-200 gap-4">

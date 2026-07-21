@@ -6,10 +6,13 @@ import { useToast } from '@/components/ui/Toast';
 
 interface AddBranchImagesProps {
   branchId: string;
-  onComplete: () => void;
+  onComplete?: () => void;
+  mode?: 'create' | 'edit';
+  existingImages?: string[];
+  onImagesUpdated?: (newImages: string[]) => void;
 }
 
-export function AddBranchImages({ branchId, onComplete }: AddBranchImagesProps) {
+export function AddBranchImages({ branchId, onComplete, mode = 'create', existingImages = [], onImagesUpdated }: AddBranchImagesProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -43,8 +46,7 @@ export function AddBranchImages({ branchId, onComplete }: AddBranchImagesProps) 
 
   const handleUpload = async () => {
     if (files.length === 0) {
-      // Nếu không có ảnh, cứ hoàn tất bình thường
-      onComplete();
+      if (onComplete) onComplete();
       return;
     }
     
@@ -60,12 +62,19 @@ export function AddBranchImages({ branchId, onComplete }: AddBranchImagesProps) 
       
       if (res?.success) {
         success('Tải ảnh thành công!');
-        onComplete();
+        if (mode === 'edit') {
+          setFiles([]);
+          setPreviewUrls([]);
+          if (onImagesUpdated && res.data && res.data.images) {
+            onImagesUpdated(res.data.images);
+          }
+        }
+        if (onComplete) onComplete();
       }
     } catch (error) {
       console.error('Lỗi upload ảnh:', error);
-      showError('Tải ảnh thất bại. Bạn có thể cập nhật sau.');
-      onComplete(); // Vẫn cho đi tiếp vì chi nhánh đã được tạo
+      showError('Tải ảnh thất bại. Bạn có thể thử lại sau.');
+      if (onComplete) onComplete();
     } finally {
       setIsUploading(false);
     }
@@ -100,21 +109,40 @@ export function AddBranchImages({ branchId, onComplete }: AddBranchImagesProps) 
           </div>
         )}
 
+        {/* Existing Images */}
+        {existingImages.length > 0 && (
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Ảnh hiện tại</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {existingImages.map((url, idx) => (
+                <div key={`existing-${idx}`} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt={`Existing ${idx}`} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Selected files to upload */}
         {previewUrls.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-            {previewUrls.map((url, idx) => (
-              <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => removeFile(idx)}
-                  className="absolute top-2 right-2 bg-black/50 hover:bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Ảnh mới chọn</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {previewUrls.map((url, idx) => (
+                <div key={`new-${idx}`} className="relative aspect-square rounded-lg overflow-hidden border border-amber-200 group ring-2 ring-amber-500/50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeFile(idx)}
+                    className="absolute top-2 right-2 bg-black/50 hover:bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -123,9 +151,13 @@ export function AddBranchImages({ branchId, onComplete }: AddBranchImagesProps) 
             variant="primary" 
             className="bg-amber-600 hover:bg-amber-700 text-white border-0" 
             onClick={handleUpload}
-            disabled={isUploading}
+            disabled={isUploading || (mode === 'edit' && files.length === 0)}
           >
-            {isUploading ? 'Uploading...' : (files.length > 0 ? 'Upload & Finish' : 'Skip & Finish')}
+            {isUploading ? 'Uploading...' : (
+              mode === 'edit' 
+                ? 'Upload Photos' 
+                : (files.length > 0 ? 'Upload & Finish' : 'Skip & Finish')
+            )}
           </Button>
         </div>
       </div>

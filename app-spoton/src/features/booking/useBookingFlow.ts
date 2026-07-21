@@ -412,7 +412,7 @@ export function useBookingFlow(branchId: string) {
     setLoading(true);
     try {
       if (paymentMethod === 'MOCK') {
-        const mockData = await BookingService.mockConfirmPayment(holdingBookingId);
+        const mockData = await BookingService.mockConfirmPayment(holdingBookingId, voucherCode);
         if (mockData.success) {
           setLoading(false);
           Alert.alert('Thành công', 'Thanh toán giả lập thành công!');

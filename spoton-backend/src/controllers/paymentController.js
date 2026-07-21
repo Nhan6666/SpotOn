@@ -392,15 +392,30 @@ const handleVNPayReturn = asyncHandler(async (req, res) => {
 // @access Public
 // ============================================================
 const mockPayment = asyncHandler(async (req, res) => {
-  const { booking_id } = req.body;
+  const { booking_id, voucher_code } = req.body;
   const booking = await Booking.findById(booking_id);
+  const PaymentService = require('../services/PaymentService');
+  const TableLockService = require('../services/tableLockService');
 
   if (!booking) {
     return res.status(404).json({ success: false, message: 'Booking not found' });
   }
 
-  if (booking.status !== 'PENDING_PAYMENT') {
+  if (booking.status !== 'PENDING_PAYMENT' && booking.status !== 'HOLDING') {
     return res.status(400).json({ success: false, message: 'Booking already processed or not in pending payment state' });
+  }
+
+  if (booking.status === 'HOLDING') {
+    const { 
+      tableDeposit, preOrderTotal, preOrderDeposit, voucherDiscount, totalDeposit 
+    } = await PaymentService.calculateDepositData(booking_id, voucher_code, true);
+
+    booking.table_deposit_amount = tableDeposit;
+    booking.pre_order_total_amount = preOrderTotal;
+    booking.pre_order_deposit_amount = preOrderDeposit;
+    booking.voucher_discount_amount = voucherDiscount;
+    booking.total_deposit_paid = totalDeposit;
+    booking.applied_voucher_code = voucher_code || null;
   }
 
   // === THANH TOÁN THÀNH CÔNG ===
@@ -408,6 +423,7 @@ const mockPayment = asyncHandler(async (req, res) => {
   if (!booking.payment_info) {
     booking.payment_info = {};
   }
+  booking.payment_info.method = 'MOCK';
   booking.payment_info.status = 'PAID';
   booking.payment_info.transaction_id = `MOCK_TXN_${Date.now()}`;
   booking.payment_info.paid_at = new Date();

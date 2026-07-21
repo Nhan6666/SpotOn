@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, FlatList, Alert } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
 import { CustomerService } from '@/features/customer/customer.service';
@@ -11,7 +12,7 @@ interface BranchDetailProps {
 
 export function BranchDetailFeature({ id }: BranchDetailProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const [branch, setBranch] = useState<any>(null);
   const [menu, setMenu] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,15 +91,28 @@ export function BranchDetailFeature({ id }: BranchDetailProps) {
         <Text className="font-lexend text-muted mb-4">{addressText}</Text>
         
         <View className="bg-white rounded-md p-4 shadow-sm border border-gray-100 mb-6">
-          <Text className="font-lexend font-bold text-lg mb-2">Thông tin</Text>
+          <Text className="font-lexend font-bold text-lg mb-3">Thông tin</Text>
+          {branch.description ? (
+            <Text className="font-lexend text-gray-600 mb-4">{branch.description}</Text>
+          ) : null}
           <View className="flex-row justify-between py-2 border-b border-gray-50">
-            <Text className="font-lexend text-text">Giờ mở cửa</Text>
-            <Text className="font-lexend font-semibold">{branch.open_time || '09:00'} - {branch.close_time || '22:00'}</Text>
+            <Text className="font-lexend text-text">Ca Sáng/Trưa</Text>
+            <Text className="font-lexend font-semibold text-gray-800">{branch.service_periods?.lunch?.start || '08:00'} - {branch.service_periods?.lunch?.end || '13:00'}</Text>
+          </View>
+          <View className="flex-row justify-between py-2 border-b border-gray-50">
+            <Text className="font-lexend text-text">Ca Chiều/Tối</Text>
+            <Text className="font-lexend font-semibold text-gray-800">{branch.service_periods?.dinner?.start || '15:00'} - {branch.service_periods?.dinner?.end || '23:00'}</Text>
           </View>
           <View className="flex-row justify-between py-2 border-b border-gray-50">
             <Text className="font-lexend text-text">Hotline</Text>
-            <Text className="font-lexend font-semibold">{branch.hotline || 'N/A'}</Text>
+            <Text className="font-lexend font-semibold text-gray-800">{branch.hotline || 'N/A'}</Text>
           </View>
+          {branch.manager_id && (
+            <View className="flex-row justify-between py-2 border-b border-gray-50">
+              <Text className="font-lexend text-text">Quản lý</Text>
+              <Text className="font-lexend font-semibold text-gray-800">{branch.manager_id.full_name || 'N/A'}</Text>
+            </View>
+          )}
           <View className="flex-row justify-between py-2">
             <Text className="font-lexend text-text">Trạng thái</Text>
             <Text className={`font-lexend font-semibold ${
@@ -110,6 +124,21 @@ export function BranchDetailFeature({ id }: BranchDetailProps) {
             </Text>
           </View>
         </View>
+
+        {/* Amenities */}
+        {branch.amenities && branch.amenities.length > 0 && (
+          <View className="mb-6">
+            <Text className="font-lexend font-bold text-lg mb-3">Tiện ích</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {branch.amenities.map((amenity: any, idx: number) => (
+                <View key={amenity._id || idx} className="bg-orange-50 border border-orange-100 rounded-lg px-3 py-2 flex-row items-center gap-2">
+                  <FontAwesome name={(amenity.icon as any) || 'star'} size={12} color="#ea580c" />
+                  <Text className="font-lexend text-xs text-orange-800 font-medium">{amenity.name}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Branch FULL warning (from project.md) */}
         {branch.status === 'FULL' && (
@@ -129,7 +158,7 @@ export function BranchDetailFeature({ id }: BranchDetailProps) {
         )}
 
         <View className="gap-4 mb-6">
-          {branch.status !== 'CLOSED' && (
+          {branch.status !== 'CLOSED' && user?.role !== 'ADMIN' && (
             <Button 
               title={branch.status === 'FULL' ? 'Chi nhánh đầy — Liên hệ' : 'Đặt bàn'}
               onPress={() => {

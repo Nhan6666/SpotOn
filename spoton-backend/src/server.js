@@ -25,6 +25,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const receptionRoutes = require("./routes/receptionRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const financeRoutes = require("./routes/financeRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 // =============================================
 // KHỞI TẠO APP
@@ -86,6 +87,12 @@ app.use("/api/v1/payment", paymentRoutes);
 app.use("/api/v1/reception", receptionRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/finance", financeRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
+
+// =============================================
+// SWAGGER API DOCS
+// =============================================
+require("./config/swagger")(app);
 
 // =============================================
 // GLOBAL ERROR HANDLERS

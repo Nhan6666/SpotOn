@@ -99,10 +99,35 @@ export default function TransactionsScreen() {
     <View className="flex-1 bg-background">
       {/* Header */}
       <View className="flex-row items-center px-4 pt-4 pb-4">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4 w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm">
+        <TouchableOpacity 
+          onPress={() => router.push(user?.role === 'ADMIN' ? '/admin-dashboard' : '/branch-manage')} 
+          className="mr-4 w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm"
+        >
           <FontAwesome name="arrow-left" size={16} color="#374151" />
         </TouchableOpacity>
         <Text className="font-lexend font-bold text-2xl text-text flex-1">Lịch sử giao dịch</Text>
+      </View>
+
+      {/* Summary Cards */}
+      <View className="flex-row px-4 mb-4 space-x-2">
+        <View className="flex-1 bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+          <Text className="font-lexend text-[10px] text-gray-500 font-bold mb-1 uppercase">Tổng thu</Text>
+          <Text className="font-lexend font-bold text-sm text-gray-900">
+            {transactions.filter(t => t.type === 'DEPOSIT' || t.type === 'FINAL_BILL').reduce((acc, t) => acc + t.amount, 0).toLocaleString('vi-VN')}đ
+          </Text>
+        </View>
+        <View className="flex-1 bg-white rounded-xl p-3 border border-gray-100 shadow-sm ml-2">
+          <Text className="font-lexend text-[10px] text-red-500 font-bold mb-1 uppercase">Hoàn tiền</Text>
+          <Text className="font-lexend font-bold text-sm text-red-600">
+            -{transactions.filter(t => t.type === 'REFUND').reduce((acc, t) => acc + t.amount, 0).toLocaleString('vi-VN')}đ
+          </Text>
+        </View>
+        <View className="flex-1 bg-green-50 rounded-xl p-3 border border-green-100 shadow-sm ml-2">
+          <Text className="font-lexend text-[10px] text-green-700 font-bold mb-1 uppercase">Thuần</Text>
+          <Text className="font-lexend font-bold text-sm text-green-700">
+            {(transactions.filter(t => t.type === 'DEPOSIT' || t.type === 'FINAL_BILL').reduce((acc, t) => acc + t.amount, 0) - transactions.filter(t => t.type === 'REFUND').reduce((acc, t) => acc + t.amount, 0)).toLocaleString('vi-VN')}đ
+          </Text>
+        </View>
       </View>
 
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>

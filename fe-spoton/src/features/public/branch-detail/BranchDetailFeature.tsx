@@ -9,12 +9,13 @@ import { BranchInfoTab } from './components/BranchInfoTab';
 import { BranchBookingTab } from './components/BranchBookingTab';
 import { BranchMenuTab } from './components/BranchMenuTab';
 import { BranchVouchersTab } from './components/BranchVouchersTab';
+import { BranchReviewsTab } from './components/BranchReviewsTab';
 import { STATUS_MAP } from '../branches/branches.constants';
 import { PUBLIC_TEXTS } from '@/constants/texts/public';
 
 export function BranchDetailFeature({ branchId }: { branchId: string }) {
   const { branch, menu, vouchers, isLoading, error } = useBranchDetail(branchId);
-  const [activeTab, setActiveTab] = useState<'booking' | 'info' | 'menu' | 'vouchers'>('booking');
+  const [activeTab, setActiveTab] = useState<'booking' | 'info' | 'menu' | 'vouchers' | 'reviews'>('booking');
 
   if (isLoading) {
     return (
@@ -111,6 +112,12 @@ export function BranchDetailFeature({ branchId }: { branchId: string }) {
             >
               Ưu đãi
             </button>
+            <button 
+              onClick={() => setActiveTab('reviews')}
+              className={`flex-1 min-w-[120px] py-4 px-6 text-sm font-bold uppercase tracking-wide text-center transition-colors border-b-2 ${activeTab === 'reviews' ? 'border-[#ea580c] text-[#ea580c] bg-amber-50/30' : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+            >
+              Đánh giá
+            </button>
           </div>
 
           {/* Tab Content */}
@@ -119,6 +126,7 @@ export function BranchDetailFeature({ branchId }: { branchId: string }) {
             {activeTab === 'booking' && <BranchBookingTab branch={branch} />}
             {activeTab === 'menu' && <BranchMenuTab menu={menu} />}
             {activeTab === 'vouchers' && <BranchVouchersTab vouchers={vouchers} />}
+            {activeTab === 'reviews' && <BranchReviewsTab branchId={branch._id} />}
           </div>
 
         </div>

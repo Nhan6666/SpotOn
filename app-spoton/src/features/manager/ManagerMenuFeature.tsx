@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, Modal, TextInput, ScrollView, Image } from 'react-native';
 import apiClient from '@/lib/http';
 import { FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 interface MenuItem {
   _id: string;
@@ -21,6 +23,8 @@ interface MenuCategory {
 }
 
 export function ManagerMenuFeature() {
+  const router = useRouter();
+  const { user } = useAuthStore();
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -161,7 +165,13 @@ export function ManagerMenuFeature() {
   return (
     <View className="flex-1 bg-[#F9FAFB]">
       {/* Header */}
-      <View className="bg-white px-5 pt-5 pb-4 shadow-sm z-10 border-b border-gray-100 flex-row justify-between items-center">
+      <View className="bg-white px-4 pt-5 pb-4 shadow-sm z-10 border-b border-gray-100 flex-row justify-between items-center">
+        <TouchableOpacity 
+          onPress={() => router.push(user?.role === 'ADMIN' ? '/admin-dashboard' : '/profile')}
+          className="mr-3 w-8 h-8 items-center justify-center"
+        >
+          <FontAwesome name="arrow-left" size={16} color="#374151" />
+        </TouchableOpacity>
         <View className="flex-1">
           <Text className="font-lexend font-bold text-xl text-gray-900 mb-1">Thực Đơn (Menu)</Text>
           <Text className="font-lexend text-xs text-gray-500">
@@ -249,7 +259,7 @@ export function ManagerMenuFeature() {
                     className="flex-row items-center px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-200"
                   >
                     <FontAwesome name="power-off" size={12} color="#b45309" />
-                    <Text className="font-lexend text-xs font-bold text-amber-700 ml-1.5">Trạng Thái</Text>
+                    <Text className="font-lexend text-xs font-bold text-amber-700 ml-1.5">Số Lượng & Trạng Thái</Text>
                   </TouchableOpacity>
                 ) : (
                   <>

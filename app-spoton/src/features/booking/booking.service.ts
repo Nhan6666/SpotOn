@@ -84,18 +84,20 @@ export const BookingService = {
   // ===== PAYMENT =====
 
   /** Calculate deposit amount */
-  async calculateDeposit(bookingId: string) {
+  async calculateDeposit(bookingId: string, voucherCode?: string) {
     const response = await apiClient.post('/payment/calculate-deposit', {
-      booking_id: bookingId
+      booking_id: bookingId,
+      voucher_code: voucherCode || undefined
     });
     return response.data;
   },
 
   /** Create VNPay/MoMo payment URL */
-  async createPayment(bookingId: string, method: 'VNPAY' | 'MOMO' = 'VNPAY') {
+  async createPayment(bookingId: string, method: 'VNPAY' | 'MOMO' = 'VNPAY', voucherCode?: string) {
     const response = await apiClient.post('/payment/create-payment', {
       booking_id: bookingId,
-      method
+      method,
+      voucher_code: voucherCode || undefined
     });
     return response.data;
   },
@@ -135,6 +137,12 @@ export const BookingService = {
     const response = await apiClient.patch(`/reception/bookings/${bookingId}/checkout`, {
       final_bill_amount
     });
+    return response.data;
+  },
+
+  /** Force release a booking (cancel without checkout) */
+  async forceReleaseBooking(bookingId: string) {
+    const response = await apiClient.patch(`/reception/bookings/${bookingId}/force-release`);
     return response.data;
   },
 

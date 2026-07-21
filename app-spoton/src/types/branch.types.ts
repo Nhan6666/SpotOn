@@ -16,12 +16,23 @@ export interface Zone {
 export interface Branch {
   _id: string;
   name: string;
-  address: string;
+  address: any; // Can be string or object
   phone?: string;
+  hotline?: string;
   status: 'OPEN' | 'CLOSED' | 'FULL' | 'MAINTENANCE';
-  open_time: string;
-  close_time: string;
+  open_time?: string;
+  close_time?: string;
   image?: string;
-  amenities?: string[];
+  images?: string[];
+  amenities?: any[]; // Array of strings or objects
   zones?: Zone[];
+  manager_id?: any; // String or object
+  service_periods?: {
+    lunch?: { start: string; end: string };
+    dinner?: { start: string; end: string };
+  };
+  location?: {
+    type: string;
+    coordinates: number[];
+  };
 }

@@ -44,6 +44,12 @@ function FlyToCurrentLocation({ position }: { position: [number, number] }) {
 
 export default function MapLocationPicker({ location, onChange }: MapLocationPickerProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   const handleSearch = async () => {
     if (!searchQuery) return;
@@ -114,18 +120,24 @@ export default function MapLocationPicker({ location, onChange }: MapLocationPic
       </div>
 
       <div className="h-[300px] rounded-lg overflow-hidden border border-gray-300 relative z-0">
-        <MapContainer 
-          center={[currentPos[1], currentPos[0]]} 
-          zoom={13} 
-          style={{ height: '100%', width: '100%' }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <LocationMarker position={currentPos} onChange={onChange} />
-          <FlyToCurrentLocation position={currentPos} />
-        </MapContainer>
+        {mounted ? (
+          <MapContainer 
+            center={[currentPos[1], currentPos[0]]} 
+            zoom={13} 
+            style={{ height: '100%', width: '100%' }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <LocationMarker position={currentPos} onChange={onChange} />
+            <FlyToCurrentLocation position={currentPos} />
+          </MapContainer>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400">
+            Đang tải bản đồ...
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-4 text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-100">

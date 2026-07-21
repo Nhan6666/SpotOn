@@ -55,7 +55,7 @@ export function BookingDetailFeature({ id }: { id: string }) {
   };
 
   const handleCancelClick = () => {
-    if (user?.role === 'CUSTOMER' && ['CONFIRMED', 'PENDING_PAYMENT'].includes(booking?.status)) {
+    if (user?.role === 'CUSTOMER' && booking?.status === 'CONFIRMED') {
       setCancelModalVisible(true);
     } else {
       // Legacy cancel for Manager or HOLDING state
@@ -106,6 +106,9 @@ export function BookingDetailFeature({ id }: { id: string }) {
   const statusInfo = STATUS_COLORS[booking.status] || { bg: 'bg-gray-100', text: 'text-gray-700', label: booking.status };
   const canCancel = ['HOLDING', 'PENDING_DEPOSIT', 'PENDING_PAYMENT'].includes(booking.status);
 
+  const customerName = booking.customer_id?.full_name || booking.walk_in_name || 'Khách vãng lai';
+  const phone = booking.customer_id?.phone || booking.walk_in_phone || 'Không có';
+
   return (
     <ScrollView className="flex-1 bg-background px-4 pt-4 pb-10" showsVerticalScrollIndicator={false}>
       <View className="flex-row items-center mb-6">
@@ -125,6 +128,8 @@ export function BookingDetailFeature({ id }: { id: string }) {
           </View>
         </View>
 
+        <InfoRow label="Khách hàng" value={customerName} />
+        <InfoRow label="Số điện thoại" value={phone} />
         <InfoRow label="Chi nhánh" value={booking.branch_id?.name || 'SpotOn Branch'} />
         <InfoRow label="Ngày" value={new Date(booking.reservation_date).toLocaleDateString('vi-VN')} />
         <InfoRow label="Giờ đến" value={booking.arrival_time} />
@@ -133,7 +138,7 @@ export function BookingDetailFeature({ id }: { id: string }) {
         {booking.assigned_tables && booking.assigned_tables.length > 0 && (
           <InfoRow 
             label="Bàn đã chọn" 
-            value={booking.assigned_tables.map((t: any) => `${t.zone_name} - ${t.table_number}`).join(', ')} 
+            value={booking.assigned_tables.map((t: any) => t.table_number).join(', ')} 
           />
         )}
         

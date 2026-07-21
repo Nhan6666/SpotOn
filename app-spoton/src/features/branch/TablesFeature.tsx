@@ -398,34 +398,65 @@ export function TablesFeature() {
             ))}
           </ScrollView>
 
-          {/* Table Grid */}
+          {/* Table Grid / Map */}
           {loading ? (
             <ActivityIndicator size="large" color="#14532d" className="my-10" />
           ) : (
-            <View className="bg-gray-50 rounded-xl p-2 flex-row flex-wrap justify-center border border-gray-100 border-dashed min-h-[300px]">
-              {currentZone?.tables?.map((table: any) => {
-                const computedStatus = getComputedTableStatus(table);
-                const colors = getTableColor(computedStatus);
-                return (
-                  <TouchableOpacity 
-                    key={table._id || table.table_number}
-                    onPress={() => handleTablePress(table)}
-                    className={`m-2 w-[40%] rounded-xl items-center justify-center py-4 border-2 ${colors.bg} ${colors.border} shadow-sm`}
-                  >
-                    <Text className={`font-lexend font-bold text-xl mb-1 ${colors.text}`}>
-                      {table.table_number}
-                    </Text>
-                    <Text className={`font-lexend text-[10px] mb-2 ${colors.text}`}>
-                      {table.capacity} chỗ
-                    </Text>
-                    <View className="bg-white/80 px-2 py-1 rounded shadow-sm">
-                      <Text className={`font-lexend font-bold text-[8px] uppercase ${colors.text}`}>
-                        {colors.label}
-                      </Text>
+            <View className="border border-gray-100 rounded-xl overflow-hidden min-h-[400px]">
+              <ScrollView horizontal bounces={false} style={{ flex: 1 }}>
+                <ScrollView bounces={false} style={{ flex: 1 }}>
+                  <View style={{ width: 1200, height: 1200, backgroundColor: '#f0fdf4', position: 'relative' }}>
+                    <View style={{ position: 'absolute', opacity: 0.1, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                      <View style={{ width: '100%', height: '100%', borderRightWidth: 1, borderBottomWidth: 1, borderColor: '#10b981', borderStyle: 'dashed' }} />
                     </View>
-                  </TouchableOpacity>
-                );
-              })}
+                    
+                    {currentZone?.tables?.map((table: any) => {
+                      const computedStatus = getComputedTableStatus(table);
+                      const colors = getTableColor(computedStatus);
+                      const TABLE_SIZE = 80;
+                      const w = table.width || TABLE_SIZE;
+                      const h = table.height || TABLE_SIZE;
+                      
+                      return (
+                        <TouchableOpacity 
+                          key={table._id || table.table_number}
+                          onPress={() => handleTablePress(table)}
+                          style={{
+                            position: 'absolute',
+                            left: table.x || 0,
+                            top: table.y || 0,
+                            width: w,
+                            height: h,
+                            borderRadius: table.shape === 'CIRCLE' ? w / 2 : 8,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            borderWidth: 2,
+                            borderColor: colors.border.replace('border-[', '').replace(']', ''), // Simplified since getTableColor returns tailwind classes but inline styles need actual color. We'll map colors later.
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.1,
+                            shadowRadius: 2,
+                            elevation: 2,
+                          }}
+                          className={`${colors.bg} ${colors.border}`}
+                        >
+                          <Text className={`font-lexend font-bold text-lg mb-0.5 ${colors.text}`}>
+                            {table.table_number}
+                          </Text>
+                          <Text className={`font-lexend text-[8px] mb-1 ${colors.text}`}>
+                            {table.capacity} chỗ
+                          </Text>
+                          <View className="bg-white/80 px-1 py-0.5 rounded shadow-sm">
+                            <Text className={`font-lexend font-bold text-[6px] uppercase ${colors.text}`}>
+                              {colors.label}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+              </ScrollView>
             </View>
           )}
         </View>

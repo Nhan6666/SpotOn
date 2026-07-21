@@ -111,7 +111,7 @@ export function AddBranchForm({ formData, updateFormData, currentBranchId, disab
              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{ADMIN_TEXTS.addBranchForm.labelManager}</span>
              <span className="text-gray-900 font-medium flex items-center gap-2">
                <UserCircle className="w-5 h-5 text-amber-500" />
-               {managers.find(m => m.value === formData.manager_id)?.label || ADMIN_TEXTS.addBranchForm.unassignedManager}
+               {managers.find(m => m.value === formData.manager_id)?.label || formData.manager_name || ADMIN_TEXTS.addBranchForm.unassignedManager}
              </span>
            </div>
 
@@ -262,7 +262,13 @@ export function AddBranchForm({ formData, updateFormData, currentBranchId, disab
           </label>
           <Select
             value={formData.manager_id || ''}
-            onChange={(e) => updateFormData({ manager_id: e.target.value })}
+            onChange={(e) => {
+              const selectedManager = managers.find(m => m.value === e.target.value);
+              updateFormData({ 
+                manager_id: e.target.value,
+                manager_name: selectedManager ? selectedManager.label.split(' (')[0] : ''
+              });
+            }}
             options={managers}
             placeholder={managers.length > 0 ? ADMIN_TEXTS.addBranchForm.inputManagerPlaceholder : ADMIN_TEXTS.addBranchForm.inputManagerEmpty}
             disabled={disabled}

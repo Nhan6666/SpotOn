@@ -35,6 +35,7 @@ export function AddBranchFeature() {
     },
     hotline: '',
     manager_id: '',
+    manager_name: '',
     service_periods: {
       lunch: { start: '08:00', end: '13:00', last_booking: '12:00', last_order: '12:30' },
       dinner: { start: '15:00', end: '23:00', last_booking: '22:00', last_order: '22:30' }
@@ -96,6 +97,7 @@ export function AddBranchFeature() {
       location: { type: 'Point', coordinates: [105.783, 10.033] }, 
       hotline: '', 
       manager_id: '', 
+      manager_name: '',
       service_periods: {
         lunch: { start: '08:00', end: '13:00', last_booking: '12:00', last_order: '12:30' },
         dinner: { start: '15:00', end: '23:00', last_booking: '22:00', last_order: '22:30' }
@@ -111,7 +113,12 @@ export function AddBranchFeature() {
   if (currentStep === 4) {
     return (
       <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
-        <AddBranchSuccess onReset={handleReset} />
+        <AddBranchSuccess 
+          onReset={handleReset} 
+          branchName={formData.name}
+          branchAddress={formData.address.full}
+          managerName={formData.manager_name}
+        />
       </div>
     );
   }

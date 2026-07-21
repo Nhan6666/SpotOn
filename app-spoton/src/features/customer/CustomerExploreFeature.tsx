@@ -108,7 +108,7 @@ export function CustomerExploreFeature() {
         <View className="flex-row items-center">
           <FontAwesome name="clock-o" size={14} color={Colors.primary} style={{ width: 16 }} />
           <Text className="font-lexend text-primary font-semibold text-sm ml-1">
-            {item.open_time} - {item.close_time}
+            {item.open_time || item.service_periods?.lunch?.start || '08:00'} - {item.close_time || item.service_periods?.dinner?.end || '23:00'}
           </Text>
         </View>
       </View>

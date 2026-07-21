@@ -372,9 +372,8 @@ const updateBookingInfo = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt bàn.' });
     }
 
-    // Cập nhật walk-in_name/phone nếu có truyền lên (dành cho Waiter tạo đơn vãng lai)
     if (walk_in_name !== undefined) {
-      if (walk_in_name.trim().length < 2) {
+      if (!walk_in_name || walk_in_name.trim().length < 2) {
         return res.status(400).json({ success: false, message: 'Vui lòng nhập họ tên hợp lệ (ít nhất 2 ký tự).' });
       }
       booking.walk_in_name = walk_in_name.trim();
@@ -382,7 +381,7 @@ const updateBookingInfo = async (req, res) => {
     
     if (walk_in_phone !== undefined) {
       const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
-      if (!phoneRegex.test(walk_in_phone)) {
+      if (!walk_in_phone || !phoneRegex.test(walk_in_phone)) {
         return res.status(400).json({ success: false, message: 'Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng Việt Nam.' });
       }
       booking.walk_in_phone = walk_in_phone.trim();

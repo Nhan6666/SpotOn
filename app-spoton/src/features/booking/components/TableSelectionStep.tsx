@@ -16,14 +16,21 @@ interface TableSelectionStepProps {
 }
 
 export function TableSelectionStep({ state, actions }: TableSelectionStepProps) {
-  const { zones, selectedZoneIdx, selectedTableIds, bookedTableIds } = state;
+  const { zones, selectedZoneIdx, selectedTableIds, bookedTableIds, dateOptions, selectedDateIdx, selectedTime } = state;
   const { setSelectedZoneIdx, handleTableToggle } = actions;
 
   const currentZone = zones[selectedZoneIdx];
   const tables = currentZone?.tables || [];
+  const selectedDateLabel = dateOptions[selectedDateIdx]?.label || '';
 
   return (
     <View className="flex-1 bg-[#F9FAFB]">
+      {/* Selected Time Banner */}
+      <View className="bg-blue-50 px-4 py-2 flex-row justify-center items-center border-b border-blue-100">
+        <Text className="font-lexend font-medium text-blue-800 text-sm">
+          Đang chọn bàn cho: <Text className="font-bold">{selectedTime} - {selectedDateLabel}</Text>
+        </Text>
+      </View>
       <View style={{ height: 60, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
         <ScrollView 
           horizontal 

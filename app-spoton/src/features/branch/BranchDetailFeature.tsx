@@ -10,47 +10,7 @@ interface BranchDetailProps {
   id: string;
 }
 
-const MenuCategory = ({ category }: { category: any }) => {
-  const [expanded, setExpanded] = useState(true);
 
-  return (
-    <View className="mb-4">
-      <TouchableOpacity 
-        onPress={() => setExpanded(!expanded)}
-        className="flex-row justify-between items-center mb-3 py-1"
-      >
-        <Text className="font-lexend font-bold text-lg text-primary">
-          {category.category || category.name || 'Category'}
-        </Text>
-        <FontAwesome name={expanded ? "chevron-up" : "chevron-down"} size={16} color="#b45309" />
-      </TouchableOpacity>
-      
-      {expanded && (category.items || []).map((item: any, itemIdx: number) => {
-        const imageUrl = item.image || item.image_url || item.images?.[0];
-        return (
-          <View key={item._id || itemIdx} className="flex-row items-center bg-white rounded-xl p-3 mb-3 border border-gray-100 shadow-sm">
-            {imageUrl ? (
-              <Image source={{ uri: imageUrl }} className="w-20 h-20 rounded-lg mr-3 bg-gray-100" />
-            ) : (
-              <View className="w-20 h-20 rounded-lg mr-3 bg-gray-100 items-center justify-center border border-gray-200">
-                <FontAwesome name="cutlery" size={24} color="#d1d5db" />
-              </View>
-            )}
-            <View className="flex-1 pr-2">
-              <Text className="font-lexend font-semibold text-text text-base mb-1">{item.name}</Text>
-              {item.description ? (
-                <Text className="font-lexend text-gray-500 text-xs mb-2" numberOfLines={2}>{item.description}</Text>
-              ) : null}
-              <Text className="font-lexend font-bold text-primary">
-                {item.price?.toLocaleString() || '0'}đ
-              </Text>
-            </View>
-          </View>
-        );
-      })}
-    </View>
-  );
-};
 
 export function BranchDetailFeature({ id }: BranchDetailProps) {
   const router = useRouter();
@@ -61,6 +21,7 @@ export function BranchDetailFeature({ id }: BranchDetailProps) {
   const [vouchers, setVouchers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'MENU' | 'VOUCHERS' | 'REVIEWS'>('OVERVIEW');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
 
   useEffect(() => {
     fetchBranchData();
@@ -168,17 +129,89 @@ export function BranchDetailFeature({ id }: BranchDetailProps) {
     </View>
   );
 
-  const renderMenu = () => (
-    <View className="p-4">
-      {menu.length === 0 ? (
-        <Text className="font-lexend text-muted text-center py-4">Chưa có thực đơn</Text>
-      ) : (
-        menu.map((category: any, idx: number) => (
-          <MenuCategory key={category._id || idx} category={category} />
-        ))
-      )}
-    </View>
-  );
+  const renderMenu = () => {
+    if (menu.length === 0) {
+      return (
+        <View className="p-4">
+          <Text className="font-lexend text-muted text-center py-4">Chưa có thực đơn</Text>
+        </View>
+      );
+    }
+
+    const categoriesToRender = selectedCategory === 'ALL' 
+      ? menu 
+      : menu.filter(c => (c._id || c.name || c.category) === selectedCategory);
+
+    return (
+      <View className="pb-4">
+        {/* Category Pills Header */}
+        <View className="bg-white border-b border-gray-100 py-3">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+            <TouchableOpacity
+              onPress={() => setSelectedCategory('ALL')}
+              className={`px-4 py-2 rounded-full mr-2 ${selectedCategory === 'ALL' ? 'bg-primary' : 'bg-gray-100'}`}
+            >
+              <Text className={`font-lexend font-medium ${selectedCategory === 'ALL' ? 'text-white' : 'text-gray-600'}`}>
+                Tất Cả
+              </Text>
+            </TouchableOpacity>
+            {menu.map((category: any, idx: number) => {
+              const catId = category._id || category.name || category.category;
+              const isSelected = selectedCategory === catId;
+              const catName = category.category || category.name || 'Category';
+              return (
+                <TouchableOpacity
+                  key={catId || idx}
+                  onPress={() => setSelectedCategory(catId)}
+                  className={`px-4 py-2 rounded-full mr-2 ${isSelected ? 'bg-primary' : 'bg-gray-100'}`}
+                >
+                  <Text className={`font-lexend font-medium ${isSelected ? 'text-white' : 'text-gray-600'}`}>
+                    {catName}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Menu Items */}
+        <View className="p-4">
+          {categoriesToRender.map((category: any, idx: number) => (
+            <View key={category._id || idx} className="mb-6">
+              {selectedCategory === 'ALL' && (
+                <Text className="font-lexend font-bold text-lg text-primary mb-3">
+                  {category.category || category.name || 'Category'}
+                </Text>
+              )}
+              {(category.items || []).map((item: any, itemIdx: number) => {
+                const imageUrl = item.image || item.image_url || item.images?.[0];
+                return (
+                  <View key={item._id || itemIdx} className="flex-row items-center bg-white rounded-xl p-3 mb-3 border border-gray-100 shadow-sm">
+                    {imageUrl ? (
+                      <Image source={{ uri: imageUrl }} className="w-20 h-20 rounded-lg mr-3 bg-gray-100" />
+                    ) : (
+                      <View className="w-20 h-20 rounded-lg mr-3 bg-gray-100 items-center justify-center border border-gray-200">
+                        <FontAwesome name="cutlery" size={24} color="#d1d5db" />
+                      </View>
+                    )}
+                    <View className="flex-1 pr-2">
+                      <Text className="font-lexend font-semibold text-text text-base mb-1">{item.name}</Text>
+                      {item.description ? (
+                        <Text className="font-lexend text-gray-500 text-xs mb-2" numberOfLines={2}>{item.description}</Text>
+                      ) : null}
+                      <Text className="font-lexend font-bold text-primary">
+                        {item.price?.toLocaleString() || '0'}đ
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
 
   const renderVouchers = () => (
     <View className="p-4">

@@ -303,7 +303,7 @@ export function AdminFinanceFeature() {
                       
                       <View className="flex-row justify-between items-center">
                         <Text className="font-lexend text-[10px] text-gray-400">
-                          Cập nhật: {new Date(item.updatedAt).toLocaleString('vi-VN')}
+                          Cập nhật: {new Date(item.updated_at || item.created_at || new Date()).toLocaleString('vi-VN')}
                         </Text>
                         <Text className="font-lexend text-[10px] font-bold text-orange-600">
                           📍 {item.branch_id?.name || 'Chi nhánh'}

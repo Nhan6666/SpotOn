@@ -207,8 +207,11 @@ export function ManagerMapEditorFeature() {
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="px-4 py-3 bg-white flex-row justify-between items-center border-b border-gray-200 mt-8">
-        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-          <FontAwesome name="arrow-left" size={20} color="#374151" />
+        <TouchableOpacity 
+          onPress={() => router.push(user?.role === 'ADMIN' ? '/admin-branches' : '/branch-manage')} 
+          className="p-2 -ml-2"
+        >
+          <FontAwesome name="arrow-left" size={18} color="#4b5563" />
         </TouchableOpacity>
         <Text className="font-lexend font-bold text-lg text-gray-900">Sơ đồ: {activeZone?.name}</Text>
         <TouchableOpacity 

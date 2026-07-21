@@ -3,6 +3,8 @@ import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, Refre
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import apiClient from '@/lib/http';
 import { FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 export interface VoucherItem {
   _id: string;
@@ -21,6 +23,8 @@ export interface VoucherItem {
 }
 
 export function ManagerVoucherFeature() {
+  const router = useRouter();
+  const { user } = useAuthStore();
   const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -255,11 +259,17 @@ export function ManagerVoucherFeature() {
   return (
     <View className="flex-1 bg-[#F9FAFB]">
       {/* Header */}
-      <View className="bg-white px-5 pt-5 pb-4 shadow-sm z-10 border-b border-gray-100 flex-row justify-between items-center">
+      <View className="bg-white px-4 pt-5 pb-4 shadow-sm z-10 border-b border-gray-100 flex-row justify-between items-center">
+        <TouchableOpacity 
+          onPress={() => router.push(user?.role === 'ADMIN' ? '/admin-dashboard' : '/profile')}
+          className="mr-3 w-8 h-8 items-center justify-center"
+        >
+          <FontAwesome name="arrow-left" size={16} color="#374151" />
+        </TouchableOpacity>
         <View className="flex-1">
-          <Text className="font-lexend font-bold text-xl text-gray-900 mb-1">Khuyến mãi</Text>
+          <Text className="font-lexend font-bold text-xl text-gray-900 mb-1">Khuyến Mãi</Text>
           <Text className="font-lexend text-xs text-gray-500">
-            Tạo và quản lý các mã giảm giá cho nhà hàng
+            Quản lý voucher và mã giảm giá
           </Text>
         </View>
         <TouchableOpacity 

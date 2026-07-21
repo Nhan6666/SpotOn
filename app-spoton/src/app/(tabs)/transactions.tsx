@@ -99,7 +99,10 @@ export default function TransactionsScreen() {
     <View className="flex-1 bg-background">
       {/* Header */}
       <View className="flex-row items-center px-4 pt-4 pb-4">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4 w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm">
+        <TouchableOpacity 
+          onPress={() => router.push(user?.role === 'ADMIN' ? '/admin-dashboard' : '/branch-manage')} 
+          className="mr-4 w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm"
+        >
           <FontAwesome name="arrow-left" size={16} color="#374151" />
         </TouchableOpacity>
         <Text className="font-lexend font-bold text-2xl text-text flex-1">Lịch sử giao dịch</Text>

@@ -173,7 +173,7 @@ export function useBookingFlow(branchId: string) {
       const h = Math.floor(m / 60);
       const min = m % 60;
       const timeStr = `${h.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-      const isPast = isToday && m <= nowMin + 30;
+      const isPast = isToday && m <= nowMin + 120; // Đặt tối thiểu 2 tiếng
       slots.push({ label: timeStr, value: timeStr, disabled: isPast });
     }
     return slots;

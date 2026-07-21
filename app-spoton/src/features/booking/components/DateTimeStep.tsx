@@ -24,7 +24,12 @@ export function DateTimeStep({ state, actions }: DateTimeStepProps) {
       </ScrollView>
 
       {/* Time Selector */}
-      <Text className="font-lexend font-bold text-base mb-2">Chọn giờ</Text>
+      <View className="flex-row items-center justify-between mb-2">
+        <Text className="font-lexend font-bold text-base">Chọn giờ</Text>
+        <Text className="font-lexend text-[10px] text-orange-700 bg-orange-100 px-2 py-1 rounded-md overflow-hidden">
+          * Đặt trước tối thiểu 2 tiếng
+        </Text>
+      </View>
       <View className="flex-row flex-wrap gap-2 mb-4">
         {timeOptions.map((t: any, i: number) => (
           <TouchableOpacity key={t.value} onPress={() => !t.disabled && setSelectedTimeIdx(i)} disabled={t.disabled}

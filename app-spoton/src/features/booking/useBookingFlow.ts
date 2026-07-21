@@ -278,6 +278,37 @@ export function useBookingFlow(branchId: string) {
     });
   };
 
+  const cancelHoldAndExit = () => {
+    Alert.alert(
+      'Hủy đặt bàn',
+      'Bạn có chắc chắn muốn hủy giữ bàn và thoát không?',
+      [
+        { text: 'Không', style: 'cancel' },
+        { 
+          text: 'Đồng ý', 
+          style: 'destructive',
+          onPress: async () => {
+            if (holdingBookingId) {
+              setLoading(true);
+              try {
+                await BookingService.releaseHold(holdingBookingId);
+              } catch (error) {
+                console.log('Error releasing hold', error);
+              } finally {
+                setLoading(false);
+                setHoldingBookingId(null);
+                setStep(1);
+                router.back();
+              }
+            } else {
+              router.back();
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const getPreOrderTotal = () => cart.reduce((t, i) => t + (i.item.price * i.quantity), 0);
 
   // State for Payment (Step 5)
@@ -418,7 +449,8 @@ export function useBookingFlow(branchId: string) {
     actions: {
       setStep, setGuests, setNote, setSelectedDateIdx, setSelectedTimeIdx, setSelectedZoneIdx,
       setPaymentMethod, handleTableToggle, handleAddToCart, getPreOrderTotal,
-      checkAvailabilityAndContinue, handleHoldAndContinue, handleConfirmBooking, handleProcessPayment, handleApplyVoucher,
+      checkAvailabilityAndContinue, handleHoldAndContinue, cancelHoldAndExit,
+      handleConfirmBooking, handleProcessPayment, handleApplyVoucher,
       setVoucherCode,
       router
     }

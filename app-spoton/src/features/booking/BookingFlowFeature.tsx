@@ -14,8 +14,8 @@ interface BookingFlowProps {
 export function BookingFlowFeature({ id }: BookingFlowProps) {
   const { state, actions } = useBookingFlow(id);
   
-  const { step, initLoading, loading, branch, canPreOrder } = state;
-  const { setStep, checkAvailabilityAndContinue, handleHoldAndContinue, handleConfirmBooking, handleProcessPayment, router } = actions;
+  const { step, initLoading, loading, branch, canPreOrder, holdingBookingId } = state;
+  const { setStep, checkAvailabilityAndContinue, handleHoldAndContinue, handleConfirmBooking, handleProcessPayment, cancelHoldAndExit, router } = actions;
 
   if (initLoading) {
     return <View className="flex-1 justify-center items-center bg-background"><ActivityIndicator size="large" color="#b45309" /></View>;
@@ -47,14 +47,40 @@ export function BookingFlowFeature({ id }: BookingFlowProps) {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <View className="px-4 pt-12 pb-2 border-b border-gray-100 bg-white flex-row items-center">
-        <TouchableOpacity onPress={() => step > 1 ? setStep(step - 1) : router.back()} className="mr-3">
-          <Text className="text-text text-xl">←</Text>
-        </TouchableOpacity>
-        <View className="flex-1">
-          <Text className="font-lexend font-bold text-lg text-text">{branch?.name || 'Đặt bàn'}</Text>
-          <Text className="font-lexend text-muted text-xs">Bước {step}/{totalSteps} — {stepLabels[step - 1]}</Text>
+      <View className="px-4 pt-12 pb-2 border-b border-gray-100 bg-white flex-row items-center justify-between">
+        <View className="flex-row items-center flex-1">
+          <TouchableOpacity 
+            onPress={() => {
+              if (step > 1 && step < 5) {
+                if (step === 3) {
+                  // Cảnh báo nếu quay lại bước chọn bàn thì bàn hiện tại vẫn đang bị giữ
+                  setStep(2);
+                } else {
+                  setStep(step - 1);
+                }
+              } else {
+                if (holdingBookingId) {
+                  cancelHoldAndExit();
+                } else {
+                  router.back();
+                }
+              }
+            }} 
+            className="mr-3"
+          >
+            <Text className="text-text text-xl">←</Text>
+          </TouchableOpacity>
+          <View className="flex-1">
+            <Text className="font-lexend font-bold text-lg text-text" numberOfLines={1}>{branch?.name || 'Đặt bàn'}</Text>
+            <Text className="font-lexend text-muted text-xs">Bước {step}/{totalSteps} — {stepLabels[step - 1]}</Text>
+          </View>
         </View>
+
+        {holdingBookingId && step < 5 && (
+          <TouchableOpacity onPress={cancelHoldAndExit} className="ml-2 px-3 py-1.5 bg-red-50 rounded-lg">
+            <Text className="font-lexend font-semibold text-red-600 text-xs">Hủy bàn</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Step Renderers */}

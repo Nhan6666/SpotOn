@@ -111,7 +111,7 @@ export function AddBranchForm({ formData, updateFormData, currentBranchId, disab
              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{ADMIN_TEXTS.addBranchForm.labelManager}</span>
              <span className="text-gray-900 font-medium flex items-center gap-2">
                <UserCircle className="w-5 h-5 text-amber-500" />
-               {managers.find(m => m.value === formData.manager_id)?.label || ADMIN_TEXTS.addBranchForm.unassignedManager}
+               {managers.find(m => m.value === formData.manager_id)?.label || formData.manager_name || ADMIN_TEXTS.addBranchForm.unassignedManager}
              </span>
            </div>
 

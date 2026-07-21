@@ -249,7 +249,7 @@ export function ManagerMenuFeature() {
                     className="flex-row items-center px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-200"
                   >
                     <FontAwesome name="power-off" size={12} color="#b45309" />
-                    <Text className="font-lexend text-xs font-bold text-amber-700 ml-1.5">Trạng Thái</Text>
+                    <Text className="font-lexend text-xs font-bold text-amber-700 ml-1.5">Số Lượng & Trạng Thái</Text>
                   </TouchableOpacity>
                 ) : (
                   <>

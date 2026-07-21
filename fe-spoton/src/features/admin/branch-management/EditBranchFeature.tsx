@@ -40,6 +40,7 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
     },
     hotline: "",
     manager_id: "",
+    manager_name: "",
     service_periods: {
       lunch: { start: '08:00', end: '13:00', last_booking: '12:00', last_order: '12:30' },
       dinner: { start: '15:00', end: '23:00', last_booking: '22:00', last_order: '22:30' }
@@ -73,6 +74,7 @@ export function EditBranchFeature({ branchId }: { branchId: string }) {
               typeof b.manager_id === "object" && b.manager_id
                 ? b.manager_id._id
                 : b.manager_id || "",
+            manager_name: typeof b.manager_id === "object" && b.manager_id ? b.manager_id.full_name : "",
             service_periods: b.service_periods || {
               lunch: { start: '08:00', end: '13:00', last_booking: '12:00', last_order: '12:30' },
               dinner: { start: '15:00', end: '23:00', last_booking: '22:00', last_order: '22:30' }

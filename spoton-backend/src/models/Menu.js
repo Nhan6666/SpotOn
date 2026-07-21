@@ -11,6 +11,7 @@ const MenuItemSchema = new mongoose.Schema({
   min_price: { type: Number, min: 0, default: 0 }, // UC-7.3 NF-5: Giá tối thiểu
   max_price: { type: Number, min: 0 }, // UC-7.3 NF-5: Giá tối đa
   is_available: { type: Boolean, default: true },
+  quantity: { type: Number, min: 0 },
   is_core_item: { type: Boolean, default: false }, // UC-7.3 BR-02: Core Item Lock
   image_url: { type: String },
   status: {

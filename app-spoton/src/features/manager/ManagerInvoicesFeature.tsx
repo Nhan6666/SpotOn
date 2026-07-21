@@ -208,6 +208,9 @@ export function ManagerInvoicesFeature() {
                   <View className="flex-row justify-between items-start mb-3">
                     <View className="flex-1">
                       <Text className="font-lexend font-bold text-sm text-gray-900 mb-0.5">{customerName}</Text>
+                      <Text className="font-lexend text-xs text-gray-500 mb-1">
+                        {invoice.customer_id?.phone || invoice.customer_id?.phone_number || invoice.walk_in_phone || '---'}
+                      </Text>
                       <View className="flex-row items-center mt-1">
                         <View className="bg-gray-100 px-2 py-0.5 rounded mr-2">
                           <Text className="font-lexend text-[10px] font-bold text-gray-700">Bàn: {tableNames}</Text>

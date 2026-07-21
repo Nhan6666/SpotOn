@@ -103,6 +103,32 @@ export function ManagerKanbanFeature() {
     setSelectedBookingForCheckout(booking);
   };
 
+  const handleForceRelease = (bookingId: string) => {
+    Alert.alert(
+      'Cảnh báo',
+      'Bạn sắp nhả bàn này mà chưa thanh toán.\nĐơn sẽ được chuyển vào danh sách chờ đối soát.\nTiếp tục?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Nhả bàn',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setProcessingId(bookingId);
+              await BookingService.forceReleaseBooking(bookingId);
+              Alert.alert('Thành công', 'Đã nhả bàn thành công!');
+              fetchBookings(true);
+            } catch (error: any) {
+              Alert.alert('Lỗi', error.response?.data?.message || 'Không thể nhả bàn');
+            } finally {
+              setProcessingId(null);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const getBookingsByStatus = (statusId: string) => {
     const today = new Date();
     const currentTimeStr = `${today.getHours().toString().padStart(2, '0')}:${today.getMinutes().toString().padStart(2, '0')}`;
@@ -205,16 +231,30 @@ export function ManagerKanbanFeature() {
                     <Text className="font-lexend text-gray-400 text-sm text-center">Trống</Text>
                   </View>
                 ) : (
-                  colBookings.map((booking: any) => (
+                  colBookings.map((booking: any) => {
+                    const isOnlineMember = !!booking.customer_id;
+                    const hasDeposit = booking.payment_info?.status === 'PAID' || !!booking.payment_info?.transaction_id;
+                    const isOnlineGuest = !booking.customer_id && (!!booking.walk_in_phone || hasDeposit || booking.status === 'CONFIRMED' || (booking.walk_in_name && booking.walk_in_name !== 'Khách vãng lai'));
+                    const isOnline = isOnlineMember || isOnlineGuest;
+
+                    return (
                     <TouchableOpacity
                       key={booking._id}
                       className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 mb-3"
                       onPress={() => router.push(`/booking/detail/${booking._id}`)}
                     >
                       <View className="flex-row justify-between items-start mb-2">
-                        <Text className="font-lexend font-bold text-text flex-1 text-sm">
-                          {booking.customer_id?.full_name || booking.walk_in_name || 'Khách vãng lai'}
-                        </Text>
+                        <View className="flex-1 flex-row items-center flex-wrap pr-2">
+                          <Text className="font-lexend font-bold text-text text-sm">
+                            {booking.customer_id?.full_name || booking.walk_in_name || 'Khách vãng lai'}
+                          </Text>
+                          {isOnline && (
+                            <View className="bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 ml-2 flex-row items-center">
+                              <FontAwesome name="globe" size={8} color="#7e22ce" />
+                              <Text className="font-lexend text-[8px] font-bold text-purple-700 ml-1">ĐẶT ONLINE</Text>
+                            </View>
+                          )}
+                        </View>
                         <Text className="font-lexend font-bold text-gray-700 text-sm bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
                           {booking.arrival_time}
                         </Text>
@@ -227,8 +267,8 @@ export function ManagerKanbanFeature() {
                         </Text>
                       </View>
 
-                      <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-gray-50">
-                        <View className="flex-row gap-2">
+                      <View className={`mt-3 pt-3 border-t border-gray-50 ${col.id === 'IN_USE' ? '' : 'flex-row justify-between items-center'}`}>
+                        <View className={`flex-row gap-2 ${col.id === 'IN_USE' ? 'mb-3' : ''}`}>
                           <View className="flex-row items-center bg-orange-50 px-2 py-1 rounded border border-orange-100">
                             <FontAwesome name="user" size={10} color="#c2410c" />
                             <Text className="font-lexend text-[10px] font-bold text-orange-700 ml-1">{booking.guest_count}</Text>
@@ -260,16 +300,26 @@ export function ManagerKanbanFeature() {
                         )}
 
                         {col.id === 'IN_USE' && (
-                          <TouchableOpacity 
-                            onPress={() => handleCheckout(booking)}
-                            className={`bg-green-600 px-3 py-1.5 rounded-lg flex-row items-center`}
-                          >
-                            <Text className="font-lexend font-bold text-white text-xs">Checkout</Text>
-                          </TouchableOpacity>
+                          <View className="flex-row gap-2">
+                            <TouchableOpacity 
+                              onPress={() => handleForceRelease(booking._id)}
+                              disabled={processingId === booking._id}
+                              className={`border border-red-200 bg-red-50 px-3 py-2 rounded-lg flex-row items-center justify-center flex-1 ${processingId === booking._id ? 'opacity-50' : ''}`}
+                            >
+                              <Text className="font-lexend font-bold text-red-600 text-[11px]">Nhả bàn</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                              onPress={() => handleCheckout(booking)}
+                              className="bg-green-600 px-3 py-2 rounded-lg flex-row items-center justify-center flex-1"
+                            >
+                              <Text className="font-lexend font-bold text-white text-[11px]">Thanh toán →</Text>
+                            </TouchableOpacity>
+                          </View>
                         )}
                       </View>
                     </TouchableOpacity>
-                  ))
+                    );
+                  })
                 )}
                 <View className="h-4" />
               </ScrollView>

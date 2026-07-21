@@ -52,9 +52,9 @@ export function BookingFlowFeature({ id }: BookingFlowProps) {
           <TouchableOpacity 
             onPress={() => {
               if (step > 1 && step < 5) {
-                if (step === 3) {
-                  // Cảnh báo nếu quay lại bước chọn bàn thì bàn hiện tại vẫn đang bị giữ
-                  setStep(2);
+                if (step === 3 || step === 4) {
+                  // Hiển thị confirm hủy luôn nếu đang ở bước 3 hoặc 4
+                  cancelHoldAndExit();
                 } else {
                   setStep(step - 1);
                 }

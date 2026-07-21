@@ -89,7 +89,7 @@ export function ManagerKanbanFeature() {
               await BookingService.checkInBooking(bookingId);
               fetchBookings(true);
             } catch (error: any) {
-              Alert.alert('Lỗi Check-in', error.response?.data?.message || 'Không thể check-in lúc này.');
+              Alert.alert('Lỗi Check-in', error.message || 'Không thể check-in lúc này.');
             } finally {
               setProcessingId(null);
             }
@@ -119,7 +119,7 @@ export function ManagerKanbanFeature() {
               Alert.alert('Thành công', 'Đã nhả bàn thành công!');
               fetchBookings(true);
             } catch (error: any) {
-              Alert.alert('Lỗi', error.response?.data?.message || 'Không thể nhả bàn');
+              Alert.alert('Lỗi', error.message || 'Không thể nhả bàn');
             } finally {
               setProcessingId(null);
             }
@@ -149,7 +149,7 @@ export function ManagerKanbanFeature() {
         return b.status === 'IN_USE';
       }
 
-      if (['CONFIRMED', 'PENDING_PAYMENT', 'HOLDING'].includes(b.status)) {
+      if (b.status === 'CONFIRMED') {
         let isLate = false;
         if (selDateStr < todayLocalStr) {
           isLate = true;

@@ -10,6 +10,13 @@ export default function TransactionsScreen() {
   const { user } = useAuthStore();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const changeDate = (days: number) => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + days);
+    setSelectedDate(newDate);
+  };
 
   useEffect(() => {
     fetchTransactions();
@@ -95,6 +102,13 @@ export default function TransactionsScreen() {
     }
   };
 
+  const filteredTransactions = transactions.filter((tx: any) => {
+    const txDate = new Date(tx.date);
+    return txDate.getFullYear() === selectedDate.getFullYear() &&
+           txDate.getMonth() === selectedDate.getMonth() &&
+           txDate.getDate() === selectedDate.getDate();
+  });
+
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
@@ -108,35 +122,59 @@ export default function TransactionsScreen() {
         <Text className="font-lexend font-bold text-2xl text-text flex-1">Lịch sử giao dịch</Text>
       </View>
 
+      {/* Date Picker */}
+      <View className="px-4 mb-4">
+        <View className="flex-row items-center border border-gray-200 rounded-lg bg-white p-2 shadow-sm">
+          <View className="flex-1 flex-row justify-between items-center">
+            <View>
+              <Text className="font-lexend text-[10px] text-gray-500 mb-1">Chọn ngày xem lịch sử</Text>
+              <View className="flex-row items-center">
+                <TouchableOpacity onPress={() => changeDate(-1)} className="px-3 py-1.5 mr-2 bg-gray-50 rounded border border-gray-200">
+                  <FontAwesome name="chevron-left" size={12} color="#6b7280" />
+                </TouchableOpacity>
+                <Text className="font-lexend font-bold text-sm text-text mx-2">{selectedDate.toLocaleDateString('vi-VN')}</Text>
+                <TouchableOpacity onPress={() => changeDate(1)} className="px-3 py-1.5 ml-2 bg-gray-50 rounded border border-gray-200">
+                  <FontAwesome name="chevron-right" size={12} color="#6b7280" />
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            <TouchableOpacity onPress={() => setSelectedDate(new Date())} className="px-3 py-2 bg-[#f0fdf4] rounded-lg border border-[#bbf7d0]">
+              <Text className="font-lexend font-bold text-xs text-[#166534]">Hôm nay</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
       {/* Summary Cards */}
       <View className="flex-row px-4 mb-4 space-x-2">
         <View className="flex-1 bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
           <Text className="font-lexend text-[10px] text-gray-500 font-bold mb-1 uppercase">Tổng thu</Text>
           <Text className="font-lexend font-bold text-sm text-gray-900">
-            {transactions.filter(t => t.type === 'DEPOSIT' || t.type === 'FINAL_BILL').reduce((acc, t) => acc + t.amount, 0).toLocaleString('vi-VN')}đ
+            {filteredTransactions.filter(t => t.type === 'DEPOSIT' || t.type === 'FINAL_BILL').reduce((acc, t) => acc + t.amount, 0).toLocaleString('vi-VN')}đ
           </Text>
         </View>
         <View className="flex-1 bg-white rounded-xl p-3 border border-gray-100 shadow-sm ml-2">
           <Text className="font-lexend text-[10px] text-red-500 font-bold mb-1 uppercase">Hoàn tiền</Text>
           <Text className="font-lexend font-bold text-sm text-red-600">
-            -{transactions.filter(t => t.type === 'REFUND').reduce((acc, t) => acc + t.amount, 0).toLocaleString('vi-VN')}đ
+            -{filteredTransactions.filter(t => t.type === 'REFUND').reduce((acc, t) => acc + t.amount, 0).toLocaleString('vi-VN')}đ
           </Text>
         </View>
         <View className="flex-1 bg-green-50 rounded-xl p-3 border border-green-100 shadow-sm ml-2">
           <Text className="font-lexend text-[10px] text-green-700 font-bold mb-1 uppercase">Thuần</Text>
           <Text className="font-lexend font-bold text-sm text-green-700">
-            {(transactions.filter(t => t.type === 'DEPOSIT' || t.type === 'FINAL_BILL').reduce((acc, t) => acc + t.amount, 0) - transactions.filter(t => t.type === 'REFUND').reduce((acc, t) => acc + t.amount, 0)).toLocaleString('vi-VN')}đ
+            {(filteredTransactions.filter(t => t.type === 'DEPOSIT' || t.type === 'FINAL_BILL').reduce((acc, t) => acc + t.amount, 0) - filteredTransactions.filter(t => t.type === 'REFUND').reduce((acc, t) => acc + t.amount, 0)).toLocaleString('vi-VN')}đ
           </Text>
         </View>
       </View>
 
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-        {transactions.length === 0 ? (
+        {filteredTransactions.length === 0 ? (
           <View className="items-center justify-center py-10">
-            <Text className="font-lexend text-muted">Chưa có giao dịch nào.</Text>
+            <Text className="font-lexend text-muted">Chưa có giao dịch nào trong ngày này.</Text>
           </View>
         ) : (
-          transactions.map((tx: any) => {
+          filteredTransactions.map((tx: any) => {
             const details = getTxDetails(tx.type);
             return (
               <TouchableOpacity 

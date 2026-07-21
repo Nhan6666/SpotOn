@@ -74,6 +74,11 @@ export const useSocketStore = create<SocketState>((set) => ({
       set({ lastKitchenOrder: new Date() });
     });
 
+    socket.on('new_order_kitchen', (data) => {
+      console.log('socket: new_order_kitchen', data);
+      set({ lastKitchenOrder: new Date() });
+    });
+
     socket.on('ITEM_READY', (data) => {
       console.log('socket: ITEM_READY', data);
       set({ lastItemReady: new Date() });

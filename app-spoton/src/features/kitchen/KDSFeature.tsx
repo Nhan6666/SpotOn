@@ -87,15 +87,17 @@ export function KDSFeature() {
     const socket = getSocket();
     if (socket && branchId) {
       // socket.emit('join_branch', branchId); is handled globally if needed
-      socket.on('new_order_kitchen', () => {
-        fetchOrders();
-      });
+      socket.on('new_order_kitchen', () => fetchOrders());
+      socket.on('NEW_KITCHEN_ORDER', () => fetchOrders());
     }
 
     return () => {
       clearInterval(interval);
       clearInterval(timerInterval);
-      if (socket) socket.off('new_order_kitchen');
+      if (socket) {
+        socket.off('new_order_kitchen');
+        socket.off('NEW_KITCHEN_ORDER');
+      }
     };
   }, [fetchOrders, branchId]);
 

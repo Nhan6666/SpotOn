@@ -222,6 +222,16 @@ export default function TabLayout() {
         }}
       />
 
+      {/* ===== KITCHEN: Lịch sử ===== */}
+      <Tabs.Screen
+        name="kds-history"
+        options={{
+          title: 'Lịch sử',
+          tabBarIcon: ({ color }) => <TabBarIcon name="history" color={color as string} />,
+          href: isKitchen ? '/kds-history' : null,
+        }}
+      />
+
       {/* ===== ALL: Tài khoản ===== */}
       <Tabs.Screen
         name="profile"

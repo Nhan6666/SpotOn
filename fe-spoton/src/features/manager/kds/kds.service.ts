@@ -8,9 +8,9 @@ export const kdsService = {
         `/bookings?branch_id=${branchId}&start_date=${startDate}&end_date=${endDate}`
       );
       
-      // Chỉ lấy đơn đang IN_USE (Khách đã check-in hoặc khách vãng lai) có món ăn
+      // Lấy đơn đang IN_USE (hiện tại) hoặc CONFIRMED (đặt trước) có món ăn
       const active = res.data.filter(b => 
-        ['IN_USE'].includes(b.status) && 
+        ['IN_USE', 'CONFIRMED'].includes(b.status) && 
         b.order_items && 
         b.order_items.some(item => item.prep_status !== 'SERVED')
       );

@@ -78,11 +78,21 @@ export function TableSelectionStep({ state, actions }: TableSelectionStepProps) 
               tables.map((table: any) => {
                 const isBooked = bookedTableIds.includes(table._id);
                 const isSelected = selectedTableIds.includes(table._id);
-                const isAvailable = !isBooked && (table.status === 'EMPTY' || !table.status);
+                const isLocked = table.status === 'LOCKED';
                 
-                let colors = TABLE_STATUS[table.status] || TABLE_STATUS.EMPTY;
+                // Bàn có thể đặt nếu không bị đặt (trong ca đó) và không bị khóa (bảo trì)
+                const isAvailable = !isBooked && !isLocked;
+                
+                // Mặc định bàn trống (xanh lá) nếu khả dụng
+                let colors = TABLE_STATUS.EMPTY;
+                
                 if (!isAvailable) {
-                  colors = { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-400', label: isBooked ? 'Đã đặt' : (TABLE_STATUS[table.status]?.label || 'Bảo trì') };
+                  colors = { 
+                    bg: 'bg-gray-100', 
+                    border: 'border-gray-300', 
+                    text: 'text-gray-400', 
+                    label: isBooked ? 'Đã đặt' : 'Bảo trì' 
+                  };
                 }
                 
                 if (isSelected) {

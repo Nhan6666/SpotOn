@@ -29,6 +29,7 @@ const chartConfig = {
   backgroundGradientFrom: "#ffffff",
   backgroundGradientTo: "#ffffff",
   color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(107, 114, 128, 1)`, // gray-500
   strokeWidth: 2,
   barPercentage: 0.5,
   useShadowColorFromDataset: false,
@@ -36,12 +37,19 @@ const chartConfig = {
     r: "4",
     strokeWidth: "2",
     stroke: "#10b981"
+  },
+  propsForBackgroundLines: {
+    stroke: "#f3f4f6", // gray-100
+    strokeDasharray: "0" // solid lines
   }
 };
 
 const barChartConfig = {
   ...chartConfig,
   color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
+  fillShadowGradient: "#3b82f6", // solid blue
+  fillShadowGradientOpacity: 0.8,
+  decimalPlaces: 0,
 };
 
 export function AdminDashboardFeature() {
@@ -219,9 +227,11 @@ export function AdminDashboardFeature() {
                 bezier
                 style={{ borderRadius: 12, marginLeft: -16 }}
                 withDots={true}
-                withInnerLines={false}
+                withInnerLines={true}
                 yAxisLabel=""
                 yAxisSuffix="M"
+                formatYLabel={(yValue: string) => parseFloat(yValue).toString()}
+                fromZero={true}
               />
             </View>
 
@@ -244,8 +254,10 @@ export function AdminDashboardFeature() {
                 yAxisSuffix=""
                 chartConfig={barChartConfig}
                 style={{ borderRadius: 12, marginLeft: -16 }}
-                withInnerLines={false}
+                withInnerLines={true}
                 showValuesOnTopOfBars={true}
+                showBarTops={false}
+                fromZero={true}
               />
             </View>
           </View>

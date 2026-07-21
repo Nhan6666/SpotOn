@@ -72,8 +72,8 @@ export function AdminMapEditorFeature({ id }: AdminMapEditorFeatureProps) {
         onPanResponderRelease: (e, gestureState) => {
           pan.flattenOffset();
           // Grid snap
-          const snapX = Math.round(pan.x._value / 20) * 20;
-          const snapY = Math.round(pan.y._value / 20) * 20;
+          const snapX = Math.round((pan.x as any)._value / 20) * 20;
+          const snapY = Math.round((pan.y as any)._value / 20) * 20;
           
           const boundedX = Math.max(0, Math.min(snapX, 2000 - (t.width || 70)));
           const boundedY = Math.max(0, Math.min(snapY, 2000 - (t.height || 70)));

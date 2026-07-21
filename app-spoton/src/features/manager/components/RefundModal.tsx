@@ -253,7 +253,7 @@ export function RefundModal({ visible, booking, onClose, onSuccess }: RefundModa
                       onPress={pickImage}
                       className="border-2 border-dashed border-gray-300 rounded-lg p-5 items-center justify-center bg-gray-50"
                     >
-                      <FontAwesome name="camera" size={24} color="#9ca3af" style={{ mb: 8 }} />
+                      <FontAwesome name="camera" size={24} color="#9ca3af" style={{ marginBottom: 8 }} />
                       <Text className="font-lexend text-gray-600 text-xs font-medium mt-2">Bấm để chọn ảnh</Text>
                     </TouchableOpacity>
                   )}

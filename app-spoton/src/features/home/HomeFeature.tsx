@@ -51,9 +51,9 @@ export function HomeFeature() {
               <Text className="font-lexend font-bold text-4xl text-white tracking-tight">SpotOn</Text>
             </View>
             <View className="flex-row gap-3">
-              {user?.role === 'ADMIN' && (
+              {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
                 <TouchableOpacity 
-                  onPress={() => router.push('/admin-dashboard')}
+                  onPress={() => router.push(user?.role === 'ADMIN' ? '/admin-dashboard' : '/branch-manage')}
                   className="w-12 h-12 bg-white/20 rounded-full items-center justify-center border border-white/30 backdrop-blur-sm"
                 >
                   <FontAwesome name="dashboard" size={20} color="#fff" />

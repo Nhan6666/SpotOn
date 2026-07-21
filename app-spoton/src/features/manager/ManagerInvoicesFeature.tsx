@@ -105,7 +105,10 @@ export function ManagerInvoicesFeature() {
       <View className="bg-white pt-4 pb-3 shadow-sm z-10 border-b border-gray-200">
         <View className="px-4 mb-3 flex-row items-center justify-between">
           <View className="flex-row items-center flex-1">
-            <TouchableOpacity onPress={() => router.back()} className="mr-3 w-8 h-8 items-center justify-center">
+            <TouchableOpacity 
+              onPress={() => router.push(user?.role === 'ADMIN' ? '/admin-dashboard' : '/branch-manage')} 
+              className="mr-3 w-8 h-8 items-center justify-center"
+            >
               <FontAwesome name="arrow-left" size={16} color="#374151" />
             </TouchableOpacity>
             <View>

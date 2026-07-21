@@ -68,7 +68,10 @@ export default function StatisticsScreen() {
     <View className="flex-1 bg-background">
       {/* Header */}
       <View className="flex-row items-center px-4 pt-4 pb-4">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4 w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm">
+        <TouchableOpacity 
+          onPress={() => router.push(user?.role === 'ADMIN' ? '/admin-dashboard' : '/branch-manage')} 
+          className="mr-4 w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm"
+        >
           <FontAwesome name="arrow-left" size={16} color="#374151" />
         </TouchableOpacity>
         <Text className="font-lexend font-bold text-2xl text-text flex-1">Thống kê</Text>
@@ -76,8 +79,13 @@ export default function StatisticsScreen() {
 
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
         {/* Doanh thu */}
-        <View className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-5 mb-4 shadow-sm">
-          <Text className="font-lexend text-white/80 text-sm mb-1">Tổng doanh thu (Hoàn thành)</Text>
+        <View className="bg-orange-600 rounded-2xl p-5 mb-5 shadow-md shadow-orange-600/30">
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="font-lexend text-white/90 text-sm">Tổng doanh thu (Hoàn thành)</Text>
+            <View className="w-8 h-8 bg-white/20 rounded-full items-center justify-center">
+              <FontAwesome name="money" size={14} color="#fff" />
+            </View>
+          </View>
           <Text className="font-lexend font-bold text-white text-3xl">
             {stats?.totalRevenue?.toLocaleString('vi-VN')}đ
           </Text>

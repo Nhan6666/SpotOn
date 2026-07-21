@@ -16,6 +16,7 @@ export function BranchManageFeature() {
   const [formData, setFormData] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [initialFormData, setInitialFormData] = useState<any>(null);
+  const [amenitiesList, setAmenitiesList] = useState<any[]>([]);
   const [pickerConfig, setPickerConfig] = useState<{ show: boolean, period: 'lunch' | 'dinner', field: string, value: Date } | null>(null);
 
   const parseTimeString = (timeStr: string) => {
@@ -55,7 +56,15 @@ export function BranchManageFeature() {
 
   const fetchData = useCallback(async () => {
     try {
-      const branchRes = await BranchService.getMyBranch();
+      const [branchRes, amenitiesRes] = await Promise.all([
+        BranchService.getMyBranch(),
+        apiClient.get('/amenities')
+      ]);
+
+      if (amenitiesRes.data?.success) {
+        setAmenitiesList(amenitiesRes.data.data);
+      }
+
       if (branchRes.success && branchRes.data) {
         setBranch(branchRes.data);
         const initialPeriods = branchRes.data.service_periods || {
@@ -65,7 +74,8 @@ export function BranchManageFeature() {
         const initial = {
           ...initialPeriods,
           status: branchRes.data.status || 'OPEN',
-          overload_threshold: branchRes.data.overload_threshold?.toString() || '85'
+          overload_threshold: branchRes.data.overload_threshold?.toString() || '85',
+          amenities: branchRes.data.amenities?.map((a: any) => typeof a === 'object' && a !== null ? a._id.toString() : a.toString()) || [],
         };
         setFormData(initial);
         setInitialFormData(initial);
@@ -94,6 +104,17 @@ export function BranchManageFeature() {
     }));
   };
 
+  const toggleAmenity = (id: string) => {
+    setFormData((prev: any) => {
+      const current = prev.amenities || [];
+      if (current.includes(id)) {
+        return { ...prev, amenities: current.filter((a: string) => a !== id) };
+      } else {
+        return { ...prev, amenities: [...current, id] };
+      }
+    });
+  };
+
   const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
 
   const handleSave = async () => {
@@ -102,7 +123,8 @@ export function BranchManageFeature() {
       const res = await BranchService.updateBranch(branch._id, {
         service_periods: { lunch: formData.lunch, dinner: formData.dinner },
         status: formData.status,
-        overload_threshold: Number(formData.overload_threshold) || 85
+        overload_threshold: Number(formData.overload_threshold) || 85,
+        amenities: formData.amenities
       });
       if (res.success) {
         Alert.alert('Thành công', 'Cập nhật thành công');
@@ -153,17 +175,49 @@ export function BranchManageFeature() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} colors={['#b45309']} />}
     >
       <View className="px-4 pt-6 pb-2">
-        <View className="flex-row justify-between items-center">
+        <View className="flex-row justify-between items-center mb-4">
+          <Text className="font-lexend font-bold text-2xl text-text">Bảng điều khiển</Text>
+          <TouchableOpacity 
+            onPress={() => router.push('/')}
+            className="bg-orange-50 w-10 h-10 rounded-full items-center justify-center border border-orange-100"
+          >
+            <FontAwesome name="home" size={20} color="#ea580c" />
+          </TouchableOpacity>
+        </View>
+
+        <View className="flex-row justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm mb-2">
           <View className="flex-1 pr-4">
-            <Text className="font-lexend font-bold text-2xl text-text">Chi nhánh: {branch?.name || 'SpotOn'}</Text>
-            <Text className="font-lexend text-gray-500 text-xs mt-1">Quản lý thông tin và các giới hạn vận hành của chi nhánh.</Text>
+            <Text className="font-lexend font-bold text-lg text-text">Chi nhánh: {branch?.name || 'SpotOn'}</Text>
+            <Text className="font-lexend text-gray-500 text-xs mt-1">Quản lý thông tin và các giới hạn vận hành.</Text>
           </View>
           <TouchableOpacity 
             onPress={() => router.push('/manager/map-editor')}
-            className="flex-row items-center bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-sm"
+            className="flex-row items-center bg-orange-600 px-3 py-2 rounded-lg shadow-sm"
           >
-            <FontAwesome name="map" size={14} color="#374151" />
-            <Text className="font-lexend font-bold text-xs text-gray-700 ml-2">Sơ đồ bàn</Text>
+            <FontAwesome name="map" size={14} color="#fff" />
+            <Text className="font-lexend font-bold text-xs text-white ml-2">Sửa sơ đồ</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Lối tắt (Quick Links) */}
+        <View className="flex-row flex-wrap justify-between mt-2">
+          <TouchableOpacity 
+            onPress={() => router.push('/statistics')}
+            className="w-[48%] bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex-row items-center mb-2"
+          >
+            <View className="w-8 h-8 bg-blue-50 rounded-full items-center justify-center mr-2">
+              <FontAwesome name="line-chart" size={14} color="#3b82f6" />
+            </View>
+            <Text className="font-lexend font-bold text-xs text-gray-700">Thống kê</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => router.push('/invoices')}
+            className="w-[48%] bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex-row items-center mb-2"
+          >
+            <View className="w-8 h-8 bg-green-50 rounded-full items-center justify-center mr-2">
+              <FontAwesome name="file-text-o" size={14} color="#22c55e" />
+            </View>
+            <Text className="font-lexend font-bold text-xs text-gray-700">Hóa đơn</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -213,17 +267,37 @@ export function BranchManageFeature() {
           </View>
           
           <View>
-            <Text className="font-lexend text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider">Tiện ích chi nhánh</Text>
-            {branch?.amenities && branch.amenities.length > 0 ? (
+            <View className="flex-row items-center justify-between mb-1">
+              <Text className="font-lexend text-[10px] font-bold text-gray-500 uppercase tracking-wider">Tiện ích chi nhánh</Text>
+              <Text className="font-lexend text-[10px] text-gray-400 italic">Nhấn để chọn/bỏ chọn</Text>
+            </View>
+            {amenitiesList && amenitiesList.length > 0 ? (
               <View className="flex-row flex-wrap mt-1">
-                {branch.amenities.map((amenity: any, idx: number) => (
-                  <View key={idx} className="bg-gray-100 rounded px-2 py-1 mr-2 mb-2">
-                    <Text className="font-lexend text-xs text-gray-600">{amenity.name || amenity}</Text>
-                  </View>
-                ))}
+                {amenitiesList.map((amenity: any) => {
+                  const isSelected = formData?.amenities?.includes(amenity._id);
+                  return (
+                    <TouchableOpacity
+                      key={amenity._id}
+                      onPress={() => toggleAmenity(amenity._id)}
+                      className={`rounded-lg px-3 py-1.5 mr-2 mb-2 border ${
+                        isSelected 
+                          ? 'bg-amber-50 border-amber-500' 
+                          : 'bg-gray-50 border-gray-200'
+                      }`}
+                    >
+                      <Text 
+                        className={`font-lexend text-xs ${
+                          isSelected ? 'text-amber-700 font-bold' : 'text-gray-600'
+                        }`}
+                      >
+                        {amenity.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             ) : (
-              <Text className="font-lexend italic text-xs text-gray-400">Không có tiện ích nào</Text>
+              <Text className="font-lexend italic text-xs text-gray-400">Không có tiện ích nào trong hệ thống</Text>
             )}
           </View>
         </View>

@@ -102,7 +102,11 @@ export function KDSFeature() {
   const updateStatus = async (bookingId: string, itemId: string, newStatus: string) => {
     try {
       // Optimistic update
-      setItems(prev => prev.map(i => i._id === itemId ? { ...i, prep_status: newStatus } : i));
+      if (newStatus === 'READY') {
+        setItems(prev => prev.filter(i => i._id !== itemId));
+      } else {
+        setItems(prev => prev.map(i => i._id === itemId ? { ...i, prep_status: newStatus } : i));
+      }
       
       await apiClient.patch(`/orders/${bookingId}/items/${itemId}/status`, {
         status: newStatus,
@@ -117,7 +121,11 @@ export function KDSFeature() {
   const updateGroupStatus = async (groupItems: any[], newStatus: string) => {
     // For grouped items, we update them sequentially or via Promise.all
     try {
-      setItems(prev => prev.map(i => groupItems.some(gi => gi._id === i._id) ? { ...i, prep_status: newStatus } : i));
+      if (newStatus === 'READY') {
+        setItems(prev => prev.filter(i => !groupItems.some(gi => gi._id === i._id)));
+      } else {
+        setItems(prev => prev.map(i => groupItems.some(gi => gi._id === i._id) ? { ...i, prep_status: newStatus } : i));
+      }
       
       await Promise.all(
         groupItems.map(item => 

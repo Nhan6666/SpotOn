@@ -33,9 +33,9 @@
 | `hotline` | String | |
 | `images` | [String] | Mảng link ảnh chi nhánh |
 | `open_time` | String | VD: "09:00" |
-| `close_time` | String | VD: "22:00" |
-| `status` | String | Enum: `OPEN`, `FULL`, `CLOSED` — default: `OPEN` |
-| `overload_threshold` | Number | Ngưỡng báo động % — default: 95 |
+    | `close_time` | String | VD: "22:00" |
+    | `status` | String | Enum: `OPEN`, `FULL`, `CLOSED` — default: `OPEN` |
+    | `overload_threshold` | Number | Ngưỡng báo động % — default: 95 |
 | `zones` | [ZoneSchema] | Embedded array |
 | `created_at` | Date | auto |
 | `updated_at` | Date | auto |

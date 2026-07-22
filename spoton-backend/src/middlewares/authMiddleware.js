@@ -63,4 +63,36 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { protect, authorize };
+// =============================================
+// MIDDLEWARE: Tùy chọn xác thực (Cho phép Khách ẩn danh)
+// =============================================
+const optionalAuth = async (req, res, next) => {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return next(); // Cho qua nếu không có token
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role === 'IPAD') {
+      req.user = {
+        _id: decoded._id,
+        role: 'IPAD',
+        branch_id: decoded.branch_id,
+        table_ids: decoded.table_ids
+      };
+      return next();
+    }
+
+    req.user = await User.findById(decoded.userId || decoded.id).select('-password_hash');
+    next();
+  } catch (error) {
+    next(); // Cho qua dù token sai/hết hạn
+  }
+};
+
+module.exports = { protect, authorize, optionalAuth };

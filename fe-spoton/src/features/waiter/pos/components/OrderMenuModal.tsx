@@ -82,19 +82,18 @@ export function OrderMenuModal({ booking, tableNumber, branchId, onClose, onSubm
   }, [branchId, showError]);
 
   const addToCart = (item: MenuItem) => {
-    // Check available inventory (ignore if -1/unlimited or 0 if somehow not filtered)
     if (item.quantity === 0) {
-      showError("Món này đã hết hàng!");
+      return;
+    }
+
+    const existing = cart.find(i => i._id === item._id);
+    if (existing && item.quantity !== -1 && existing.quantity >= item.quantity) {
       return;
     }
 
     setCart(prev => {
-      const existing = prev.find(i => i._id === item._id);
-      if (existing) {
-        if (item.quantity !== -1 && existing.quantity >= item.quantity) {
-          showError(`Chỉ còn ${item.quantity} phần cho món này!`);
-          return prev;
-        }
+      const existingInPrev = prev.find(i => i._id === item._id);
+      if (existingInPrev) {
         return prev.map(i => i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i);
       }
       return [...prev, { ...item, quantity: 1 }];
@@ -103,14 +102,18 @@ export function OrderMenuModal({ booking, tableNumber, branchId, onClose, onSubm
 
   const updateQuantity = (itemId: string, delta: number) => {
     const menuItem = menuItems.find(i => i._id === itemId);
+    const cartItem = cart.find(i => i._id === itemId);
+    
+    if (cartItem) {
+      const newQ = cartItem.quantity + delta;
+      if (delta > 0 && menuItem && menuItem.quantity !== -1 && newQ > menuItem.quantity) {
+        return;
+      }
+    }
 
     setCart(prev => prev.map(i => {
       if (i._id === itemId) {
         const newQ = i.quantity + delta;
-        if (delta > 0 && menuItem && menuItem.quantity !== -1 && newQ > menuItem.quantity) {
-          showError(`Chỉ còn ${menuItem.quantity} phần cho món này!`);
-          return i;
-        }
         return newQ > 0 ? { ...i, quantity: newQ } : i;
       }
       return i;
@@ -179,7 +182,9 @@ export function OrderMenuModal({ booking, tableNumber, branchId, onClose, onSubm
             <div className="text-center py-20 text-gray-500">Đang tải Menu...</div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {menuItems.filter(i => i.category === activeCategory).map(item => (
+              {menuItems.filter(i => i.category === activeCategory).map(item => {
+                const inCart = cart.find(c => c._id === item._id)?.quantity || 0;
+                return (
                 <div key={item._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
                   <div className="h-32 bg-gray-200 w-full relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -189,7 +194,7 @@ export function OrderMenuModal({ booking, tableNumber, branchId, onClose, onSubm
                     <p className="font-bold text-sm text-gray-900 line-clamp-2 flex-1">{item.name}</p>
                     {item.quantity !== -1 && (
                       <span className={`text-xs font-medium mt-1 ${item.quantity === 0 ? 'text-red-500' : 'text-amber-600'}`}>
-                        {item.quantity === 0 ? 'Hết hàng' : `Kho: ${item.quantity}`}
+                        {item.quantity === 0 ? 'Hết hàng' : `Kho: ${Math.max(0, item.quantity - inCart)}`}
                       </span>
                     )}
                     <div className="flex justify-between items-center mt-2">
@@ -200,7 +205,8 @@ export function OrderMenuModal({ booking, tableNumber, branchId, onClose, onSubm
                       ) : (
                         <button 
                           onClick={() => addToCart(item)}
-                          className="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white p-1.5 rounded-lg transition-colors shadow-sm"
+                          disabled={item.quantity !== -1 && inCart >= item.quantity}
+                          className="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white p-1.5 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:hover:bg-blue-50 disabled:hover:text-blue-600 disabled:cursor-not-allowed"
                         >
                           <Plus className="w-4 h-4" />
                         </button>
@@ -208,7 +214,7 @@ export function OrderMenuModal({ booking, tableNumber, branchId, onClose, onSubm
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           )}
         </div>
@@ -250,7 +256,11 @@ export function OrderMenuModal({ booking, tableNumber, branchId, onClose, onSubm
                             <Minus className="w-4 h-4" />
                           </button>
                           <span className="font-bold text-sm w-4 text-center">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item._id, 1)} className="text-gray-500 hover:text-blue-600">
+                          <button 
+                            onClick={() => updateQuantity(item._id, 1)} 
+                            disabled={menuItems.find(i => i._id === item._id)?.quantity !== -1 && item.quantity >= (menuItems.find(i => i._id === item._id)?.quantity || 0)}
+                            className="text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-gray-500"
+                          >
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>

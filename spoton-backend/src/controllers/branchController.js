@@ -4,6 +4,7 @@
 // ============================================================
 const Branch = require('../models/Branch');
 const User = require('../models/User');
+const SystemConfig = require('../models/SystemConfig');
 
 // @desc   Lấy tất cả chi nhánh
 // @route  GET /api/v1/branches
@@ -46,12 +47,68 @@ const getBranchById = async (req, res) => {
   }
 };
 
+// @desc   Lấy chi nhánh của người dùng hiện tại (cho Manager/Admin)
+// @route  GET /api/v1/branches/my/branch
+// @access Private
+const getMyBranch = async (req, res) => {
+  try {
+    let branchId = req.user.branch_id;
+    
+    // Nếu là ADMIN mà không có branch_id, lấy chi nhánh đầu tiên làm mặc định để quản lý
+    if (req.user.role === 'ADMIN' && !branchId) {
+      const firstBranch = await Branch.findOne();
+      if (firstBranch) {
+        branchId = firstBranch._id;
+      }
+    }
+
+    if (!branchId) {
+      return res.status(404).json({ success: false, message: 'Bạn chưa được phân công chi nhánh nào.' });
+    }
+
+    const branch = await Branch.findById(branchId)
+      .populate('manager_id', 'full_name email phone')
+      .populate('amenities');
+      
+    if (!branch) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chi nhánh.' });
+    }
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'Lấy thông tin chi nhánh thành công.',
+      data: branch 
+    });
+  } catch (error) {
+    console.error('Lỗi getMyBranch:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
 // @desc   Tạo chi nhánh mới
 // @route  POST /api/v1/branches
 // @access Private (ADMIN)
 const createBranch = async (req, res) => {
   try {
-    const branch = await Branch.create(req.body);
+    const branchData = { ...req.body };
+
+    // UC-7.3 BR: Configuration Inheritance
+    // Lấy cấu hình mặc định từ SystemConfig nếu có
+    if (!branchData.service_periods) {
+      const config = await SystemConfig.findOne({ config_key: 'DEFAULT_BOOKING_RULES' });
+      if (config && config.config_value) {
+        try {
+          const parsedConfig = JSON.parse(config.config_value);
+          if (parsedConfig.service_periods) {
+            branchData.service_periods = parsedConfig.service_periods;
+          }
+        } catch (e) {
+          console.error("Lỗi parse DEFAULT_BOOKING_RULES", e);
+        }
+      }
+    }
+
+    const branch = await Branch.create(branchData);
 
     // Sync manager
     if (branch.manager_id) {
@@ -140,10 +197,42 @@ const deleteBranch = async (req, res) => {
   }
 };
 
+// @desc   Lấy danh sách các loại sức chứa bàn (capacity) trong hệ thống
+// @route  GET /api/v1/branches/table-capacities
+// @access Public
+const getTableCapacities = async (req, res) => {
+  try {
+    const branches = await Branch.find({}, 'zones.tables.capacity');
+    const capacities = new Set();
+    
+    branches.forEach(branch => {
+      branch.zones?.forEach(zone => {
+        zone.tables?.forEach(table => {
+          if (table.capacity) capacities.add(table.capacity);
+        });
+      });
+    });
+
+    // Chỉ lấy đúng những gì có trong DB
+    const sortedCapacities = Array.from(capacities).sort((a, b) => a - b);
+
+    res.status(200).json({
+      success: true,
+      data: sortedCapacities
+    });
+  } catch (error) {
+    console.error('Lỗi getTableCapacities:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
+
 module.exports = {
   getAllBranches,
   getBranchById,
+  getMyBranch,
   createBranch,
   updateBranch,
-  deleteBranch
+  deleteBranch,
+  getTableCapacities
 };

@@ -8,9 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function AmenitiesPage() {
-  return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
-      <AmenitiesFeature />
-    </div>
-  );
+  return <AmenitiesFeature />;
 }

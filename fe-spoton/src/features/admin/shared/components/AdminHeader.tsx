@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, Bell, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/providers/AuthProvider';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 export function AdminHeader() {
   const { user, logout } = useAuth();
@@ -40,9 +41,9 @@ export function AdminHeader() {
     if (user.role === 'ADMIN') {
       return (
         <>
-          <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 font-medium">Về Trang Chủ</Link>
-          <Link href="/admin/branches" className="block px-4 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold border-y border-amber-100">Vào Trang Quản Trị</Link>
-          <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Hồ sơ cá nhân</Link>
+          <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 font-medium">{ADMIN_TEXTS.layout.header.home}</Link>
+          <Link href="/admin/branches" className="block px-4 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold border-y border-amber-100">{ADMIN_TEXTS.layout.header.adminPortal}</Link>
+          <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{ADMIN_TEXTS.layout.header.profile}</Link>
         </>
       );
     }
@@ -50,9 +51,9 @@ export function AdminHeader() {
     if (user.role === 'MANAGER') {
       return (
         <>
-          <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 font-medium">Về Trang Chủ</Link>
-          <Link href="/manager/branch" className="block px-4 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold border-y border-amber-100">Vào Trang Quản Lý</Link>
-          <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Hồ sơ cá nhân</Link>
+          <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 font-medium">{ADMIN_TEXTS.layout.header.home}</Link>
+          <Link href="/manager/branch" className="block px-4 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold border-y border-amber-100">{ADMIN_TEXTS.layout.header.managerPortal}</Link>
+          <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{ADMIN_TEXTS.layout.header.profile}</Link>
         </>
       );
     }
@@ -66,12 +67,12 @@ export function AdminHeader() {
         <Search className="w-4 h-4 text-gray-400" />
         <input 
           type="text" 
-          placeholder="Search menu items, categories..." 
+          placeholder={ADMIN_TEXTS.layout.header.searchPlaceholder}
           className="outline-none text-sm w-full bg-transparent text-gray-700 placeholder:text-gray-400"
         />
       </div>
       <div className="flex items-center gap-5">
-        <span className="text-sm font-bold text-gray-700">Management Portal</span>
+        <span className="text-sm font-bold text-gray-700">{ADMIN_TEXTS.layout.header.managementPortal}</span>
         <div className="w-px h-5 bg-gray-200 mx-1"></div>
         <button className="text-gray-400 hover:text-gray-600 transition-colors">
           <Bell className="w-5 h-5" strokeWidth={2} />
@@ -98,7 +99,7 @@ export function AdminHeader() {
             <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 overflow-hidden animate-fade-in-down">
               {/* Info Header */}
               <div className="px-4 py-3 border-b border-gray-50 mb-1">
-                <p className="text-sm font-semibold text-gray-800 truncate">{user?.full_name || 'Người dùng'}</p>
+                <p className="text-sm font-semibold text-gray-800 truncate">{user?.full_name || ADMIN_TEXTS.layout.header.defaultUser}</p>
                 <p className="text-xs text-gray-500 truncate">{user?.email}</p>
               </div>
 
@@ -115,7 +116,7 @@ export function AdminHeader() {
                 }}
                 className="w-full text-left px-4 py-2 text-sm cursor-pointer text-red-600 hover:bg-red-50 font-medium transition-colors"
               >
-                Đăng xuất
+                {ADMIN_TEXTS.layout.header.logout}
               </button>
             </div>
           )}

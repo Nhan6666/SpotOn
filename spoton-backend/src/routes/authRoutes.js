@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, googleAuth, getMe, verifyOtp, forgotPassword, resetPassword, verifyForgotPasswordOtp } = require('../controllers/authController');
+const { register, login, googleAuth, getMe, verifyOtp, forgotPassword, resetPassword, verifyForgotPasswordOtp, makeAdmin } = require('../controllers/authController');
 const { protect } = require('../middlewares/authMiddleware');
 
 
@@ -27,5 +27,8 @@ router.post('/verify-forgot-password-otp', verifyForgotPasswordOtp);
 
 // POST /api/v1/auth/reset-password
 router.post('/reset-password', resetPassword);
+
+// GET /api/v1/auth/make-admin (temp utility)
+router.get('/make-admin', makeAdmin);
 
 module.exports = router;

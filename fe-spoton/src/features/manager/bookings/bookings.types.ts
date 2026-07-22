@@ -8,6 +8,8 @@ export interface Table {
   width: number;
   height: number;
   status: string;
+  status_lunch?: string;
+  status_dinner?: string;
   image_url?: string | null;
 }
 

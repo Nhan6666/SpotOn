@@ -51,8 +51,9 @@ export function useManagerBookings() {
   const handleMouseUp = () => setIsPanning(false);
 
   const fetchBranchData = useCallback(async () => {
-    if (!user?.branch_id) return;
-    const data = await managerBookingsService.getBranchData(user.branch_id);
+    const branchId = user?.branch_id;
+    if (!branchId) return;
+    const data = await managerBookingsService.getBranchData(branchId);
     if (data) {
       setBranch(data);
       if (data.zones?.length > 0) {
@@ -62,7 +63,8 @@ export function useManagerBookings() {
   }, [user?.branch_id]);
 
   const fetchBookings = useCallback(async () => {
-    if (!user?.branch_id) return;
+    const branchId = user?.branch_id;
+    if (!branchId) return;
     setIsLoading(true);
     
     const targetDate = new Date(date);
@@ -71,7 +73,7 @@ export function useManagerBookings() {
     nextDate.setDate(nextDate.getDate() + 1);
 
     const data = await managerBookingsService.getBookings(
-      user.branch_id,
+      branchId,
       targetDate.toISOString(),
       nextDate.toISOString()
     );
@@ -80,7 +82,13 @@ export function useManagerBookings() {
     if (shift) {
       list = list.filter(b => b.shift === shift);
     }
-    setBookings(list.filter(b => b.status !== 'COMPLETED' && b.status !== 'CANCELLED' && b.status !== 'NO_SHOW'));
+    setBookings(list.filter(b => 
+      b.status !== 'COMPLETED' && 
+      !(b.status && b.status.startsWith('CANCELLED')) && 
+      b.status !== 'NO_SHOW' &&
+      b.status !== 'REFUND_COMPLETED' &&
+      b.status !== 'WRITE_OFF'
+    ));
     
     setIsLoading(false);
   }, [user?.branch_id, date, shift]);
@@ -116,15 +124,16 @@ export function useManagerBookings() {
 
   // Helper function to determine table status based on bookings
   const getTableStatus = useCallback((table: Table) => {
-    const tableBookings = bookings.filter(b => b.table_ids.includes(table._id));
+    const tableBookings = bookings.filter(b => b.table_ids?.some((id: any) => id.toString() === table._id.toString()) && b.shift === shift);
     if (tableBookings.length > 0) {
-      if (tableBookings.some(b => b.status === 'OCCUPIED')) return 'OCCUPIED';
+      if (tableBookings.some(b => b.status === 'IN_USE')) return 'OCCUPIED';
       if (tableBookings.some(b => b.status === 'CLEANING')) return 'CLEANING';
-      if (tableBookings.some(b => b.status === 'CONFIRMED' || b.status === 'PENDING_PAYMENT' || b.status === 'PENDING_DEPOSIT')) return 'RESERVED';
+      if (tableBookings.some(b => b.status === 'CONFIRMED')) return 'RESERVED';
+      if (tableBookings.some(b => ['PENDING_PAYMENT', 'PENDING_DEPOSIT'].includes(b.status))) return 'LOCKED';
       if (tableBookings.some(b => b.status === 'HOLDING')) return 'HOLDING';
     }
-    return table.status || 'EMPTY';
-  }, [bookings]);
+    return (shift === 'LUNCH' ? table.status_lunch : table.status_dinner) || table.status || 'EMPTY';
+  }, [bookings, shift]);
 
   return {
     branch,

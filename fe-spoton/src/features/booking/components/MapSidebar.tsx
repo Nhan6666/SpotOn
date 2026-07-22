@@ -1,6 +1,7 @@
 import React from 'react';
 import { BadgeCheck, Users, MoveHorizontal } from 'lucide-react';
 import { CapacityFilter } from '../types';
+import { PUBLIC_TEXTS } from '@/constants/texts/public';
 
 interface MapSidebarProps {
   branchId: string;
@@ -12,16 +13,18 @@ interface MapSidebarProps {
 }
 
 export function MapSidebar({ branchId, branchName, branchAddress, selectedCapacity, onCapacitySelect, liveOccupancy }: MapSidebarProps) {
+  const { mapSidebar } = PUBLIC_TEXTS;
+
   const branchInfo = {
-    name: branchName || "SpotOn Chi nhánh",
-    address: branchAddress || "Đang tải địa chỉ..."
+    name: branchName || mapSidebar.defaultName,
+    address: branchAddress || mapSidebar.loadingAddress
   };
 
   const capacityOptions: { value: any; label: string; details: string }[] = [
-    { value: 2, label: "2 NGƯỜI", details: "60×60 cm / 70×70 cm" },
-    { value: 4, label: "4 NGƯỜI", details: "120×80 cm / 110×110 cm" },
-    { value: 6, label: "6 NGƯỜI", details: "160×80 cm / 140×140 cm" },
-    { value: 8, label: "8 NGƯỜI", details: "200×100 cm / Ø 160 cm" }
+    { value: 2, label: mapSidebar.capacities[2].label, details: mapSidebar.capacities[2].details },
+    { value: 4, label: mapSidebar.capacities[4].label, details: mapSidebar.capacities[4].details },
+    { value: 6, label: mapSidebar.capacities[6].label, details: mapSidebar.capacities[6].details },
+    { value: 8, label: mapSidebar.capacities[8].label, details: mapSidebar.capacities[8].details }
   ];
 
   return (
@@ -35,13 +38,13 @@ export function MapSidebar({ branchId, branchName, branchAddress, selectedCapaci
         <p className="text-sm text-gray-500 mb-4">{branchInfo.address}</p>
         <div className="flex items-center gap-1.5 text-blue-600 text-sm font-medium">
           <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-          Now Serving
+          {mapSidebar.serving}
         </div>
       </div>
 
       {/* Filter Card */}
       <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4">
-        <h3 className="font-bold text-gray-800 text-sm tracking-wide">CHỌN THEO SỐ LƯỢNG KHÁCH</h3>
+        <h3 className="font-bold text-gray-800 text-sm tracking-wide">{mapSidebar.filterTitle}</h3>
         
         <div className="flex flex-col gap-3">
           {capacityOptions.map(option => (
@@ -71,19 +74,19 @@ export function MapSidebar({ branchId, branchName, branchAddress, selectedCapaci
         </div>
 
         <div className="mt-4 pt-4 border-t border-gray-100">
-          <h3 className="font-bold text-gray-800 text-sm tracking-wide mb-3">QUY TẮC KHOẢNG CÁCH</h3>
+          <h3 className="font-bold text-gray-800 text-sm tracking-wide mb-3">{mapSidebar.distanceTitle}</h3>
           <ul className="text-xs text-gray-600 space-y-2">
             <li className="flex items-center gap-2">
               <MoveHorizontal className="w-3 h-3 text-gray-400" />
-              Lối đi chính: 120 - 150 cm
+              {mapSidebar.mainAisle}
             </li>
             <li className="flex items-center gap-2">
               <MoveHorizontal className="w-3 h-3 text-gray-400" />
-              Lối đi phụ: 90 - 110 cm
+              {mapSidebar.subAisle}
             </li>
             <li className="flex items-center gap-2">
               <MoveHorizontal className="w-3 h-3 text-gray-400" />
-              Tường / Vật cản: ≥ 60 cm
+              {mapSidebar.wallDistance}
             </li>
           </ul>
         </div>
@@ -92,7 +95,7 @@ export function MapSidebar({ branchId, branchName, branchAddress, selectedCapaci
       {/* Live Occupancy */}
       <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-bold text-gray-800 text-sm tracking-wide">LIVE OCCUPANCY</h3>
+          <h3 className="font-bold text-gray-800 text-sm tracking-wide">{mapSidebar.occupancyTitle}</h3>
           <span className="font-bold text-gray-900">{liveOccupancy}%</span>
         </div>
         <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
@@ -101,7 +104,7 @@ export function MapSidebar({ branchId, branchName, branchAddress, selectedCapaci
             style={{ width: `${liveOccupancy}%` }}
           ></div>
         </div>
-        <div className="text-xs text-gray-400 italic">Refreshed just now</div>
+        <div className="text-xs text-gray-400 italic">{mapSidebar.refreshedNow}</div>
       </div>
     </div>
   );

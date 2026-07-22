@@ -17,8 +17,33 @@ export function useVoucherForm(
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [, setTick] = useState(0);
+    const [tableCapacities, setTableCapacities] = useState<number[]>([]);
+    const [branches, setBranches] = useState<{_id: string, name: string}[]>([]);
 
     useEffect(() => {
+        const fetchCapacities = async () => {
+            try {
+                const { http } = await import('@/lib/http');
+                const res = await http.get<{success: boolean, data: number[]}>('/branches/table-capacities');
+                if (res.success && res.data) {
+                    setTableCapacities(res.data);
+                }
+            } catch (err) {}
+        };
+        const fetchBranches = async () => {
+            try {
+                const { http } = await import('@/lib/http');
+                const res = await http.get<{success: boolean, data: any[]}>('/branches?limit=100');
+                if (res.success && res.data) {
+                    // Extract _id and name from the paginated response or direct array
+                    const branchList = Array.isArray(res.data) ? res.data : (res.data as any).branches || [];
+                    setBranches(branchList.map((b: any) => ({ _id: b._id, name: b.name })));
+                }
+            } catch (err) {}
+        };
+        fetchCapacities();
+        fetchBranches();
+
         const timer = setInterval(() => setTick(t => t + 1), 10000);
         return () => clearInterval(timer);
     }, []);
@@ -29,16 +54,18 @@ export function useVoucherForm(
             const endLocal = initialData.valid_until ? formatDatetimeLocal(initialData.valid_until) : '';
             setData({
                 code: initialData.code,
-                branch_id: initialData.branch_id || '',
+                branch_id: initialData.branch_id ? (typeof initialData.branch_id === 'object' ? initialData.branch_id._id : initialData.branch_id) : '',
                 discount_percentage: String(initialData.discount_percentage),
                 max_discount_amount: initialData.max_discount_amount ? String(initialData.max_discount_amount) : '',
                 min_order_value: String(initialData.min_order_value),
+                min_guest_count: initialData.min_guest_count ? String(initialData.min_guest_count) : '',
                 usage_limit: initialData.usage_limit ? String(initialData.usage_limit) : '',
                 startDate: startLocal ? startLocal.split('T')[0] : '',
                 startTime: startLocal ? startLocal.split('T')[1] : '00:00',
                 endDate: endLocal ? endLocal.split('T')[0] : '',
                 endTime: endLocal ? endLocal.split('T')[1] : '23:59',
                 is_active: initialData.is_active,
+                is_public: initialData.is_public ?? true,
             });
         }
     }, [initialData]);
@@ -103,6 +130,8 @@ export function useVoucherForm(
         handleSubmitClick,
         isRunning,
         isScheduled,
-        nowLocalStr
+        nowLocalStr,
+        tableCapacities,
+        branches
     };
 }

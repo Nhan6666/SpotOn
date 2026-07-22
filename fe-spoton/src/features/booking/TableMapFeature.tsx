@@ -9,6 +9,7 @@ import { fetchBranchMapData } from "./booking.service";
 import type { EditorZone } from "../admin/map-editor/map-editor.types";
 import type { TableData } from "./components/TableShape";
 import { Lock } from "lucide-react";
+import { PUBLIC_TEXTS } from '@/constants/texts/public';
 
 interface TableMapFeatureProps {
   branchId: string;
@@ -101,7 +102,7 @@ export function TableMapFeature({ branchId }: TableMapFeatureProps) {
                 >
                   {zone.name}
                   {zone.status === 'CLOSED' && (
-                    <span className="px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 text-[10px] uppercase">Đóng</span>
+                    <span className="px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 text-[10px] uppercase">{PUBLIC_TEXTS.branchDetail.map.zoneClosed}</span>
                   )}
                 </button>
               ))}
@@ -114,9 +115,9 @@ export function TableMapFeature({ branchId }: TableMapFeatureProps) {
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 border border-gray-200 shadow-sm">
                   <Lock className="w-8 h-8 text-red-500" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Quán đang đóng cửa</h3>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">{PUBLIC_TEXTS.branchDetail.map.branchClosed.title}</h3>
                 <p className="text-gray-500 max-w-md">
-                  Rất xin lỗi, chi nhánh <strong>{branchName}</strong> hiện đang tạm dừng nhận khách. Quý khách vui lòng quay lại sau hoặc chọn chi nhánh khác!
+                  {PUBLIC_TEXTS.branchDetail.map.branchClosed.desc.replace('{branchName}', branchName)}
                 </p>
               </div>
             ) : selectedZone?.status === 'CLOSED' ? (
@@ -124,9 +125,9 @@ export function TableMapFeature({ branchId }: TableMapFeatureProps) {
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 border border-gray-200 shadow-sm">
                   <Lock className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Khu vực đang tạm đóng</h3>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">{PUBLIC_TEXTS.branchDetail.map.zoneClosedDetail.title}</h3>
                 <p className="text-gray-500 max-w-md">
-                  Khu vực này hiện đang tạm thời đóng cửa (do thời tiết hoặc đang bảo trì). Vui lòng chọn một khu vực khác để tiếp tục đặt bàn.
+                  {PUBLIC_TEXTS.branchDetail.map.zoneClosedDetail.desc}
                 </p>
               </div>
             ) : (

@@ -3,11 +3,15 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 import logoImg from '@/assets/images/Logo-SpotOn-2.png';
+import { COMMON_TEXTS } from '@/constants/texts/common';
 
 export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
+  const pathname = usePathname();
+  const { navbar } = COMMON_TEXTS;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -30,34 +34,33 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
       case 'CUSTOMER':
         return (
           <>
-            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Hồ sơ cá nhân</Link>
-            <Link href="/my-bookings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Lịch sử đặt bàn</Link>
-            <Link href="/support" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Yêu cầu hỗ trợ</Link>
+            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.customer.profile}</Link>
+            <Link href="/my-bookings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.customer.history}</Link>
+            <Link href="/support" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.customer.support}</Link>
           </>
         );
       case 'WAITER':
         return (
           <>
-            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Hồ sơ cá nhân</Link>
-            <Link href="/waiter/tables" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Quản lý bàn trực tiếp</Link>
-            <Link href="/waiter/bookings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Danh sách đặt chỗ hôm nay</Link>
-            <Link href="/waiter/dispatch" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Điều phối</Link>
+            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.waiter.profile}</Link>
+            <Link href="/waiter/pos" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.waiter.tables}</Link>
+            <Link href="/waiter/runner" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.waiter.dispatch}</Link>
           </>
         );
       case 'MANAGER':
         return (
           <>
-            <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 font-medium">Về Trang Chủ</Link>
-            <Link href="/manager/branch" className="block px-4 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold border-y border-amber-100">Vào Trang Quản Lý</Link>
-            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Hồ sơ cá nhân</Link>
+            <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 font-medium">{navbar.roleMenu.manager.home}</Link>
+            <Link href="/manager/branch" className="block px-4 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold border-y border-amber-100">{navbar.roleMenu.manager.dashboard}</Link>
+            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.manager.profile}</Link>
           </>
         );
       case 'ADMIN':
         return (
           <>
-            <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 font-medium">Về Trang Chủ</Link>
-            <Link href="/admin/branches" className="block px-4 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold border-y border-amber-100">Vào Trang Quản Trị</Link>
-            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">Hồ sơ cá nhân</Link>
+            <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 font-medium">{navbar.roleMenu.admin.home}</Link>
+            <Link href="/admin/branches" className="block px-4 py-2 text-sm text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold border-y border-amber-100">{navbar.roleMenu.admin.dashboard}</Link>
+            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600">{navbar.roleMenu.admin.profile}</Link>
           </>
         );
       default:
@@ -79,33 +82,30 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
     : `https://ui-avatars.com/api/?name=${getInitials(user?.full_name)}&background=f59e0b&color=fff&length=1`;
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-100 shadow-sm transition-all duration-300">
+    <header className="sticky top-0 z-50 w-full bg-[#164626] border-b border-[#2A5A3A] shadow-sm transition-all duration-300">
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
 
         {/* === Logo === */}
         <Link href="/" className="flex items-center">
-          <Image
-            src={logoImg}
-            alt="SpotOn Logo"
-            className="h-16 w-auto object-contain"
-            priority
-          />
+          <span className="text-4xl font-stencil tracking-wider uppercase text-white drop-shadow-md">
+            SPOT<span className="text-[#F2B02A]">ON</span>
+          </span>
         </Link>
 
         {/* === Center Nav === */}
         {!isAdmin && (
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-sm font-medium text-amber-500 border-b-2 border-amber-500 pb-1">
-              Trang chủ
+            <Link href="/" className={`text-sm font-bold uppercase tracking-wider transition-colors pb-1 border-b-2 ${pathname === '/' ? 'text-[#F2B02A] border-[#F2B02A]' : 'text-gray-300 border-transparent hover:border-[#F2B02A] hover:text-[#F2B02A]'}`}>
+              {navbar.home}
             </Link>
-            <Link href="/branches" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
-              Chi nhánh
+            <Link href="/branches" className={`text-sm font-bold uppercase tracking-wider transition-colors pb-1 border-b-2 ${pathname?.startsWith('/branches') ? 'text-[#F2B02A] border-[#F2B02A]' : 'text-gray-300 border-transparent hover:border-[#F2B02A] hover:text-[#F2B02A]'}`}>
+              {navbar.branches}
             </Link>
-            <Link href="/menus" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
-              Thực đơn
+            <Link href="/menu" className={`text-sm font-bold uppercase tracking-wider transition-colors pb-1 border-b-2 ${pathname?.startsWith('/menu') ? 'text-[#F2B02A] border-[#F2B02A]' : 'text-gray-300 border-transparent hover:border-[#F2B02A] hover:text-[#F2B02A]'}`}>
+              {navbar.menus}
             </Link>
-            <Link href="/promotions" className="text-sm font-medium text-gray-600 hover:text-amber-500 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-500">
-              Khuyến mãi
+            <Link href="/promotions" className={`text-sm font-bold uppercase tracking-wider transition-colors pb-1 border-b-2 ${pathname?.startsWith('/promotions') ? 'text-[#F2B02A] border-[#F2B02A]' : 'text-gray-300 border-transparent hover:border-[#F2B02A] hover:text-[#F2B02A]'}`}>
+              {navbar.promotions}
             </Link>
           </nav>
         )}
@@ -113,13 +113,7 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
         {/* === Right Actions === */}
         <div className="flex items-center gap-4 sm:gap-6">
 
-          {/* Thanh tìm kiếm */}
-          {!isAdmin && (
-            <div className="hidden lg:flex items-center bg-gray-50 rounded-full px-4 py-2 border border-gray-100">
-              <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-              <input type="text" placeholder="Tìm kiếm..." className="bg-transparent border-none outline-none text-sm w-32" />
-            </div>
-          )}
+
 
 
           {/* Logic Phân Quyền: Nếu đã đăng nhập thì hiện Avatar Menu, chưa thì hiện Nút Đăng Nhập */}
@@ -159,14 +153,14 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                     }}
                     className="w-full text-left px-4 py-2 text-sm cursor-pointer text-red-600 hover:bg-red-50 font-medium transition-colors"
                   >
-                    Đăng xuất
+                    {navbar.logout}
                   </button>
                 </div>
               )}
             </div>
           ) : (
-            <Link href="/login" className="flex items-center justify-center px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-full transition-colors shadow-sm whitespace-nowrap">
-              Đăng nhập
+            <Link href="/login" className="flex items-center justify-center px-6 py-2.5 bg-transparent border-2 border-[#F2B02A] hover:bg-[#F2B02A] hover:text-[#164626] text-[#F2B02A] text-sm font-bold uppercase tracking-wider rounded-full transition-colors shadow-sm whitespace-nowrap">
+              ĐẶT BÀN
             </Link>
           )}
 

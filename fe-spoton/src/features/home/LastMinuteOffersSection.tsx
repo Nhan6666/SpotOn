@@ -66,10 +66,12 @@ function OfferCard({ offer, index }: { offer: LastMinuteOffer; index: number }) 
             </div>
             <span className="text-[10px]" style={{ color: '#6b5d4a' }}>({offer.reviewCount})</span>
           </div>
-          <button className="mt-1 w-full py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105"
-            style={{ background: 'linear-gradient(135deg, #c8891a 0%, #f0b843 100%)', color: '#fff' }}>
-            Book Now
-          </button>
+          <Link href="/branches" className="mt-1 w-full block">
+            <button className="w-full py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #c8891a 0%, #f0b843 100%)', color: '#fff' }}>
+              Đặt ngay
+            </button>
+          </Link>
         </div>
       </div>
     </AOS>
@@ -88,22 +90,22 @@ export function LastMinuteOffersSection() {
               style={{ background: 'linear-gradient(160deg, #c8891a 0%, #a06a10 100%)' }}>
               <div>
                 <div className="inline-block text-[10px] font-bold px-3 py-1 rounded-full mb-3" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}>
-                  LAST MINUTE
+                  ƯU ĐÃI CHÓT GIỜ
                 </div>
-                <p className="text-xl font-bold text-white leading-tight mb-2">LAST MINUTE<br />OFFERS</p>
+                <p className="text-xl font-bold text-white leading-tight mb-2">ƯU ĐÃI<br />CHÓT GIỜ</p>
                 <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                  Book today and enjoy special discounts at select branches tonight.
+                  Đặt bàn ngay hôm nay để nhận giảm giá đặc biệt tại các chi nhánh được chọn trong tối nay.
                 </p>
               </div>
               <div className="mt-6">
                 <div className="flex items-center gap-2 rounded-xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.9)' }}>
-                  <CountdownBlock value={time.h} label="Hrs" />
+                  <CountdownBlock value={time.h} label="Giờ" />
                   <span className="font-bold text-lg" style={{ color: '#c8891a' }}>:</span>
-                  <CountdownBlock value={time.m} label="Min" />
+                  <CountdownBlock value={time.m} label="Phút" />
                   <span className="font-bold text-lg" style={{ color: '#c8891a' }}>:</span>
-                  <CountdownBlock value={time.s} label="Sec" />
+                  <CountdownBlock value={time.s} label="Giây" />
                 </div>
-                <p className="text-center text-xs mt-2 font-bold text-white">UP TO 30% OFF</p>
+                <p className="text-center text-xs mt-2 font-bold text-white">GIẢM ĐẾN 30%</p>
               </div>
             </div>
           </AOS>

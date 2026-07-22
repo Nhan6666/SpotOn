@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { X, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ADMIN_TEXTS } from "@/constants/texts/admin";
 
 interface ZoneFormModalProps {
   isOpen: boolean;
@@ -49,14 +50,14 @@ export function ZoneFormModal({ isOpen, onClose, onSubmit, initialData, mode }: 
         <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-5">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-white">
-              {mode === "create" ? "Thêm Khu Vực Mới" : "Chỉnh Sửa Khu Vực"}
+              {mode === "create" ? ADMIN_TEXTS.mapEditor.modalZoneTitleCreate : ADMIN_TEXTS.mapEditor.modalZoneTitleEdit}
             </h2>
             <button type="button" aria-label="Đóng" onClick={onClose} className="text-white/70 hover:text-white transition-colors rounded-full p-1 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none">
               <X className="w-5 h-5" />
             </button>
           </div>
           <p className="text-amber-100 text-sm mt-1">
-            {mode === "create" ? "Tạo một khu vực mới trong chi nhánh" : "Cập nhật thông tin khu vực"}
+            {mode === "create" ? ADMIN_TEXTS.mapEditor.modalZoneSubtitleCreate : ADMIN_TEXTS.mapEditor.modalZoneSubtitleEdit}
           </p>
         </div>
 
@@ -64,12 +65,12 @@ export function ZoneFormModal({ isOpen, onClose, onSubmit, initialData, mode }: 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-              Tên khu vực <span className="text-red-500">*</span>
+              {ADMIN_TEXTS.mapEditor.modalZoneName} <span className="text-red-500">*</span>
             </label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder='VD: "Tầng 1", "Sân vườn", "VIP"'
+              placeholder={ADMIN_TEXTS.mapEditor.modalZoneNamePlaceholder}
               required
               autoFocus
             />
@@ -77,16 +78,16 @@ export function ZoneFormModal({ isOpen, onClose, onSubmit, initialData, mode }: 
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-              Sức chứa tối đa (người)
+              {ADMIN_TEXTS.mapEditor.modalZoneCapacity}
             </label>
             <Input
               type="number"
               value={capacity}
               onChange={(e) => setCapacity(Number(e.target.value))}
               min={0}
-              placeholder="VD: 50"
+              placeholder={ADMIN_TEXTS.mapEditor.modalZoneCapacityPlaceholder}
             />
-            <p className="text-xs text-gray-400 mt-1">Để 0 nếu không giới hạn</p>
+            <p className="text-xs text-gray-400 mt-1">{ADMIN_TEXTS.mapEditor.modalZoneCapacityHint}</p>
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -97,7 +98,7 @@ export function ZoneFormModal({ isOpen, onClose, onSubmit, initialData, mode }: 
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Hủy
+              {ADMIN_TEXTS.mapEditor.modalZoneBtnCancel}
             </Button>
             <Button
               type="submit"
@@ -106,7 +107,7 @@ export function ZoneFormModal({ isOpen, onClose, onSubmit, initialData, mode }: 
               disabled={isSubmitting || !name.trim()}
             >
               {isSubmitting && <RefreshCcw className="w-4 h-4 mr-1.5 animate-spin" />}
-              {isSubmitting ? "Đang lưu..." : mode === "create" ? "Thêm Khu Vực" : "Lưu Thay Đổi"}
+              {isSubmitting ? ADMIN_TEXTS.mapEditor.modalZoneBtnSaving : mode === "create" ? ADMIN_TEXTS.mapEditor.modalZoneBtnCreate : ADMIN_TEXTS.mapEditor.modalZoneBtnSave}
             </Button>
           </div>
         </form>

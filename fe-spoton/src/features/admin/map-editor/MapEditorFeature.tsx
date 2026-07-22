@@ -30,6 +30,7 @@ import {
 import { fetchMapTemplates } from "../map-templates/map-template.service";
 
 import type { EditorZone, EditorTable, TableStatus } from "./map-editor.types";
+import { ADMIN_TEXTS } from "@/constants/texts/admin";
 
 interface MapEditorFeatureProps {
   branchId: string;
@@ -110,7 +111,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
         });
       }
     } catch (err) {
-      showError("Không thể tải dữ liệu sơ đồ bàn.");
+      showError(ADMIN_TEXTS.mapEditor.errorLoad);
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -127,7 +128,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
   const handleCreateZone = async (data: { name: string; capacity: number }) => {
     const res = await createZone(branchId, data);
     if (res.success) {
-      success(`Thêm khu vực "${data.name}" thành công!`);
+      success(`${ADMIN_TEXTS.mapEditor.successCreateZone} "${data.name}" thành công!`);
       await loadZones();
       setSelectedZoneId(res.data._id);
     }
@@ -137,7 +138,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
     if (!zoneModal.zoneId) return;
     const res = await updateZoneApi(branchId, zoneModal.zoneId, data);
     if (res.success) {
-      success("Cập nhật khu vực thành công!");
+      success(ADMIN_TEXTS.mapEditor.successUpdateZone);
       await loadZones();
     }
   };
@@ -145,7 +146,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
   const handleDeleteZone = async () => {
     const res = await deleteZoneApi(branchId, deleteModal.id);
     if (res.success) {
-      success(`Xóa khu vực "${deleteModal.name}" thành công!`);
+      success(`${ADMIN_TEXTS.mapEditor.successDeleteZone} "${deleteModal.name}" thành công!`);
       if (selectedZoneId === deleteModal.id) {
         setSelectedZoneId(null);
       }
@@ -160,7 +161,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
     if (!selectedZoneId) return;
     const res = await createTable(branchId, selectedZoneId, data);
     if (res.success) {
-      success(`Thêm bàn "${data.table_number}" thành công!`);
+      success(`${ADMIN_TEXTS.mapEditor.successCreateTable} "${data.table_number}" thành công!`);
       await loadZones();
     }
   };
@@ -169,7 +170,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
     if (!selectedZoneId || !tableModal.tableId) return;
     const res = await updateTableApi(branchId, selectedZoneId, tableModal.tableId, data);
     if (res.success) {
-      success("Cập nhật bàn thành công!");
+      success(ADMIN_TEXTS.mapEditor.successUpdateTable);
       await loadZones();
     }
   };
@@ -187,7 +188,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
 
     const res = await deleteTableApi(branchId, deleteModal.parentId, deleteModal.id);
     if (res.success) {
-      success(`Xóa bàn "${deleteModal.name}" thành công!`);
+      success(`${ADMIN_TEXTS.mapEditor.successDeleteTable} "${deleteModal.name}" thành công!`);
       await loadZones();
     }
   };
@@ -196,14 +197,14 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
     if (!selectedZoneId) return;
     const res = await bulkUpdateTablesLayout(branchId, selectedZoneId, tablesLayout);
     if (res.success) {
-      success("Lưu sơ đồ bàn thành công!");
+      success(ADMIN_TEXTS.mapEditor.successSaveLayout);
       await loadZones();
     }
   };
 
   const handleOpenImportModal = async () => {
     if (!selectedZoneId) {
-      showError("Vui lòng chọn một khu vực trước khi nhập từ mẫu.");
+      showError(ADMIN_TEXTS.mapEditor.errorSelectZoneFirst);
       return;
     }
     try {
@@ -213,7 +214,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
         setImportModal(true);
       }
     } catch (err) {
-      showError("Không thể tải danh sách mẫu.");
+      showError(ADMIN_TEXTS.mapEditor.errorLoadTemplates);
     }
   };
 
@@ -222,13 +223,13 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
     try {
       const res = await applyTemplateApi(branchId, selectedZoneId, templateId);
       if (res.success) {
-        success("Đã áp dụng sơ đồ mẫu thành công!");
+        success(ADMIN_TEXTS.mapEditor.successApplyTemplate);
         setImportConfirm({ open: false, templateId: "" });
         setImportModal(false);
         await loadZones();
       }
     } catch (err) {
-      showError("Lỗi khi áp dụng sơ đồ mẫu.");
+      showError(ADMIN_TEXTS.mapEditor.errorApplyTemplate);
     }
   };
 
@@ -262,10 +263,10 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Sơ Đồ Bàn
+              {ADMIN_TEXTS.mapEditor.title}
             </h1>
             <p className="text-sm text-gray-500">
-              {branchName || "Đang tải..."}
+              {branchName || ADMIN_TEXTS.mapEditor.loading}
             </p>
           </div>
         </div>
@@ -277,9 +278,9 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
             onClick={() => setShowLeftSidebar(!showLeftSidebar)}
           >
             {showLeftSidebar ? (
-              <><PanelLeftClose className="w-4 h-4 mr-1.5" /> Ẩn cột khu vực</>
+              <><PanelLeftClose className="w-4 h-4 mr-1.5" /> {ADMIN_TEXTS.mapEditor.btnHideSidebar}</>
             ) : (
-              <><PanelLeft className="w-4 h-4 mr-1.5" /> Hiện cột khu vực</>
+              <><PanelLeft className="w-4 h-4 mr-1.5" /> {ADMIN_TEXTS.mapEditor.btnShowSidebar}</>
             )}
           </Button>
           <Button
@@ -288,7 +289,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
             className="bg-white shadow-sm hover:bg-gray-50"
             onClick={handleOpenImportModal}
           >
-            <Download className="w-4 h-4 mr-1.5" /> Nhập từ Mẫu
+            <Download className="w-4 h-4 mr-1.5" /> {ADMIN_TEXTS.mapEditor.btnImportTemplate}
           </Button>
           <Button
             variant="outline"
@@ -298,7 +299,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
             disabled={isLoading}
           >
             <RefreshCcw className={`w-4 h-4 mr-1.5 ${isLoading ? "animate-spin" : ""}`} />
-            Làm mới
+            {ADMIN_TEXTS.mapEditor.btnRefresh}
           </Button>
         </div>
       </div>
@@ -409,11 +410,11 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
         isOpen={deleteModal.open}
         onClose={() => setDeleteModal({ open: false, type: "zone", id: "", name: "" })}
         onConfirm={deleteModal.type === "zone" ? handleDeleteZone : handleDeleteTable}
-        title={deleteModal.type === "zone" ? "Xóa khu vực?" : "Xóa bàn?"}
+        title={deleteModal.type === "zone" ? ADMIN_TEXTS.mapEditor.deleteZoneTitle : ADMIN_TEXTS.mapEditor.deleteTableTitle}
         description={
           deleteModal.type === "zone"
-            ? "Tất cả bàn trong khu vực này cũng sẽ bị xóa. Hành động này không thể hoàn tác."
-            : "Bàn sẽ bị xóa khỏi khu vực. Hành động này không thể hoàn tác."
+            ? ADMIN_TEXTS.mapEditor.deleteZoneDesc
+            : ADMIN_TEXTS.mapEditor.deleteTableDesc
         }
         itemName={deleteModal.name}
       />
@@ -424,8 +425,8 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]">
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-gray-900">Nhập từ Sơ đồ mẫu</h3>
-                <p className="text-xs text-red-500 mt-1">Lưu ý: Bàn trong khu vực đang chọn sẽ bị ghi đè hoàn toàn.</p>
+                <h3 className="font-bold text-gray-900">{ADMIN_TEXTS.mapEditor.importModalTitle}</h3>
+                <p className="text-xs text-red-500 mt-1">{ADMIN_TEXTS.mapEditor.importModalWarning}</p>
               </div>
               <button onClick={() => setImportModal(false)} className="text-gray-400 hover:text-gray-600">
                 <PanelLeftClose className="w-5 h-5" />
@@ -433,7 +434,7 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
             </div>
             <div className="p-5 overflow-y-auto">
               {availableTemplates.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">Chưa có Sơ đồ mẫu nào trong hệ thống.</p>
+                <p className="text-sm text-gray-500 text-center py-4">{ADMIN_TEXTS.mapEditor.importModalEmpty}</p>
               ) : (
                 <div className="space-y-3">
                   {availableTemplates.map(tpl => (
@@ -442,14 +443,14 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
                         <p className="font-semibold text-gray-900 text-sm">{tpl.name}</p>
                         <p className="text-xs text-gray-500 line-clamp-1">{tpl.description}</p>
                       </div>
-                      <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">Chọn</Button>
+                      <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">{ADMIN_TEXTS.mapEditor.importModalBtnSelect}</Button>
                     </div>
                   ))}
                 </div>
               )}
             </div>
             <div className="p-4 border-t border-gray-100 flex justify-end">
-              <Button variant="outline" onClick={() => setImportModal(false)}>Hủy</Button>
+              <Button variant="outline" onClick={() => setImportModal(false)}>{ADMIN_TEXTS.mapEditor.importModalBtnCancel}</Button>
             </div>
           </div>
         </div>
@@ -462,13 +463,13 @@ export function MapEditorFeature({ branchId }: MapEditorFeatureProps) {
             <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-7 h-7 text-amber-600" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Xác nhận ghi đè?</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">{ADMIN_TEXTS.mapEditor.confirmImportTitle}</h3>
             <p className="text-sm text-gray-500 mb-6">
-              Hành động này sẽ xóa <strong className="text-gray-700">toàn bộ</strong> bàn hiện tại trong khu vực &ldquo;{selectedZone?.name}&rdquo; và thay thế bằng sơ đồ mẫu. Bạn có chắc chắn không?
+              {ADMIN_TEXTS.mapEditor.confirmImportDesc1} <strong className="text-gray-700">{ADMIN_TEXTS.mapEditor.confirmImportDesc2}</strong> {ADMIN_TEXTS.mapEditor.confirmImportDesc3} &ldquo;{selectedZone?.name}&rdquo; {ADMIN_TEXTS.mapEditor.confirmImportDesc4}
             </p>
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => setImportConfirm({ open: false, templateId: "" })}>Hủy</Button>
-              <Button variant="primary" className="flex-1 bg-amber-600 hover:bg-amber-700 border-0" onClick={() => handleImportTemplate(importConfirm.templateId)}>Xác nhận</Button>
+              <Button variant="outline" className="flex-1" onClick={() => setImportConfirm({ open: false, templateId: "" })}>{ADMIN_TEXTS.mapEditor.confirmImportBtnCancel}</Button>
+              <Button variant="primary" className="flex-1 bg-amber-600 hover:bg-amber-700 border-0" onClick={() => handleImportTemplate(importConfirm.templateId)}>{ADMIN_TEXTS.mapEditor.confirmImportBtnConfirm}</Button>
             </div>
           </div>
         </div>

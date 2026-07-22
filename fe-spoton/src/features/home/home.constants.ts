@@ -48,7 +48,7 @@ export const LAST_MINUTE_OFFERS: LastMinuteOffer[] = [
     reviewCount: 1133,
     image: '/images/offers/steakhouse.jpg',
     discountPercent: 20,
-    tag: '20% Today',
+    tag: 'Giảm 20% hôm nay',
     tagColor: '#c8891a',
   },
   {
@@ -59,7 +59,7 @@ export const LAST_MINUTE_OFFERS: LastMinuteOffer[] = [
     reviewCount: 980,
     image: '/images/offers/sushi.jpg',
     discountPercent: 15,
-    tag: '15% Today',
+    tag: 'Giảm 15% hôm nay',
     tagColor: '#c8891a',
   },
   {
@@ -70,40 +70,40 @@ export const LAST_MINUTE_OFFERS: LastMinuteOffer[] = [
     reviewCount: 311,
     image: '/images/offers/trattoria.jpg',
     discountPercent: 10,
-    tag: 'Free Apps',
+    tag: 'Miễn phí món khai vị',
     tagColor: '#c8891a',
   },
 ];
 
 export const CATEGORY_BANNERS: CategoryBanner[] = [
-  { id: 'new', label: 'New Openings', icon: '✨', bg: '#1a1208', href: '/search?category=new' },
-  { id: 'fine', label: 'Fine Dining Experiences', icon: '🕯️', bg: '#2d2218', href: '/search?category=fine-dining' },
-  { id: 'casual', label: 'Casual Eats', icon: '🍔', bg: '#c8891a', href: '/search?category=casual' },
+  { id: 'new', label: 'Địa điểm mới', icon: '✨', bg: '#1a1208', href: '/search?category=new' },
+  { id: 'fine', label: 'Ẩm thực cao cấp', icon: '🕯️', bg: '#2d2218', href: '/search?category=fine-dining' },
+  { id: 'casual', label: 'Ăn uống bình dân', icon: '🍔', bg: '#c8891a', href: '/search?category=casual' },
 ];
 
 export const DINING_GUIDES: DiningGuide[] = [
   {
     id: 'g1',
-    title: 'Top 5 Places for Authentic Sushi Experiences in the City',
-    excerpt: 'From hole-in-wall sushi bars to upscale omakase, these carefully selected spots will satisfy your inner sushi-loving self.',
+    title: 'Top 5 địa điểm thưởng thức Sushi chuẩn vị tại Thành phố',
+    excerpt: 'Từ những quán sushi nhỏ bé đến những nhà hàng omakase sang trọng, những địa điểm được lựa chọn cẩn thận này sẽ làm hài lòng tâm hồn yêu sushi của bạn.',
     image: '/images/guides/sushi-guide.jpg',
-    date: 'May 24, 2024',
-    tag: 'GUIDE',
+    date: '24 Tháng 5, 2024',
+    tag: 'CẨM NANG',
   },
   {
     id: 'g2',
-    title: 'The Ultimate Guide to Romantic Dinners',
-    excerpt: 'Set the perfect mood for a special evening with our curated list of the most romantic restaurants.',
+    title: 'Cẩm nang tối ưu cho những bữa tối lãng mạn',
+    excerpt: 'Tạo nên bầu không khí hoàn hảo cho một buổi tối đặc biệt với danh sách các nhà hàng lãng mạn nhất được chúng tôi tuyển chọn.',
     image: '/images/guides/romantic-guide.jpg',
-    date: 'May 26, 2024',
-    tag: 'GUIDE',
+    date: '26 Tháng 5, 2024',
+    tag: 'CẨM NANG',
   },
   {
     id: 'g3',
-    title: 'Exploring Vegan Options at High-End Restaurants',
-    excerpt: 'Discover how top chefs are elevating plant-based cuisine into extraordinary culinary experiences.',
+    title: 'Khám phá các lựa chọn ăn chay tại nhà hàng cao cấp',
+    excerpt: 'Khám phá cách các đầu bếp hàng đầu nâng tầm ẩm thực thuần chay thành những trải nghiệm ẩm thực phi thường.',
     image: '/images/guides/vegan-guide.jpg',
-    date: 'May 18, 2024',
-    tag: 'GUIDE',
+    date: '18 Tháng 5, 2024',
+    tag: 'CẨM NANG',
   },
 ];

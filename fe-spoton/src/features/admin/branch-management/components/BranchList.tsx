@@ -10,9 +10,12 @@ import { useBranchContext } from '../branch-management.context';
 import { DeactivateBranchModal } from './DeactivateBranchModal';
 import { ViewBranchDetailsModal } from './ViewBranchDetailsModal';
 import Link from 'next/link';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
+import { useToast } from '@/components/ui/Toast';
 
 export function BranchList() {
   const { branches, isLoading, updateBranch } = useBranchContext();
+  const { success: toastSuccess, error: toastError } = useToast();
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<{ id: string; name: string } | null>(null);
@@ -81,9 +84,10 @@ export function BranchList() {
     try {
       const newStatus = branch.status === 'OPEN' || branch.status === 'FULL' ? 'CLOSED' : 'OPEN';
       await updateBranch(branch._id, { status: newStatus });
+      toastSuccess(newStatus === 'OPEN' ? 'Chi nhánh đã được mở!' : 'Chi nhánh đã được đóng!');
     } catch (error) {
       console.error('Failed to toggle status:', error);
-      alert('Không thể cập nhật trạng thái chi nhánh. Vui lòng thử lại.');
+      toastError(ADMIN_TEXTS.branchList.errorUpdateStatus);
     }
   };
 
@@ -95,7 +99,7 @@ export function BranchList() {
             <div className="w-12 h-6 bg-amber-400 rounded-full flex items-center p-1 mb-1">
               <div className="w-4 h-4 bg-gray-900 rounded-full shadow-sm ml-auto"></div>
             </div>
-            <span className="text-[10px] font-bold text-gray-700 uppercase">MỞ CỬA</span>
+            <span className="text-[10px] font-bold text-gray-700 uppercase">{ADMIN_TEXTS.branchList.statusOpen}</span>
           </div>
         );
       case 'FULL':
@@ -104,7 +108,7 @@ export function BranchList() {
             <div className="w-12 h-6 bg-red-500 rounded-full flex items-center p-1 mb-1">
               <div className="w-4 h-4 bg-white rounded-full shadow-sm ml-auto"></div>
             </div>
-            <span className="text-[10px] font-bold text-gray-700 uppercase">HẾT BÀN</span>
+            <span className="text-[10px] font-bold text-gray-700 uppercase">{ADMIN_TEXTS.branchList.statusFull}</span>
           </div>
         );
       case 'CLOSED':
@@ -113,7 +117,7 @@ export function BranchList() {
             <div className="w-12 h-6 bg-gray-300 rounded-full flex items-center p-1 mb-1">
               <div className="w-4 h-4 bg-white rounded-full shadow-sm"></div>
             </div>
-            <span className="text-[10px] font-bold text-gray-500 uppercase">ĐÓNG CỬA</span>
+            <span className="text-[10px] font-bold text-gray-500 uppercase">{ADMIN_TEXTS.branchList.statusClosed}</span>
           </div>
         );
       case 'SETUP':
@@ -122,7 +126,7 @@ export function BranchList() {
             <div className="w-12 h-6 bg-blue-400 rounded-full flex items-center p-1 mb-1">
               <div className="w-4 h-4 bg-white rounded-full shadow-sm"></div>
             </div>
-            <span className="text-[10px] font-bold text-gray-600 uppercase">SETUP</span>
+            <span className="text-[10px] font-bold text-gray-600 uppercase">{ADMIN_TEXTS.branchList.statusSetup}</span>
           </div>
         );
       default:
@@ -153,7 +157,7 @@ export function BranchList() {
         <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-gray-50/50 rounded-t-xl">
           <div className="w-full sm:max-w-md">
             <Input 
-              placeholder="Tìm theo Mã, Tên, Địa chỉ, Quản lý..." 
+              placeholder={ADMIN_TEXTS.branchList.searchPlaceholder} 
               icon={<Search className="w-4 h-4" />}
               className="bg-white"
               value={searchQuery}
@@ -170,7 +174,7 @@ export function BranchList() {
                 </Button>
               }
             >
-              <DropdownItem onClick={() => setStatusFilter("ALL")}>All Status</DropdownItem>
+              <DropdownItem onClick={() => setStatusFilter("ALL")}>{ADMIN_TEXTS.branchList.filterAllStatus}</DropdownItem>
               <DropdownItem onClick={() => setStatusFilter("OPEN")}>OPEN</DropdownItem>
               <DropdownItem onClick={() => setStatusFilter("FULL")}>FULL</DropdownItem>
               <DropdownItem onClick={() => setStatusFilter("SETUP")}>SETUP</DropdownItem>
@@ -183,12 +187,12 @@ export function BranchList() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-white border-b border-gray-100 text-[11px] uppercase tracking-wider text-gray-500">
-                <th className="px-6 py-4 rounded-tl-lg font-bold">MÃ CHI NHÁNH</th>
-                <th className="px-6 py-4 font-bold">HÌNH ẢNH</th>
-                <th className="px-6 py-4 font-bold">THÔNG TIN</th>
-                <th className="px-6 py-4 font-bold">LIÊN HỆ</th>
-                <th className="px-6 py-4 font-bold">TRẠNG THÁI</th>
-                <th className="px-6 py-4 rounded-tr-lg font-bold">HÀNH ĐỘNG</th>
+                <th className="px-6 py-4 rounded-tl-lg font-bold">{ADMIN_TEXTS.branchList.thCode}</th>
+                <th className="px-6 py-4 font-bold">{ADMIN_TEXTS.branchList.thImage}</th>
+                <th className="px-6 py-4 font-bold">{ADMIN_TEXTS.branchList.thInfo}</th>
+                <th className="px-6 py-4 font-bold">{ADMIN_TEXTS.branchList.thContact}</th>
+                <th className="px-6 py-4 font-bold">{ADMIN_TEXTS.branchList.thStatus}</th>
+                <th className="px-6 py-4 rounded-tr-lg font-bold">{ADMIN_TEXTS.branchList.thActions}</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
@@ -198,7 +202,7 @@ export function BranchList() {
                     <div className="flex justify-center mb-4">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
                     </div>
-                    Đang tải dữ liệu...
+                    {ADMIN_TEXTS.branchList.loading}
                   </td>
                 </tr>
               ) : paginatedBranches.length > 0 ? (
@@ -236,17 +240,17 @@ export function BranchList() {
                     </td>
                     <td className="px-6 py-6 whitespace-nowrap align-top">
                       <div className="text-[15px] font-medium text-gray-900 mb-1">
-                        {branch.manager_id && typeof branch.manager_id === 'object' && branch.manager_id.full_name ? branch.manager_id.full_name : <span className="text-gray-400 italic">Chưa chỉ định</span>}
+                        {branch.manager_id && typeof branch.manager_id === 'object' && branch.manager_id.full_name ? branch.manager_id.full_name : <span className="text-gray-400 italic">{ADMIN_TEXTS.branchList.unassigned}</span>}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {branch.hotline || <span className="italic text-gray-400">Không có</span>}
+                        {branch.hotline || <span className="italic text-gray-400">{ADMIN_TEXTS.branchList.noHotline}</span>}
                       </div>
                     </td>
                     <td className="px-6 py-6 whitespace-nowrap align-top text-center">
                       <div 
                         onClick={() => handleToggleStatus(branch)} 
                         className="cursor-pointer hover:opacity-80 transition-opacity inline-block"
-                        title="Nhấn để chuyển đổi trạng thái"
+                        title={ADMIN_TEXTS.branchList.btnToggleStatus}
                       >
                         {getStatusBadge(branch.status)}
                       </div>
@@ -256,17 +260,17 @@ export function BranchList() {
                         <button 
                           onClick={() => { setViewBranch(branch); setDetailsModalOpen(true); }}
                           className="text-gray-400 hover:text-green-600 transition-colors" 
-                          title="Xem chi tiết"
+                          title={ADMIN_TEXTS.branchList.btnView}
                         >
                           <Eye className="w-5 h-5" />
                         </button>
-                        <Link href={`/admin/branches/${branch._id}/edit`} className="text-gray-400 hover:text-amber-600 transition-colors" title="Chỉnh sửa">
+                        <Link href={`/admin/branches/${branch._id}/edit`} className="text-gray-400 hover:text-amber-600 transition-colors" title={ADMIN_TEXTS.branchList.btnEdit}>
                           <Edit2 className="w-5 h-5" />
                         </Link>
                         <button 
                           onClick={() => handleDeactivateClick(branch._id, branch.name)}
                           className="text-gray-400 hover:text-red-600 transition-colors" 
-                          title="Xóa / Vô hiệu hóa"
+                          title={ADMIN_TEXTS.branchList.btnDelete}
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
@@ -276,7 +280,7 @@ export function BranchList() {
                 ))) : (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    Không tìm thấy chi nhánh nào phù hợp.
+                    {ADMIN_TEXTS.branchList.emptyList}
                   </td>
                 </tr>
               )}
@@ -287,7 +291,7 @@ export function BranchList() {
         {/* Pagination */}
         <div className="flex justify-between items-center px-6 py-4 border-t border-gray-200 rounded-b-xl">
           <div className="text-sm text-gray-500">
-            Showing {filteredBranches.length === 0 ? 0 : startIndex + 1} to {Math.min(startIndex + ITEMS_PER_PAGE, filteredBranches.length)} of {filteredBranches.length} branches
+            {ADMIN_TEXTS.branchList.paginationShowing} {filteredBranches.length === 0 ? 0 : startIndex + 1} {ADMIN_TEXTS.branchList.paginationTo} {Math.min(startIndex + ITEMS_PER_PAGE, filteredBranches.length)} {ADMIN_TEXTS.branchList.paginationOf} {filteredBranches.length} {ADMIN_TEXTS.branchList.paginationBranches}
           </div>
           <div className="flex gap-2">
             <Button 

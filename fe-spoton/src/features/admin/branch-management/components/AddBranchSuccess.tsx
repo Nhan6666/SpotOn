@@ -5,9 +5,12 @@ import Link from 'next/link';
 
 interface AddBranchSuccessProps {
   onReset: () => void;
+  branchName: string;
+  branchAddress: string;
+  managerName: string;
 }
 
-export function AddBranchSuccess({ onReset }: AddBranchSuccessProps) {
+export function AddBranchSuccess({ onReset, branchName, branchAddress, managerName }: AddBranchSuccessProps) {
   return (
     <div className="flex items-center justify-center min-h-[60vh] py-12">
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden max-w-md w-full">
@@ -28,14 +31,13 @@ export function AddBranchSuccess({ onReset }: AddBranchSuccessProps) {
           <div className="w-full bg-slate-50 rounded-lg border border-slate-200 p-5 mb-8 text-left space-y-4">
             <div className="grid grid-cols-[120px_1fr] gap-4 pb-4 border-b border-slate-200">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Name</span>
-              <span className="text-sm font-semibold text-gray-900">Downtown Metro Branch</span>
+              <span className="text-sm font-semibold text-gray-900">{branchName}</span>
             </div>
             
             <div className="grid grid-cols-[120px_1fr] gap-4 pb-4 border-b border-slate-200">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Address</span>
               <span className="text-sm text-gray-700 leading-tight">
-                1420 Business Parkway, Suite 200<br />
-                Metropolis, NY 10001
+                {branchAddress}
               </span>
             </div>
             
@@ -45,7 +47,7 @@ export function AddBranchSuccess({ onReset }: AddBranchSuccessProps) {
                 <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center">
                   <User className="w-3 h-3 text-slate-500" />
                 </div>
-                <span className="text-sm font-semibold text-gray-900">Sarah Jenkins</span>
+                <span className="text-sm font-semibold text-gray-900">{managerName || 'Unassigned'}</span>
               </div>
             </div>
           </div>

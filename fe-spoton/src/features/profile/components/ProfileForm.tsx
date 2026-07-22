@@ -14,6 +14,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { ProfileFormSchema, ProfileFormValues } from '../profile.schema';
 import { profileService } from '../profile.service';
 import { UserProfile } from '../profile.types';
+import { PROFILE_TEXTS } from '@/constants/texts/profile';
 
 interface ProfileFormProps {
   user: UserProfile;
@@ -47,9 +48,9 @@ export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
       const updatedUser = await profileService.updateProfile(data);
       onUpdateSuccess(updatedUser);
       updateUser({ full_name: updatedUser.full_name, avatar: updatedUser.avatar });
-      toast('Cập nhật hồ sơ thành công', 'success');
+      toast(PROFILE_TEXTS.form.success, 'success');
     } catch (error: any) {
-      toast(error.message || 'Lỗi khi cập nhật hồ sơ', 'error');
+      toast(error.message || PROFILE_TEXTS.form.errorUpdate, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -65,9 +66,9 @@ export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
       const updatedUser = await profileService.updateProfile({ avatar: url });
       onUpdateSuccess(updatedUser);
       updateUser({ avatar: updatedUser.avatar });
-      toast('Tải ảnh lên thành công', 'success');
+      toast(PROFILE_TEXTS.form.avatarUploadSuccess, 'success');
     } catch (error: any) {
-      toast(error.message || 'Lỗi khi tải ảnh lên', 'error');
+      toast(error.message || PROFILE_TEXTS.form.avatarUploadError, 'error');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -79,8 +80,8 @@ export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Thông tin cá nhân</CardTitle>
-        <CardDescription>Cập nhật thông tin liên hệ và sở thích cá nhân</CardDescription>
+        <CardTitle>{PROFILE_TEXTS.form.cardTitle}</CardTitle>
+        <CardDescription>{PROFILE_TEXTS.form.cardDesc}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col md:flex-row gap-8">
@@ -94,7 +95,7 @@ export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
               )}
               {isUploading && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-sm font-medium">
-                  Đang tải lên...
+                  {PROFILE_TEXTS.form.uploading}
                 </div>
               )}
             </div>
@@ -105,7 +106,7 @@ export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
             >
-              Ảnh đại diện
+              {PROFILE_TEXTS.form.avatarBtn}
             </Button>
             <input
               type="file"
@@ -119,7 +120,7 @@ export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
           {/* Form Section */}
           <form id="profile-form" onSubmit={handleSubmit(onSubmit)} className="flex-1 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email (không thể thay đổi)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{PROFILE_TEXTS.form.emailLabel}</label>
               <Input
                 value={user.email}
                 disabled
@@ -127,14 +128,14 @@ export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{PROFILE_TEXTS.form.nameLabel}</label>
               <Input
                 {...register('full_name')}
               />
               {errors.full_name?.message && <p className="text-red-500 text-xs mt-1">{errors.full_name.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{PROFILE_TEXTS.form.phoneLabel}</label>
               <Input
                 {...register('phone')}
               />
@@ -149,7 +150,7 @@ export function ProfileForm({ user, onUpdateSuccess }: ProfileFormProps) {
           form="profile-form"
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
+          {isSubmitting ? PROFILE_TEXTS.form.submittingBtn : PROFILE_TEXTS.form.submitBtn}
         </Button>
       </CardFooter>
     </Card>

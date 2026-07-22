@@ -3,22 +3,25 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Store, UtensilsCrossed, TicketPercent, BarChart3, Settings, Tags, LayoutGrid, Map } from 'lucide-react';
+import { LayoutDashboard, Store, UtensilsCrossed, TicketPercent, BarChart3, Settings, Tags, LayoutGrid, Map, Users, Star } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
+import { ADMIN_TEXTS } from '@/constants/texts/admin';
 
 const MENU_ITEMS = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/branches', label: 'Branch Management', icon: Store, matchPrefix: true },
-  { href: '/admin/map-templates', label: 'Map Templates', icon: LayoutGrid, matchPrefix: true },
-  { href: '/admin/menu', label: 'Menu', icon: UtensilsCrossed, matchPrefix: true },
-  { href: '/admin/categories', label: 'Categories', icon: Tags, matchPrefix: true },
-  { href: '/admin/vouchers', label: 'Vouchers', icon: TicketPercent, matchPrefix: true },
-  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, matchPrefix: true },
+  { href: '/admin', label: ADMIN_TEXTS.layout?.sidebar?.overview || 'Tổng quan', icon: LayoutDashboard },
+  { href: '/admin/finance', label: 'Tài chính & Kiểm toán', icon: BarChart3, matchPrefix: true },
+  { href: '/admin/accounts', label: 'Tài khoản', icon: Users, matchPrefix: true },
+  { href: '/admin/branches', label: ADMIN_TEXTS.layout?.sidebar?.branches || 'Chi nhánh', icon: Store, matchPrefix: true },
+  { href: '/admin/map-templates', label: ADMIN_TEXTS.layout?.sidebar?.mapTemplates || 'Mẫu sơ đồ', icon: LayoutGrid, matchPrefix: true },
+  { href: '/admin/menu', label: ADMIN_TEXTS.layout?.sidebar?.menu || 'Thực đơn', icon: UtensilsCrossed, matchPrefix: true },
+  { href: '/admin/categories', label: ADMIN_TEXTS.layout?.sidebar?.categories || 'Danh mục', icon: Tags, matchPrefix: true },
+  { href: '/admin/vouchers', label: ADMIN_TEXTS.layout?.sidebar?.vouchers || 'Khuyến mãi', icon: TicketPercent, matchPrefix: true },
+  { href: '/admin/reviews', label: 'Đánh giá', icon: Star, matchPrefix: true },
 ];
 
 const SYSTEM_CONFIGS = [
-  { href: '/admin/system-configs/booking-rules', label: 'Booking Rules', icon: Settings, matchPrefix: true },
-  { href: '/admin/system-configs/amenities', label: 'Amenities', icon: Tags, matchPrefix: true },
+  { href: '/admin/system-configs/booking-rules', label: ADMIN_TEXTS.layout.sidebar.bookingRules, icon: Settings, matchPrefix: true },
+  { href: '/admin/system-configs/amenities', label: ADMIN_TEXTS.layout.sidebar.amenities, icon: Tags, matchPrefix: true },
 ];
 
 export function AdminSidebar() {
@@ -29,10 +32,10 @@ export function AdminSidebar() {
     let items = [...MENU_ITEMS];
     
     if (user?.role === 'MANAGER') {
-      items = items.filter(item => item.href !== '/admin/map-templates');
+      items = items.filter(item => item.href !== '/admin/map-templates' && item.href !== '/admin/reviews');
       const branchItem = items.find(i => i.href === '/admin/branches');
       if (branchItem) {
-        branchItem.label = 'Chi nhánh của tôi';
+        branchItem.label = ADMIN_TEXTS.layout.sidebar.myBranch;
       }
     } else if (user?.role === 'ADMIN') {
       // Admin sees Map Templates, no specific branch map shortcut
@@ -68,7 +71,7 @@ export function AdminSidebar() {
         {visibleMenuItems.map(renderLink)}
         
         <div className="pt-4 pb-2">
-          <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">System Configs</p>
+          <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">{ADMIN_TEXTS.layout.sidebar.systemConfig}</p>
         </div>
         
         {SYSTEM_CONFIGS.map(renderLink)}

@@ -1,5 +1,5 @@
 import { http } from '@/lib/http';
-import { PublicBranchDetail } from './branch-detail.types';
+import { PublicBranchDetail, BranchReview } from './branch-detail.types';
 
 export const branchDetailService = {
   getBranchById: async (id: string): Promise<PublicBranchDetail> => {
@@ -34,9 +34,9 @@ export const branchDetailService = {
     }
   },
 
-  getVouchers: async () => {
+  getVouchers: async (branchId: string) => {
     try {
-      const res = await http.get<{ success: boolean; data: any }>('/vouchers');
+      const res = await http.get<{ success: boolean; data: any }>(`/vouchers/public/branch/${branchId}`);
       return res.data;
     } catch {
       return [];
@@ -95,5 +95,29 @@ export const branchDetailService = {
     } catch {
       return null;
     }
+  },
+
+  getBranchReviews: async (branchId: string) => {
+    const res = await http.get<{ success: boolean; count: number; data: BranchReview[] }>(`/reviews/branch/${branchId}`);
+    return res.data;
+  },
+
+  createReview: async (branchId: string, rating: number, comment: string) => {
+    const res = await http.post<{ success: boolean; message: string; data: BranchReview }>('/reviews', {
+      branch_id: branchId,
+      rating,
+      comment,
+    });
+    return res;
+  },
+
+  getAdminReviews: async () => {
+    const res = await http.get<{ success: boolean; count: number; data: BranchReview[] }>('/reviews/admin');
+    return res.data;
+  },
+
+  deleteAdminReview: async (reviewId: string) => {
+    const res = await http.delete<{ success: boolean; message: string; data: any }>(`/reviews/admin/${reviewId}`);
+    return res;
   },
 };

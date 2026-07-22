@@ -9,7 +9,10 @@ const getPublicCategories = async (req, res) => {
   try {
     const branchId = req.params.branchId;
 
-    const localMenus = await Menu.find({ branch_id: branchId }).select('category_name').lean();
+    let localMenus = [];
+    if (branchId && branchId !== 'master') {
+      localMenus = await Menu.find({ branch_id: branchId }).select('category_name').lean();
+    }
     const masterMenus = await Menu.find({ branch_id: null }).select('category_name').lean();
 
     const categorySet = new Set();
@@ -52,7 +55,10 @@ const getPublicMenuItems = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Thiếu tham số category_name.' });
     }
 
-    const localMenu = await Menu.findOne({ branch_id: branchId, category_name }).lean();
+    let localMenu = null;
+    if (branchId && branchId !== 'master') {
+      localMenu = await Menu.findOne({ branch_id: branchId, category_name }).lean();
+    }
     const masterMenu = await Menu.findOne({ branch_id: null, category_name }).lean();
 
     const items = [];
@@ -123,21 +129,24 @@ const getPublicBranchMenu = async (req, res) => {
   try {
     const branchId = req.params.branchId;
 
-    const localMenus = await Menu.find({ branch_id: branchId }).lean();
+    let localMenus = [];
+    if (branchId !== 'default') {
+      localMenus = await Menu.find({ branch_id: branchId }).lean();
+    }
     const masterMenus = await Menu.find({ branch_id: null }).lean();
 
     const categoryMap = new Map();
 
     masterMenus.forEach(menu => {
       const items = menu.items.map(item => {
-        const override = item.branch_overrides?.find(o => String(o.branch_id) === String(branchId));
+        const override = branchId !== 'default' ? item.branch_overrides?.find(o => String(o.branch_id) === String(branchId)) : null;
         return {
           _id: item._id,
           name: item.name,
           description: item.description,
           price: item.base_price,
           image: item.image_url,
-          is_available: override && override.is_available !== undefined ? override.is_available : false,
+          is_available: branchId === 'default' ? true : (override && override.is_available !== undefined ? override.is_available : false),
           quantity: override && override.quantity !== undefined ? override.quantity : 0,
         };
       });
@@ -184,8 +193,46 @@ const getPublicBranchMenu = async (req, res) => {
   }
 };
 
+// ============================================================
+// @desc   Lấy danh sách món ăn Best Seller
+// @route  GET /api/v1/menus/public/best-sellers
+// @access Public
+// ============================================================
+const getPublicBestSellers = async (req, res) => {
+  try {
+    const masterMenus = await Menu.find({ branch_id: null }).lean();
+    let allItems = [];
+    
+    masterMenus.forEach(menu => {
+      if (menu.items) {
+        allItems.push(...menu.items);
+      }
+    });
+
+    // Shuffle and pick 5 items
+    allItems = allItems.sort(() => 0.5 - Math.random());
+    const bestSellers = allItems.slice(0, 5).map(item => ({
+      _id: item._id,
+      name: item.name,
+      description: item.description,
+      price: item.base_price,
+      image: item.image_url,
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: 'Lấy món Best Seller thành công.',
+      data: bestSellers,
+    });
+  } catch (error) {
+    console.error('Lỗi getPublicBestSellers:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ.' });
+  }
+};
+
 module.exports = {
   getPublicCategories,
   getPublicMenuItems,
-  getPublicBranchMenu
+  getPublicBranchMenu,
+  getPublicBestSellers
 };

@@ -34,5 +34,10 @@ export const CustomerService = {
   async getBranchReviews(branchId: string) {
     const response = await apiClient.get(`/reviews/branch/${branchId}`);
     return response.data;
+  },
+
+  async submitReview(branch_id: string, rating: number, comment: string) {
+    const response = await apiClient.post('/reviews', { branch_id, rating, comment });
+    return response.data;
   }
 };

@@ -173,6 +173,16 @@ export default function TabLayout() {
         }}
       />
 
+      {/* ===== ADMIN: Quản lý Đánh giá ===== */}
+      <Tabs.Screen
+        name="admin-reviews"
+        options={{
+          title: 'Đánh giá',
+          tabBarIcon: ({ color }) => <TabBarIcon name="star-half-empty" color={color as string} />,
+          href: isAdmin ? '/admin-reviews' : null,
+        }}
+      />
+
       {/* ===== ADMIN: Tài chính ===== */}
       <Tabs.Screen
         name="admin-finance"

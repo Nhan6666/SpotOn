@@ -4,6 +4,7 @@ import apiClient from '@/lib/http';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/useAuthStore';
+import * as ImagePicker from 'expo-image-picker';
 
 interface MenuItem {
   _id: string;
@@ -34,10 +35,13 @@ export function ManagerMenuFeature() {
   const [showOverrideModal, setShowOverrideModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   
   // Modal Data
   const [selectedItem, setSelectedItem] = useState<Partial<MenuItem> | null>(null);
   const [formData, setFormData] = useState<any>({});
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const fetchMenus = useCallback(async () => {
     try {
@@ -89,18 +93,72 @@ export function ManagerMenuFeature() {
   const handleOpenEdit = (item: MenuItem) => {
     setSelectedItem(item);
     setFormData({ ...item });
+    setImageUri(item.image_url || null);
     setShowEditModal(true);
+  };
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Quyền truy cập', 'Vui lòng cấp quyền truy cập thư viện ảnh để upload hình.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
+  const uploadMenuImage = async (localUri: string): Promise<string | null> => {
+    if (!localUri || localUri.startsWith('http')) return localUri;
+    const filename = localUri.split('/').pop();
+    const match = /\.(\w+)$/.exec(filename || '');
+    const type = match ? `image/${match[1]}` : `image`;
+    const form = new FormData();
+    form.append('image', { uri: localUri, name: filename, type } as any);
+    try {
+      const res = await apiClient.post(`/uploads/menu`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data?.success && res.data?.data?.url) {
+        return res.data.data.url;
+      }
+      return null;
+    } catch (e) {
+      console.error('Lỗi upload ảnh:', e);
+      return null;
+    }
   };
 
   const handleSaveEdit = async () => {
     if (!selectedItem) return;
     try {
-      await apiClient.put(`/manager/menus/local/${selectedItem._id}`, formData);
+      setIsSaving(true);
+      let uploadedUrl = formData.image_url;
+      if (imageUri && !imageUri.startsWith('http')) {
+        const newUrl = await uploadMenuImage(imageUri);
+        if (newUrl) {
+          uploadedUrl = newUrl;
+        } else {
+          Alert.alert('Lỗi', 'Tải ảnh lên thất bại');
+          setIsSaving(false);
+          return;
+        }
+      }
+      const payload = { ...formData, image_url: uploadedUrl };
+      await apiClient.put(`/manager/menus/local/${selectedItem._id}`, payload);
       Alert.alert('Thành công', 'Đã cập nhật món LOCAL');
       setShowEditModal(false);
       fetchMenus();
     } catch (error: any) {
       Alert.alert('Lỗi', error.message || 'Không thể cập nhật');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -131,24 +189,45 @@ export function ManagerMenuFeature() {
       is_available: true,
       image_url: ''
     });
+    setImageUri(null);
     setShowAddModal(true);
   };
 
   const handleSaveAdd = async () => {
     try {
-      if (!formData.name || !formData.category_name || formData.base_price < 0 || formData.quantity < 0) {
+      if (!formData.name || !formData.category_name || formData.base_price === '' || formData.quantity === '') {
         Alert.alert('Lỗi', 'Vui lòng điền đủ thông tin hợp lệ');
         return;
       }
+      setIsSaving(true);
       
-      const payload = { ...formData };
+      let uploadedUrl = formData.image_url;
+      if (imageUri && !imageUri.startsWith('http')) {
+        const newUrl = await uploadMenuImage(imageUri);
+        if (newUrl) {
+          uploadedUrl = newUrl;
+        } else {
+          Alert.alert('Lỗi', 'Tải ảnh lên thất bại');
+          setIsSaving(false);
+          return;
+        }
+      }
+
+      const payload = { ...formData, image_url: uploadedUrl, base_price: Number(formData.base_price) || 0, quantity: Number(formData.quantity) || 0 };
       await apiClient.post('/manager/menus/local', payload);
       Alert.alert('Thành công', 'Đã thêm món LOCAL mới');
       setShowAddModal(false);
       fetchMenus();
     } catch (error: any) {
       Alert.alert('Lỗi', error.message || 'Không thể thêm món');
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const handleOpenDetail = (item: MenuItem) => {
+    setSelectedItem(item);
+    setShowDetailModal(true);
   };
 
   if (loading && !refreshing) {
@@ -252,11 +331,19 @@ export function ManagerMenuFeature() {
                 <Text className="font-lexend text-xs text-gray-500 font-medium">SL: {item.quantity}</Text>
               </View>
 
-              <View className="flex-row gap-2 mt-3 justify-end border-t border-gray-100 pt-3">
+              <View className="flex-row gap-2 mt-3 justify-end border-t border-gray-100 pt-3 flex-wrap">
+                <TouchableOpacity
+                  onPress={() => handleOpenDetail(item)}
+                  className="flex-row items-center px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200 mb-1"
+                >
+                  <FontAwesome name="eye" size={12} color="#4b5563" />
+                  <Text className="font-lexend text-xs font-bold text-gray-700 ml-1.5">Chi tiết</Text>
+                </TouchableOpacity>
+
                 {item.is_master ? (
                   <TouchableOpacity
                     onPress={() => handleOpenOverride(item)}
-                    className="flex-row items-center px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-200"
+                    className="flex-row items-center px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-200 mb-1"
                   >
                     <FontAwesome name="power-off" size={12} color="#b45309" />
                     <Text className="font-lexend text-xs font-bold text-amber-700 ml-1.5">Số Lượng & Trạng Thái</Text>
@@ -265,14 +352,14 @@ export function ManagerMenuFeature() {
                   <>
                     <TouchableOpacity
                       onPress={() => handleOpenEdit(item)}
-                      className="flex-row items-center px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-200"
+                      className="flex-row items-center px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-200 mb-1"
                     >
                       <FontAwesome name="edit" size={12} color="#1d4ed8" />
                       <Text className="font-lexend text-xs font-bold text-blue-700 ml-1.5">Sửa</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleDeleteLocal(item._id)}
-                      className="flex-row items-center px-3 py-1.5 bg-red-50 rounded-lg border border-red-200"
+                      className="flex-row items-center px-3 py-1.5 bg-red-50 rounded-lg border border-red-200 mb-1"
                     >
                       <FontAwesome name="trash" size={12} color="#b91c1c" />
                       <Text className="font-lexend text-xs font-bold text-red-700 ml-1.5">Xóa</Text>
@@ -385,8 +472,11 @@ export function ManagerMenuFeature() {
               <View className="flex-1">
                 <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Giá bán (VNĐ) <Text className="text-red-500">*</Text></Text>
                 <TextInput
-                  value={String(formData.base_price || 0)}
-                  onChangeText={t => setFormData({ ...formData, base_price: Number(t) })}
+                  value={formData.base_price?.toString() || ''}
+                  onChangeText={t => {
+                    const numericValue = t.replace(/[^0-9]/g, '');
+                    setFormData({ ...formData, base_price: numericValue });
+                  }}
                   keyboardType="numeric"
                   className="border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900"
                 />
@@ -394,8 +484,11 @@ export function ManagerMenuFeature() {
               <View className="flex-1">
                 <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Tồn kho <Text className="text-red-500">*</Text></Text>
                 <TextInput
-                  value={String(formData.quantity || 0)}
-                  onChangeText={t => setFormData({ ...formData, quantity: Number(t) })}
+                  value={formData.quantity?.toString() || ''}
+                  onChangeText={t => {
+                    const numericValue = t.replace(/[^0-9]/g, '');
+                    setFormData({ ...formData, quantity: numericValue });
+                  }}
                   keyboardType="numeric"
                   className="border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900"
                 />
@@ -403,13 +496,19 @@ export function ManagerMenuFeature() {
             </View>
 
             <View className="mb-6">
-              <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Đường dẫn ảnh (URL)</Text>
-              <TextInput
-                value={formData.image_url}
-                onChangeText={t => setFormData({ ...formData, image_url: t })}
-                className="border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900"
-                placeholder="https://..."
-              />
+              <Text className="font-lexend text-sm font-medium text-gray-700 mb-3">Hình ảnh món ăn</Text>
+              <View className="items-center">
+                <TouchableOpacity onPress={pickImage} className="items-center justify-center bg-gray-50 rounded-xl w-40 h-32 overflow-hidden border border-gray-200 border-dashed">
+                  {imageUri ? (
+                    <Image source={{ uri: imageUri }} className="w-full h-full" />
+                  ) : (
+                    <View className="items-center justify-center p-4">
+                      <FontAwesome name="image" size={24} color="#9ca3af" className="mb-2" />
+                      <Text className="font-lexend text-xs text-gray-500 text-center">Chọn ảnh tải lên</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
 
             <TouchableOpacity 
@@ -424,10 +523,77 @@ export function ManagerMenuFeature() {
           <View className="p-5 border-t border-gray-100 bg-white">
             <TouchableOpacity 
               onPress={showEditModal ? handleSaveEdit : handleSaveAdd} 
-              className="py-4 bg-blue-600 rounded-xl items-center"
+              disabled={isSaving}
+              className={`py-4 bg-blue-600 rounded-xl items-center flex-row justify-center ${isSaving ? 'opacity-70' : ''}`}
             >
+              {isSaving && <ActivityIndicator color="#fff" style={{ marginRight: 8 }} />}
               <Text className="font-lexend font-bold text-white text-lg">Lưu Món Ăn</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Detail Modal */}
+      <Modal visible={showDetailModal} transparent animationType="fade" onRequestClose={() => setShowDetailModal(false)}>
+        <View className="flex-1 bg-black/50 justify-center items-center p-4">
+          <View className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl">
+            {/* Header with image */}
+            <View className="relative h-48 bg-gray-100">
+              {selectedItem?.image_url ? (
+                <Image source={{ uri: selectedItem.image_url }} className="w-full h-full" resizeMode="cover" />
+              ) : (
+                <View className="w-full h-full items-center justify-center">
+                  <FontAwesome name="picture-o" size={40} color="#9ca3af" />
+                </View>
+              )}
+              <TouchableOpacity 
+                onPress={() => setShowDetailModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 bg-black/50 rounded-full items-center justify-center"
+              >
+                <FontAwesome name="times" size={16} color="white" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Content */}
+            <ScrollView className="p-5 max-h-96">
+              <View className="flex-row justify-between items-start mb-2">
+                <Text className="font-lexend font-bold text-xl text-gray-900 flex-1 mr-2">{selectedItem?.name}</Text>
+                {selectedItem?.is_master ? (
+                  <View className="bg-amber-100 px-2 py-1 rounded">
+                    <Text className="font-lexend text-[10px] font-bold text-amber-700">MASTER</Text>
+                  </View>
+                ) : (
+                  <View className="bg-blue-100 px-2 py-1 rounded">
+                    <Text className="font-lexend text-[10px] font-bold text-blue-700">LOCAL</Text>
+                  </View>
+                )}
+              </View>
+
+              <Text className="font-lexend font-bold text-lg text-orange-600 mb-4">
+                {selectedItem?.base_price?.toLocaleString('vi-VN')} đ
+              </Text>
+
+              <View className="mb-4">
+                <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Mô tả:</Text>
+                <Text className="font-lexend text-sm text-gray-600 leading-5">
+                  {selectedItem?.description || 'Không có mô tả'}
+                </Text>
+              </View>
+
+              <View className="flex-row items-center justify-between py-3 border-t border-gray-100 mt-2">
+                <Text className="font-lexend text-sm font-medium text-gray-700">Tồn kho:</Text>
+                <Text className="font-lexend text-base font-bold text-gray-900">{selectedItem?.quantity}</Text>
+              </View>
+
+              <View className="flex-row items-center justify-between py-3 border-t border-gray-100">
+                <Text className="font-lexend text-sm font-medium text-gray-700">Trạng thái:</Text>
+                <View className={`px-2 py-1 rounded flex-row items-center ${selectedItem?.is_available && (selectedItem?.quantity ?? 0) > 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+                  <Text className={`font-lexend font-bold text-[10px] ${selectedItem?.is_available && (selectedItem?.quantity ?? 0) > 0 ? 'text-green-700' : 'text-red-700'}`}>
+                    {selectedItem?.is_available && (selectedItem?.quantity ?? 0) > 0 ? 'Đang phục vụ' : 'Hết hàng / Tắt'}
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>

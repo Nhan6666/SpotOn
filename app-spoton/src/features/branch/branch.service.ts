@@ -53,5 +53,15 @@ export const BranchService = {
   ) {
     const response = await apiClient.put(`/branches/${branchId}/zones/${zoneId}/tables/layout`, { tables });
     return response.data;
+  },
+
+  async getMapTemplates() {
+    const response = await apiClient.get('/map-templates');
+    return response.data;
+  },
+
+  async applyMapTemplate(branchId: string, zoneId: string, templateId: string) {
+    const response = await apiClient.post(`/branches/${branchId}/zones/${zoneId}/apply-template`, { templateId });
+    return response.data;
   }
 };

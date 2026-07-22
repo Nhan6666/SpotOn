@@ -86,6 +86,10 @@ export function ManagerMapEditorFeature() {
   // Modal State
   const [modalVisible, setModalVisible] = useState(false);
   const [formData, setFormData] = useState({ _id: '', table_number: '', capacity: 2, width: 80, height: 80, shape: 'RECTANGLE' });
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [showZoneModal, setShowZoneModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [zoneFormData, setZoneFormData] = useState({ name: '', capacity: 0 });
 
   const fetchData = useCallback(async () => {
     try {
@@ -102,6 +106,11 @@ export function ManagerMapEditorFeature() {
             return firstZone;
           });
         }
+      }
+
+      const templatesData = await BranchService.getMapTemplates();
+      if (templatesData.success && templatesData.data) {
+        setTemplates(templatesData.data);
       }
     } catch (e) {
       console.log(e);
@@ -120,7 +129,11 @@ export function ManagerMapEditorFeature() {
   };
 
   const handleDragRelease = (tableId: string, newX: number, newY: number) => {
-    setTables(prev => prev.map(t => t._id === tableId ? { ...t, x: Math.max(0, newX), y: Math.max(0, newY) } : t));
+    setTables(prev => {
+      const newTables = prev.map(t => t._id === tableId ? { ...t, x: Math.max(0, newX), y: Math.max(0, newY) } : t);
+      setZones(prevZones => prevZones.map(z => z._id === activeZone?._id ? { ...z, tables: newTables } : z));
+      return newTables;
+    });
   };
 
   const handleTablePress = (table: any) => {
@@ -138,6 +151,39 @@ export function ManagerMapEditorFeature() {
   const handleAddTable = () => {
     setFormData({ _id: '', table_number: '', capacity: 2, width: 80, height: 80, shape: 'RECTANGLE' });
     setModalVisible(true);
+  };
+
+  const handleAddZone = async () => {
+    if (!zoneFormData.name) {
+      Alert.alert('Lỗi', 'Vui lòng nhập tên khu vực');
+      return;
+    }
+    try {
+      setIsSaving(true);
+      await BranchService.createZone(branch._id, zoneFormData);
+      Alert.alert('Thành công', 'Đã thêm khu vực mới');
+      setShowZoneModal(false);
+      fetchData();
+    } catch (error: any) {
+      Alert.alert('Lỗi', error.response?.data?.message || 'Không thể thêm khu vực');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleApplyTemplate = async (templateId: string) => {
+    if (!activeZone) return;
+    try {
+      setIsSaving(true);
+      await BranchService.applyMapTemplate(branch._id, activeZone._id, templateId);
+      Alert.alert('Thành công', 'Đã áp dụng mẫu sơ đồ bàn thành công');
+      setShowTemplateModal(false);
+      fetchData();
+    } catch (error: any) {
+      Alert.alert('Lỗi', error.response?.data?.message || 'Không thể áp dụng mẫu');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSaveLayout = async () => {
@@ -163,14 +209,28 @@ export function ManagerMapEditorFeature() {
       }
       setIsSaving(true);
       if (formData._id) {
-        await BranchService.updateTable(branch._id, activeZone._id, formData._id, formData);
+        const res = await BranchService.updateTable(branch._id, activeZone._id, formData._id, formData);
+        if (res.success && res.data) {
+          const updated = res.data;
+          setTables(prev => {
+            const newTables = prev.map(t => t._id === formData._id ? { ...updated, x: t.x, y: t.y } : t);
+            setZones(prevZones => prevZones.map(z => z._id === activeZone._id ? { ...z, tables: newTables } : z));
+            return newTables;
+          });
+        }
       } else {
-        await BranchService.createTable(branch._id, activeZone._id, { ...formData, x: 50, y: 50 });
+        const res = await BranchService.createTable(branch._id, activeZone._id, { ...formData, x: 50, y: 50 });
+        if (res.success && res.data) {
+          setTables(prev => {
+            const newTables = [...prev, res.data];
+            setZones(prevZones => prevZones.map(z => z._id === activeZone._id ? { ...z, tables: newTables } : z));
+            return newTables;
+          });
+        }
       }
       setModalVisible(false);
-      fetchData();
     } catch (e: any) {
-      Alert.alert('Lỗi', e.response?.data?.message || 'Có lỗi xảy ra');
+      Alert.alert('Lỗi', e.message || 'Có lỗi xảy ra');
     } finally {
       setIsSaving(false);
     }
@@ -187,7 +247,11 @@ export function ManagerMapEditorFeature() {
             if (formData._id) {
               await BranchService.deleteTable(branch._id, activeZone._id, formData._id);
               setModalVisible(false);
-              fetchData();
+              setTables(prev => {
+                const newTables = prev.filter(t => t._id !== formData._id);
+                setZones(prevZones => prevZones.map(z => z._id === activeZone._id ? { ...z, tables: newTables } : z));
+                return newTables;
+              });
             }
           } catch (e: any) {
             Alert.alert('Lỗi', e.response?.data?.message || 'Không thể xóa bàn');
@@ -213,14 +277,22 @@ export function ManagerMapEditorFeature() {
         >
           <FontAwesome name="arrow-left" size={18} color="#4b5563" />
         </TouchableOpacity>
-        <Text className="font-lexend font-bold text-lg text-gray-900">Sơ đồ: {activeZone?.name}</Text>
-        <TouchableOpacity 
-          onPress={handleSaveLayout} 
-          disabled={isSaving}
-          className="bg-orange-600 px-3 py-2 rounded-lg"
-        >
-          {isSaving ? <ActivityIndicator size="small" color="#fff" /> : <Text className="font-lexend font-bold text-xs text-white">Lưu Sơ đồ</Text>}
-        </TouchableOpacity>
+        <Text className="font-lexend font-bold text-lg text-gray-900 flex-1 ml-2">Sơ đồ: {activeZone?.name}</Text>
+        <View className="flex-row items-center gap-2">
+          <TouchableOpacity 
+            onPress={() => setShowTemplateModal(true)} 
+            className="bg-blue-50 border border-blue-200 px-3 py-2 rounded-lg"
+          >
+            <Text className="font-lexend font-bold text-xs text-blue-700">Dùng Mẫu</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={handleSaveLayout} 
+            disabled={isSaving}
+            className="bg-orange-600 px-3 py-2 rounded-lg"
+          >
+            {isSaving ? <ActivityIndicator size="small" color="#fff" /> : <Text className="font-lexend font-bold text-xs text-white">Lưu Sơ đồ</Text>}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Zone Tabs */}
@@ -235,6 +307,13 @@ export function ManagerMapEditorFeature() {
               <Text className={`font-lexend font-bold text-sm ${activeZone?._id === z._id ? 'text-orange-700' : 'text-gray-600'}`}>{z.name}</Text>
             </TouchableOpacity>
           ))}
+          <TouchableOpacity 
+            onPress={() => { setZoneFormData({ name: '', capacity: 0 }); setShowZoneModal(true); }}
+            className="px-4 py-2 rounded-full mr-2 bg-emerald-50 border border-emerald-200 flex-row items-center"
+          >
+            <FontAwesome name="plus" size={12} color="#059669" />
+            <Text className="font-lexend font-bold text-sm text-emerald-700 ml-1">Khu vực mới</Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
 
@@ -308,6 +387,79 @@ export function ManagerMapEditorFeature() {
                 <Text className="font-lexend font-bold text-white">Lưu Bàn</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Add Zone Modal */}
+      <Modal visible={showZoneModal} transparent animationType="fade">
+        <View className="flex-1 justify-center bg-black/50 px-4">
+          <View className="bg-white rounded-2xl p-6 shadow-xl">
+            <Text className="font-lexend font-bold text-lg text-gray-900 mb-4">Thêm khu vực mới</Text>
+            
+            <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Tên khu vực <Text className="text-red-500">*</Text></Text>
+            <TextInput 
+              value={zoneFormData.name} 
+              onChangeText={t => setZoneFormData({...zoneFormData, name: t})} 
+              className="border border-gray-300 rounded-lg px-4 py-3 mb-6 font-lexend text-gray-900" 
+              placeholder="VD: Tầng 1, Sân vườn..."
+            />
+            
+            <View className="flex-row justify-end items-center border-t border-gray-100 pt-4">
+              <TouchableOpacity onPress={() => setShowZoneModal(false)} className="px-4 py-3 mr-2">
+                <Text className="font-lexend font-medium text-gray-500">Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleAddZone} disabled={isSaving} className="px-6 py-3 bg-orange-600 rounded-lg">
+                {isSaving ? <ActivityIndicator size="small" color="#fff" /> : <Text className="font-lexend font-bold text-white">Lưu</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Apply Template Modal */}
+      <Modal visible={showTemplateModal} transparent animationType="slide">
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white rounded-t-3xl p-6 shadow-xl h-3/4">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="font-lexend font-bold text-xl text-gray-900">Sơ đồ mẫu (Admin tạo)</Text>
+              <TouchableOpacity onPress={() => setShowTemplateModal(false)} className="p-2">
+                <FontAwesome name="times" size={20} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <Text className="font-lexend text-sm text-gray-500 mb-4 leading-5">
+              Chọn một mẫu có sẵn để áp dụng cho khu vực <Text className="font-bold text-orange-600">{activeZone?.name}</Text>. 
+              Lưu ý: Sơ đồ mới sẽ thay thế toàn bộ thiết lập bàn hiện tại trong khu vực này.
+            </Text>
+
+            <ScrollView className="flex-1">
+              {templates.length === 0 ? (
+                <Text className="font-lexend text-center text-gray-500 mt-10">Chưa có sơ đồ mẫu nào được tạo.</Text>
+              ) : (
+                templates.map(tpl => (
+                  <TouchableOpacity 
+                    key={tpl._id}
+                    onPress={() => {
+                      Alert.alert('Xác nhận', `Bạn chắc chắn muốn áp dụng mẫu "${tpl.name}" cho khu vực này?`, [
+                        { text: 'Hủy', style: 'cancel' },
+                        { text: 'Áp dụng', style: 'destructive', onPress: () => handleApplyTemplate(tpl._id) }
+                      ]);
+                    }}
+                    className="flex-row items-center p-4 bg-gray-50 rounded-xl border border-gray-200 mb-3"
+                  >
+                    <View className="w-12 h-12 bg-blue-100 rounded-lg items-center justify-center mr-4">
+                      <FontAwesome name="map" size={20} color="#2563eb" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="font-lexend font-bold text-gray-900 text-base">{tpl.name}</Text>
+                      <Text className="font-lexend text-sm text-gray-500">{tpl.description || 'Không có mô tả'}</Text>
+                    </View>
+                    <FontAwesome name="chevron-right" size={14} color="#9ca3af" />
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>

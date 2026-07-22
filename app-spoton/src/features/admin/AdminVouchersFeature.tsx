@@ -1,38 +1,45 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, Modal, TextInput, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, Modal, TextInput, ScrollView, Platform } from 'react-native';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import apiClient from '@/lib/http';
 import { FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 interface Branch {
   _id: string;
   name: string;
 }
 
-interface VoucherItem {
+export interface VoucherItem {
   _id: string;
   code: string;
+  branch_id?: string | { _id: string; name: string } | null;
   discount_percentage: number;
   max_discount_amount?: number;
   min_order_value: number;
+  min_guest_count?: number;
   valid_from: string;
   valid_until: string;
   usage_limit?: number;
   used_count: number;
-  min_guest_count?: number;
   is_active: boolean;
   is_public: boolean;
-  branch_id?: { _id: string; name: string } | null;
 }
 
 export function AdminVouchersFeature() {
+  const router = useRouter();
+  const { user } = useAuthStore();
   const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [tableCapacities, setTableCapacities] = useState<number[]>([]);
+  
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   
   // Filters
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'ended'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'scheduled' | 'expired' | 'inactive'>('all');
   
   // Add Modal
   const [showAddModal, setShowAddModal] = useState(false);
@@ -44,19 +51,23 @@ export function AdminVouchersFeature() {
     max_discount_amount: 50000,
     min_order_value: 0,
     min_guest_count: 1,
-    valid_from: new Date().toISOString().split('T')[0],
-    valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    valid_from: new Date().toISOString(),
+    valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     usage_limit: 100,
     is_active: true,
     is_public: true,
     branch_id: '' // empty string means Global (null in backend)
   });
 
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+
   const fetchData = useCallback(async () => {
     try {
-      const [vouchersRes, branchesRes] = await Promise.all([
+      const [vouchersRes, branchesRes, capacitiesRes] = await Promise.all([
         apiClient.get('/vouchers'),
-        apiClient.get('/branches')
+        apiClient.get('/branches'),
+        apiClient.get('/branches/table-capacities')
       ]);
       
       if (vouchersRes.data?.success) {
@@ -64,6 +75,9 @@ export function AdminVouchersFeature() {
       }
       if (branchesRes.data?.success) {
         setBranches(branchesRes.data.data || []);
+      }
+      if (capacitiesRes.data?.success) {
+        setTableCapacities(capacitiesRes.data.data || []);
       }
     } catch (error) {
       console.log('Error fetching data:', error);
@@ -117,10 +131,18 @@ export function AdminVouchersFeature() {
         return;
       }
       
+      const startDate = new Date(formData.valid_from);
+      const endDate = new Date(formData.valid_until);
+      
+      if (startDate >= endDate) {
+        Alert.alert('Lỗi', 'Ngày kết thúc phải sau ngày bắt đầu');
+        return;
+      }
+      
       const payload: any = {
         ...formData,
-        valid_from: new Date(formData.valid_from).toISOString(),
-        valid_until: new Date(formData.valid_until + 'T23:59:59.999Z').toISOString(),
+        valid_from: startDate.toISOString(),
+        valid_until: endDate.toISOString(),
       };
       
       if (!payload.branch_id) {
@@ -136,21 +158,122 @@ export function AdminVouchersFeature() {
     }
   };
 
+  const handleSaveEdit = async () => {
+    try {
+      if (!formData.code || formData.discount_percentage <= 0) {
+        Alert.alert('Lỗi', 'Vui lòng nhập Mã và % Giảm');
+        return;
+      }
+      const startDate = new Date(formData.valid_from);
+      const endDate = new Date(formData.valid_until);
+      
+      if (startDate >= endDate) {
+        Alert.alert('Lỗi', 'Ngày kết thúc phải sau ngày bắt đầu');
+        return;
+      }
+      
+      const payload: any = {
+        ...formData,
+        valid_from: startDate.toISOString(),
+        valid_until: endDate.toISOString(),
+      };
+      
+      if (!payload.branch_id) {
+        payload.branch_id = null; // Update global
+      }
+      
+      await apiClient.put(`/vouchers/${formData._id}`, payload);
+      Alert.alert('Thành công', 'Đã cập nhật voucher');
+      setShowAddModal(false);
+      fetchData();
+    } catch (error: any) {
+      Alert.alert('Lỗi', error.message || 'Không thể cập nhật voucher');
+    }
+  };
+
+  const handleEditClick = (item: VoucherItem) => {
+    setFormData({
+      ...item,
+      branch_id: typeof item.branch_id === 'object' && item.branch_id ? item.branch_id._id : (item.branch_id || '')
+    });
+    setShowAddModal(true);
+  };
+
   const getStatus = (v: VoucherItem) => {
-    if (!v.is_active) return 'ended';
+    if (!v.is_active) return 'inactive';
     const now = new Date();
+    const from = new Date(v.valid_from);
     const until = new Date(v.valid_until);
-    if (now > until) return 'ended';
+    if (now < from) return 'scheduled';
+    if (now > until) return 'expired';
     return 'active';
   };
 
   const filtered = vouchers.filter(v => {
     if (search && !v.code.toLowerCase().includes(search.toLowerCase())) return false;
     const st = getStatus(v);
-    if (statusFilter === 'active' && st !== 'active') return false;
-    if (statusFilter === 'ended' && st !== 'ended') return false;
+    if (statusFilter !== 'all' && st !== statusFilter) return false;
     return true;
   });
+
+  const isFormRunning = formData._id ? getStatus(formData as VoucherItem) === 'active' : false;
+
+  const handleShowStartPicker = () => {
+    if (isFormRunning) return;
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: new Date(formData.valid_from),
+        mode: 'date',
+        minimumDate: new Date(),
+        onChange: (event: any, selectedDate?: Date) => {
+          if (event.type === 'set' && selectedDate) {
+            DateTimePickerAndroid.open({
+              value: selectedDate,
+              mode: 'time',
+              is24Hour: true,
+              onChange: (timeEvent: any, selectedTime?: Date) => {
+                if (timeEvent.type === 'set' && selectedTime) {
+                  const finalDate = new Date(selectedDate);
+                  finalDate.setHours(selectedTime.getHours(), selectedTime.getMinutes());
+                  setFormData((prev: any) => ({ ...prev, valid_from: finalDate.toISOString() }));
+                }
+              }
+            });
+          }
+        },
+      });
+    } else {
+      setShowStartPicker(true);
+    }
+  };
+
+  const handleShowEndPicker = () => {
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: new Date(formData.valid_until),
+        mode: 'date',
+        minimumDate: new Date(formData.valid_from),
+        onChange: (event: any, selectedDate?: Date) => {
+          if (event.type === 'set' && selectedDate) {
+            DateTimePickerAndroid.open({
+              value: selectedDate,
+              mode: 'time',
+              is24Hour: true,
+              onChange: (timeEvent: any, selectedTime?: Date) => {
+                if (timeEvent.type === 'set' && selectedTime) {
+                  const finalDate = new Date(selectedDate);
+                  finalDate.setHours(selectedTime.getHours(), selectedTime.getMinutes());
+                  setFormData((prev: any) => ({ ...prev, valid_until: finalDate.toISOString() }));
+                }
+              }
+            });
+          }
+        },
+      });
+    } else {
+      setShowEndPicker(true);
+    }
+  };
 
   if (loading && !refreshing) {
     return (
@@ -177,10 +300,10 @@ export function AdminVouchersFeature() {
         <TouchableOpacity 
           onPress={() => {
             setFormData({
-              code: '', discount_percentage: 10, max_discount_amount: 50000, min_order_value: 0, min_guest_count: 1,
-              valid_from: new Date().toISOString().split('T')[0],
-              valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-              usage_limit: 100, is_active: true, is_public: true, branch_id: ''
+              code: '', discount_percentage: 10, max_discount_amount: 50000, min_order_value: 0,
+              valid_from: new Date().toISOString(),
+              valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              usage_limit: 100, min_guest_count: 1, is_active: true, is_public: true, branch_id: ''
             });
             setShowAddModal(true);
           }}
@@ -203,21 +326,21 @@ export function AdminVouchersFeature() {
           />
         </View>
         
-        <View className="flex-row gap-2">
-          {['all', 'active', 'ended'].map(f => {
-            const labels: any = { all: 'Tất cả', active: 'Đang chạy', ended: 'Đã kết thúc' };
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row py-1">
+          {['all', 'active', 'scheduled', 'expired', 'inactive'].map(f => {
+            const labels: any = { all: 'Tất cả', active: 'Đang chạy', scheduled: 'Sắp diễn ra', expired: 'Đã kết thúc', inactive: 'Tạm dừng' };
             const isActive = statusFilter === f;
             return (
               <TouchableOpacity
                 key={f}
                 onPress={() => setStatusFilter(f as any)}
-                className={`px-4 py-1.5 rounded-full border ${isActive ? 'bg-orange-50 border-orange-200' : 'bg-white border-gray-200'}`}
+                className={`px-4 py-1.5 rounded-full border mr-2 ${isActive ? 'bg-orange-50 border-orange-200' : 'bg-white border-gray-200'}`}
               >
                 <Text className={`font-lexend text-xs font-medium ${isActive ? 'text-orange-700' : 'text-gray-600'}`}>{labels[f]}</Text>
               </TouchableOpacity>
             )
           })}
-        </View>
+        </ScrollView>
       </View>
 
       {/* List */}
@@ -231,33 +354,45 @@ export function AdminVouchersFeature() {
           const usagePercent = item.usage_limit ? Math.min(100, (item.used_count / item.usage_limit) * 100) : 0;
           
           return (
-            <View className="bg-white p-4 rounded-xl mb-4 border border-gray-200 shadow-sm">
+            <TouchableOpacity 
+              onPress={() => handleEditClick(item)}
+              activeOpacity={0.7}
+              className="bg-white p-4 rounded-xl mb-4 border border-gray-200 shadow-sm"
+            >
               <View className="flex-row justify-between items-start mb-2">
-                <View className="flex-row items-center gap-2">
-                  <View className="bg-gray-100 px-2 py-1 rounded">
-                    <Text className="font-lexend font-bold text-gray-800 text-sm tracking-widest">{item.code}</Text>
+                <View className="flex-row items-start gap-2 flex-1">
+                  <View>
+                    <View className="bg-gray-100 px-2 py-1 rounded self-start mb-1">
+                      <Text className="font-lexend font-bold text-gray-800 text-sm tracking-widest">{item.code}</Text>
+                    </View>
+                    <View className="flex-row items-center">
+                      <FontAwesome name={typeof item.branch_id === 'object' && item.branch_id ? "map-marker" : "globe"} size={10} color="#6b7280" />
+                      <Text className="font-lexend text-[10px] text-gray-500 ml-1" numberOfLines={1}>
+                        {typeof item.branch_id === 'object' && item.branch_id ? `Chi nhánh ${item.branch_id.name}` : 'Toàn hệ thống (Global)'}
+                      </Text>
+                    </View>
                   </View>
-                  <View className={`px-2 py-0.5 rounded-full ${status === 'active' ? 'bg-green-100' : 'bg-red-100'}`}>
-                    <Text className={`font-lexend font-bold text-[10px] ${status === 'active' ? 'text-green-700' : 'text-red-700'}`}>
-                      {status === 'active' ? 'Đang chạy' : 'Đã dừng'}
+                  <View className={`px-2 py-0.5 rounded-full ml-1 ${
+                    status === 'active' ? 'bg-green-100' : 
+                    status === 'scheduled' ? 'bg-yellow-100' :
+                    status === 'expired' ? 'bg-gray-100' : 'bg-red-100'
+                  }`}>
+                    <Text className={`font-lexend font-bold text-[10px] ${
+                      status === 'active' ? 'text-green-700' : 
+                      status === 'scheduled' ? 'text-yellow-700' :
+                      status === 'expired' ? 'text-gray-500' : 'text-red-700'
+                    }`}>
+                      {status === 'active' ? 'Đang chạy' : 
+                       status === 'scheduled' ? 'Sắp diễn ra' :
+                       status === 'expired' ? 'Đã kết thúc' : 'Tạm dừng'}
                     </Text>
                   </View>
                 </View>
                 <Text className="font-lexend font-bold text-orange-600 text-lg">-{item.discount_percentage}%</Text>
               </View>
 
-              <View className="flex-row items-center mb-3">
-                <FontAwesome name="map-marker" size={12} color="#6b7280" />
-                <Text className="font-lexend text-xs text-gray-600 ml-1.5 font-medium">
-                  {item.branch_id?.name || 'Toàn hệ thống (Global)'}
-                </Text>
-              </View>
-
-              <Text className="font-lexend text-xs text-gray-500 mb-1">
+              <Text className="font-lexend text-xs text-gray-500 mb-3 mt-1">
                 Giảm tối đa {item.max_discount_amount ? item.max_discount_amount.toLocaleString('vi-VN') + 'đ' : 'Không giới hạn'}
-              </Text>
-              <Text className="font-lexend text-xs text-gray-500 mb-3">
-                Đơn tối thiểu {item.min_order_value ? item.min_order_value.toLocaleString('vi-VN') + 'đ' : '0đ'} (Bàn ≥ {item.min_guest_count || 1} người)
               </Text>
 
               <View className="flex-row items-center justify-between mb-3">
@@ -273,7 +408,12 @@ export function AdminVouchersFeature() {
 
               <View className="flex-row justify-between items-center border-t border-gray-100 pt-3">
                 <View>
-                  <Text className="font-lexend text-[10px] text-gray-400">HSD: {new Date(item.valid_until).toLocaleDateString('vi-VN')}</Text>
+                  <Text className="font-lexend text-[10px] text-gray-500">
+                    {new Date(item.valid_from).toLocaleString('vi-VN')}
+                  </Text>
+                  <Text className="font-lexend text-[10px] text-gray-500 mt-0.5">
+                    Đến: {new Date(item.valid_until).toLocaleString('vi-VN')}
+                  </Text>
                 </View>
                 <View className="flex-row gap-2">
                   {status === 'active' ? (
@@ -287,7 +427,7 @@ export function AdminVouchersFeature() {
                   )}
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           );
         }}
         ListEmptyComponent={
@@ -301,11 +441,11 @@ export function AdminVouchersFeature() {
         }
       />
 
-      {/* Add Modal */}
+      {/* Add/Edit Modal */}
       <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
         <View className="flex-1 bg-white">
           <View className="flex-row justify-between items-center px-5 py-4 border-b border-gray-100 shadow-sm bg-white z-10">
-            <Text className="font-lexend font-bold text-lg text-gray-900">Thêm Mã Khuyến Mãi</Text>
+            <Text className="font-lexend font-bold text-lg text-gray-900">{formData._id ? 'Sửa Khuyến Mãi' : 'Thêm Khuyến Mãi'}</Text>
             <TouchableOpacity onPress={() => setShowAddModal(false)} className="p-2 bg-gray-100 rounded-full">
               <FontAwesome name="times" size={16} color="#4b5563" />
             </TouchableOpacity>
@@ -316,10 +456,11 @@ export function AdminVouchersFeature() {
             <View className="mb-4">
               <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Phạm vi áp dụng <Text className="text-red-500">*</Text></Text>
               <TouchableOpacity 
-                onPress={() => setShowBranchSelect(true)}
-                className="flex-row justify-between items-center border border-gray-300 rounded-lg px-4 py-3"
+                onPress={() => !isFormRunning && setShowBranchSelect(true)}
+                activeOpacity={isFormRunning ? 1 : 0.2}
+                className={`flex-row justify-between items-center border border-gray-300 rounded-lg px-4 py-3 ${isFormRunning ? 'bg-gray-100 opacity-70' : ''}`}
               >
-                <Text className="font-lexend text-gray-900">{selectedBranchName}</Text>
+                <Text className={`font-lexend ${isFormRunning ? 'text-gray-500' : 'text-gray-900'}`}>{selectedBranchName}</Text>
                 <FontAwesome name="chevron-down" size={12} color="#6b7280" />
               </TouchableOpacity>
             </View>
@@ -328,8 +469,9 @@ export function AdminVouchersFeature() {
               <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Mã Code (vd: SUMMER20) <Text className="text-red-500">*</Text></Text>
               <TextInput
                 value={formData.code}
+                editable={!isFormRunning}
                 onChangeText={t => setFormData({ ...formData, code: t.toUpperCase() })}
-                className="border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900 font-bold uppercase"
+                className={`border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900 font-bold uppercase ${isFormRunning ? 'bg-gray-100 text-gray-500 opacity-70' : ''}`}
                 placeholder="Nhập mã voucher"
               />
             </View>
@@ -339,32 +481,59 @@ export function AdminVouchersFeature() {
                 <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">% Giảm <Text className="text-red-500">*</Text></Text>
                 <TextInput
                   value={String(formData.discount_percentage)}
+                  editable={!isFormRunning}
                   onChangeText={t => setFormData({ ...formData, discount_percentage: Number(t) })}
                   keyboardType="numeric"
-                  className="border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900"
+                  className={`border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900 ${isFormRunning ? 'bg-gray-100 text-gray-500 opacity-70' : ''}`}
                 />
               </View>
               <View className="flex-1">
                 <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Giảm Tối Đa (VNĐ)</Text>
                 <TextInput
                   value={String(formData.max_discount_amount || '')}
+                  editable={!isFormRunning}
                   onChangeText={t => setFormData({ ...formData, max_discount_amount: Number(t) })}
                   keyboardType="numeric"
-                  className="border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900"
+                  className={`border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900 ${isFormRunning ? 'bg-gray-100 text-gray-500 opacity-70' : ''}`}
                 />
               </View>
             </View>
 
+            <View className="mb-4">
+              <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Đơn tối thiểu (VNĐ)</Text>
+              <TextInput
+                value={String(formData.min_order_value || 0)}
+                editable={!isFormRunning}
+                onChangeText={t => setFormData({ ...formData, min_order_value: Number(t) })}
+                keyboardType="numeric"
+                className={`border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900 ${isFormRunning ? 'bg-gray-100 text-gray-500 opacity-70' : ''}`}
+              />
+            </View>
+
+            <View className="mb-4">
+              <Text className="font-lexend text-sm font-medium text-gray-700 mb-2">Điều kiện số người tối thiểu</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+                <TouchableOpacity
+                  disabled={isFormRunning}
+                  onPress={() => setFormData({ ...formData, min_guest_count: 1 })}
+                  className={`mr-2 px-4 py-2 rounded-full border ${formData.min_guest_count === 1 ? 'bg-orange-100 border-orange-500' : 'bg-white border-gray-300'} ${isFormRunning ? 'opacity-50' : ''}`}
+                >
+                  <Text className={`font-lexend text-sm ${formData.min_guest_count === 1 ? 'text-orange-700 font-bold' : 'text-gray-600'}`}>Không yêu cầu</Text>
+                </TouchableOpacity>
+                {tableCapacities.map(cap => (
+                  <TouchableOpacity
+                    key={cap}
+                    disabled={isFormRunning}
+                    onPress={() => setFormData({ ...formData, min_guest_count: cap })}
+                    className={`mr-2 px-4 py-2 rounded-full border ${formData.min_guest_count === cap ? 'bg-orange-100 border-orange-500' : 'bg-white border-gray-300'} ${isFormRunning ? 'opacity-50' : ''}`}
+                  >
+                    <Text className={`font-lexend text-sm ${formData.min_guest_count === cap ? 'text-orange-700 font-bold' : 'text-gray-600'}`}>Từ {cap} người</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
             <View className="flex-row gap-4 mb-4">
-              <View className="flex-1">
-                <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Đơn tối thiểu (VNĐ)</Text>
-                <TextInput
-                  value={String(formData.min_order_value || 0)}
-                  onChangeText={t => setFormData({ ...formData, min_order_value: Number(t) })}
-                  keyboardType="numeric"
-                  className="border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900"
-                />
-              </View>
               <View className="flex-1">
                 <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Số lượt dùng tối đa</Text>
                 <TextInput
@@ -374,51 +543,79 @@ export function AdminVouchersFeature() {
                   className="border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900"
                 />
               </View>
+              <View className="flex-1" />
             </View>
 
             <View className="mb-4">
-              <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Số khách tối thiểu trên bàn</Text>
-              <TextInput
-                value={String(formData.min_guest_count || 1)}
-                onChangeText={t => setFormData({ ...formData, min_guest_count: Number(t) })}
-                keyboardType="numeric"
-                className="border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900"
-              />
-            </View>
-
-            <View className="mb-4">
-              <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu (YYYY-MM-DD)</Text>
-              <TextInput
-                value={formData.valid_from}
-                onChangeText={t => setFormData({ ...formData, valid_from: t })}
-                className="border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900"
-              />
+              <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu</Text>
+              <TouchableOpacity
+                onPress={handleShowStartPicker}
+                activeOpacity={isFormRunning ? 1 : 0.2}
+                className={`border border-gray-300 rounded-lg px-4 py-3 flex-row justify-between items-center ${isFormRunning ? 'bg-gray-100 opacity-70' : ''}`}
+              >
+                <Text className={`font-lexend ${isFormRunning ? 'text-gray-500' : 'text-gray-900'}`}>{new Date(formData.valid_from!).toLocaleString('vi-VN')}</Text>
+                <FontAwesome name="calendar" size={16} color="#9ca3af" />
+              </TouchableOpacity>
+              {Platform.OS === 'ios' && showStartPicker && !isFormRunning && (
+                <DateTimePicker
+                  value={new Date(formData.valid_from)}
+                  mode="datetime"
+                  display="default"
+                  minimumDate={new Date()}
+                  onChange={(event: any, selectedDate?: Date) => {
+                    setShowStartPicker(false);
+                    if (selectedDate) setFormData({ ...formData, valid_from: selectedDate.toISOString() });
+                  }}
+                />
+              )}
             </View>
 
             <View className="mb-6">
-              <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Ngày kết thúc (YYYY-MM-DD)</Text>
-              <TextInput
-                value={formData.valid_until}
-                onChangeText={t => setFormData({ ...formData, valid_until: t })}
-                className="border border-gray-300 rounded-lg px-4 py-3 font-lexend text-gray-900"
-              />
+              <Text className="font-lexend text-sm font-medium text-gray-700 mb-1">Ngày kết thúc</Text>
+              <TouchableOpacity
+                onPress={handleShowEndPicker}
+                className="border border-gray-300 rounded-lg px-4 py-3 flex-row justify-between items-center"
+              >
+                <Text className="font-lexend text-gray-900">{new Date(formData.valid_until!).toLocaleString('vi-VN')}</Text>
+                <FontAwesome name="calendar" size={16} color="#9ca3af" />
+              </TouchableOpacity>
+              {Platform.OS === 'ios' && showEndPicker && (
+                <DateTimePicker
+                  value={new Date(formData.valid_until)}
+                  mode="datetime"
+                  display="default"
+                  minimumDate={new Date(formData.valid_from)}
+                  onChange={(event: any, selectedDate?: Date) => {
+                    setShowEndPicker(false);
+                    if (selectedDate) setFormData({ ...formData, valid_until: selectedDate.toISOString() });
+                  }}
+                />
+              )}
             </View>
 
             <TouchableOpacity 
               onPress={() => setFormData({ ...formData, is_public: !formData.is_public })}
-              className="flex-row items-center mb-8"
+              className="flex-row items-center mb-4"
             >
               <FontAwesome name={formData.is_public ? 'check-square-o' : 'square-o'} size={24} color={formData.is_public ? '#ea580c' : '#9ca3af'} />
               <Text className="font-lexend text-sm text-gray-900 ml-3 font-medium">Hiển thị công khai trên App (Voucher lưu tự động)</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity 
+              onPress={() => setFormData({ ...formData, is_active: !formData.is_active })}
+              className="flex-row items-center mb-8"
+            >
+              <FontAwesome name={formData.is_active ? 'toggle-on' : 'toggle-off'} size={24} color={formData.is_active ? '#16a34a' : '#9ca3af'} />
+              <Text className="font-lexend text-sm text-gray-900 ml-3 font-medium">Kích hoạt voucher (Active)</Text>
+            </TouchableOpacity>
+
           </ScrollView>
           <View className="p-5 border-t border-gray-100 bg-white">
             <TouchableOpacity 
-              onPress={handleSaveAdd} 
+              onPress={formData._id ? handleSaveEdit : handleSaveAdd} 
               className="py-4 bg-orange-600 rounded-xl items-center shadow-sm"
             >
-              <Text className="font-lexend font-bold text-white text-lg">Tạo Voucher</Text>
+              <Text className="font-lexend font-bold text-white text-lg">{formData._id ? 'Lưu Thay Đổi' : 'Tạo Voucher'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -467,7 +664,6 @@ export function AdminVouchersFeature() {
             </View>
           </View>
         </Modal>
-
       </Modal>
     </View>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert, SafeAreaView, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
@@ -22,6 +22,33 @@ export function BranchDetailFeature({ id }: BranchDetailProps) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'MENU' | 'VOUCHERS' | 'REVIEWS'>('OVERVIEW');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+
+  // Review Modal States
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const handleSubmitReview = async () => {
+    if (!rating) return;
+    setSubmittingReview(true);
+    try {
+      const res = await CustomerService.submitReview(id, rating, comment);
+      if (res.success) {
+        Alert.alert('Thành công', 'Cảm ơn bạn đã gửi đánh giá!');
+        setReviewModalVisible(false);
+        setComment('');
+        setRating(5);
+        if (res.data) {
+          setReviews(prev => [res.data, ...prev]);
+        }
+      }
+    } catch (error: any) {
+      Alert.alert('Lỗi', error.message || 'Không thể gửi đánh giá');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   useEffect(() => {
     fetchBranchData();
@@ -245,6 +272,20 @@ export function BranchDetailFeature({ id }: BranchDetailProps) {
         <Text className="font-lexend text-gray-500 text-xs">{reviews.length} đánh giá</Text>
       </View>
 
+      {/* Review Button */}
+      {isAuthenticated && user?.role === 'CUSTOMER' ? (
+        <TouchableOpacity 
+          onPress={() => setReviewModalVisible(true)}
+          className="bg-primary py-3 rounded-lg items-center mb-4 shadow-sm"
+        >
+          <Text className="font-lexend font-bold text-white">Viết đánh giá</Text>
+        </TouchableOpacity>
+      ) : !isAuthenticated ? (
+        <View className="bg-gray-50 py-3 rounded-lg items-center mb-4 border border-gray-200">
+          <Text className="font-lexend text-gray-500">Vui lòng đăng nhập để đánh giá</Text>
+        </View>
+      ) : null}
+
       {reviews.length === 0 ? (
         <Text className="font-lexend text-muted text-center py-4">Chưa có đánh giá nào</Text>
       ) : (
@@ -372,6 +413,52 @@ export function BranchDetailFeature({ id }: BranchDetailProps) {
           />
         </View>
       )}
+
+      {/* Review Modal */}
+      <Modal visible={reviewModalVisible} transparent animationType="slide">
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 justify-end bg-black/50"
+        >
+          <View className="bg-white rounded-t-3xl p-6 pb-12">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="font-lexend font-bold text-lg">Đánh giá của bạn</Text>
+              <TouchableOpacity onPress={() => setReviewModalVisible(false)}>
+                <FontAwesome name="times" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <View className="items-center mb-6">
+              <View className="flex-row">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity key={star} onPress={() => setRating(star)} className="p-2">
+                    <FontAwesome name={star <= rating ? "star" : "star-o"} size={32} color="#fbbf24" />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text className="font-lexend text-gray-500 mt-2">
+                {rating === 5 ? 'Tuyệt vời' : rating === 4 ? 'Rất tốt' : rating === 3 ? 'Bình thường' : rating === 2 ? 'Tệ' : 'Rất tệ'}
+              </Text>
+            </View>
+
+            <TextInput
+              className="bg-gray-50 border border-gray-200 rounded-lg p-3 font-lexend text-base h-24 text-left"
+              placeholder="Chia sẻ trải nghiệm của bạn (không bắt buộc)"
+              multiline
+              textAlignVertical="top"
+              value={comment}
+              onChangeText={setComment}
+            />
+
+            <Button 
+              title={submittingReview ? "Đang gửi..." : "Gửi đánh giá"} 
+              onPress={handleSubmitReview} 
+              disabled={submittingReview}
+              className="mt-6"
+            />
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
